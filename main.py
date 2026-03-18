@@ -15,7 +15,7 @@ def get_scores(sport, league):
         return []
 
 def get_standings(sport, league):
-    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/standings"
+    url = f"https://site.api.espn.com/apis/v2/sports/{sport}/{league}/standings"
     try:
         response = requests.get(url)
         data = response.json()
@@ -25,34 +25,11 @@ def get_standings(sport, league):
 
 def get_stories(url, limit=5):
     try:
-        feed = feedparser.parse(url)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        feed = feedparser.parse(url, request_headers=headers)
         return feed.entries[:limit]
     except:
         return []
-
-@app.route("/")
-def sports():
-    nhl_games = get_scores("hockey", "nhl")
-    mlb_games = get_scores("baseball", "mlb")
-    nhl_standings = get_standings("hockey", "nhl")
-    mlb_standings = get_standings("baseball", "mlb")
-    pl_standings = get_standings("soccer", "eng.1")
-    
-    nhl_stories = get_stories("https://www.sportsnet.ca/hockey/nhl/feed/")
-    mlb_stories = get_stories("https://www.sportsnet.ca/mlb/feed/")
-    pl_stories = get_stories("https://www.theguardian.com/football/premierleague/rss")
-    cycling_stories = get_stories("https://www.cyclingnews.com/rss")
-    
-    now = datetime.now().strftime("%A, %B %d · %I:%M %p")
-    
-    return sports_template(now, nhl_games, mlb_games, nhl_standings, mlb_standings, pl_standings, nhl_stories, mlb_stories, pl_stories, cycling_stories)
-
-@app.route("/news")
-def news():
-    cbc_stories = get_stories("https://www.cbc.ca/cmlink/rss-topstories", 8)
-    globe_stories = get_stories("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/", 8)
-    now = datetime.now().strftime("%A, %B %d · %I:%M %p")
-    return news_template(now, cbc_stories, globe_stories)
 
 def render_scores(games, league):
     if not games:
@@ -79,14 +56,22 @@ def render_scores(games, league):
 
 def render_standings(data, label):
     try:
-        entries = data["children"][0]["standings"]["entries"][:6]
+        all_entries = []
+        for conference in data.get("children", []):
+            entries = conference["standings"]["entries"]
+            all_entries.extend(entries)
+        all_entries = sorted(
+            all_entries,
+            key=lambda e: next((s["value"] for s in e["stats"] if s["name"] == "points"), 0),
+            reverse=True
+        )[:8]
     except:
         return "<p class='empty'>Standings unavailable</p>"
-    html = f"<div class='standings'>"
-    for i, entry in enumerate(entries):
+    html = "<div class='standings'>"
+    for i, entry in enumerate(all_entries):
         team = entry["team"]["shortDisplayName"]
         stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
-        pts = stats.get("points", stats.get("playoffSeed", "-"))
+        pts = stats.get("points", stats.get("wins", "-"))
         html += f"""
         <div class='standing-row'>
             <span class='pos'>{i+1}</span>
@@ -103,7 +88,6 @@ def render_stories(stories, tag, tag_class):
     for entry in stories:
         title = entry.get("title", "No title")
         link = entry.get("link", "#")
-        source = entry.get("source", {}).get("title", "")
         published = entry.get("published", "")
         html += f"""
         <div class='story-item'>
@@ -116,44 +100,55 @@ def render_stories(stories, tag, tag_class):
     return html
 
 CSS = """
-* {{ box-sizing: border-box; margin: 0; padding: 0; }}
-body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; max-width: 600px; margin: 0 auto; }}
-.header {{ padding: 16px; border-bottom: 0.5px solid #eee; background: white; position: sticky; top: 0; }}
-.header h1 {{ font-size: 18px; font-weight: 500; }}
-.header .date {{ font-size: 11px; color: #999; margin-top: 2px; }}
-.nav {{ display: flex; background: white; border-bottom: 0.5px solid #eee; }}
-.nav a {{ flex: 1; padding: 10px; text-align: center; font-size: 13px; color: #999; text-decoration: none; border-bottom: 2px solid transparent; }}
-.nav a.active {{ color: #111; border-bottom: 2px solid #111; font-weight: 500; }}
-.body {{ padding: 12px 16px; }}
-.section-label {{ font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin: 14px 0 8px; }}
-.scores-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }}
-.score-card {{ background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 8px 10px; }}
-.score-league {{ font-size: 9px; color: #999; text-transform: uppercase; margin-bottom: 4px; }}
-.score-row {{ display: flex; justify-content: space-between; font-size: 13px; margin: 2px 0; }}
-.score-num {{ font-weight: 500; }}
-.score-status {{ font-size: 9px; color: #999; margin-top: 4px; }}
-.standings {{ background: white; border: 0.5px solid #eee; border-radius: 10px; overflow: hidden; margin-bottom: 4px; }}
-.standing-row {{ display: flex; align-items: center; padding: 7px 10px; border-bottom: 0.5px solid #f5f5f5; font-size: 12px; }}
-.standing-row:last-child {{ border-bottom: none; }}
-.pos {{ color: #999; width: 20px; font-size: 11px; }}
-.team {{ flex: 1; }}
-.pts {{ font-weight: 500; font-size: 12px; }}
-.story-item {{ display: flex; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }}
-.story-item:last-child {{ border-bottom: none; }}
-.tag {{ font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; margin-top: 2px; }}
-.tag-nhl {{ background: #dbeafe; color: #1e40af; }}
-.tag-mlb {{ background: #fee2e2; color: #991b1b; }}
-.tag-pl {{ background: #dcfce7; color: #166534; }}
-.tag-cycling {{ background: #fef9c3; color: #854d0e; }}
-.tag-cbc {{ background: #ede9fe; color: #5b21b6; }}
-.tag-globe {{ background: #f3f4f6; color: #374151; }}
-.story-item a {{ font-size: 13px; color: #111; text-decoration: none; line-height: 1.4; }}
-.story-item a:hover {{ text-decoration: underline; }}
-.story-meta {{ font-size: 10px; color: #999; margin-top: 2px; }}
-.empty {{ font-size: 13px; color: #999; padding: 8px 0; }}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; max-width: 600px; margin: 0 auto; }
+.header { padding: 16px; border-bottom: 0.5px solid #eee; background: white; position: sticky; top: 0; }
+.header h1 { font-size: 18px; font-weight: 500; }
+.header .date { font-size: 11px; color: #999; margin-top: 2px; }
+.nav { display: flex; background: white; border-bottom: 0.5px solid #eee; }
+.nav a { flex: 1; padding: 10px; text-align: center; font-size: 13px; color: #999; text-decoration: none; border-bottom: 2px solid transparent; }
+.nav a.active { color: #111; border-bottom: 2px solid #111; font-weight: 500; }
+.body { padding: 12px 16px; }
+.section-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin: 14px 0 8px; }
+.scores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.score-card { background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 8px 10px; }
+.score-league { font-size: 9px; color: #999; text-transform: uppercase; margin-bottom: 4px; }
+.score-row { display: flex; justify-content: space-between; font-size: 13px; margin: 2px 0; }
+.score-num { font-weight: 500; }
+.score-status { font-size: 9px; color: #999; margin-top: 4px; }
+.standings { background: white; border: 0.5px solid #eee; border-radius: 10px; overflow: hidden; margin-bottom: 4px; }
+.standing-row { display: flex; align-items: center; padding: 7px 10px; border-bottom: 0.5px solid #f5f5f5; font-size: 12px; }
+.standing-row:last-child { border-bottom: none; }
+.pos { color: #999; width: 20px; font-size: 11px; }
+.team { flex: 1; }
+.pts { font-weight: 500; font-size: 12px; }
+.story-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
+.story-item:last-child { border-bottom: none; }
+.tag { font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; margin-top: 2px; }
+.tag-nhl { background: #dbeafe; color: #1e40af; }
+.tag-mlb { background: #fee2e2; color: #991b1b; }
+.tag-pl { background: #dcfce7; color: #166534; }
+.tag-cycling { background: #fef9c3; color: #854d0e; }
+.tag-cbc { background: #ede9fe; color: #5b21b6; }
+.tag-globe { background: #f3f4f6; color: #374151; }
+.story-item a { font-size: 13px; color: #111; text-decoration: none; line-height: 1.4; }
+.story-item a:hover { text-decoration: underline; }
+.story-meta { font-size: 10px; color: #999; margin-top: 2px; }
+.empty { font-size: 13px; color: #999; padding: 8px 0; }
 """
 
-def sports_template(now, nhl_games, mlb_games, nhl_standings, mlb_standings, pl_standings, nhl_stories, mlb_stories, pl_stories, cycling_stories):
+@app.route("/")
+def sports():
+    nhl_games = get_scores("hockey", "nhl")
+    mlb_games = get_scores("baseball", "mlb")
+    nhl_standings = get_standings("hockey", "nhl")
+    mlb_standings = get_standings("baseball", "mlb")
+    pl_standings = get_standings("soccer", "eng.1")
+    nhl_stories = get_stories("https://www.sportsnet.ca/hockey/nhl/feed/")
+    mlb_stories = get_stories("https://www.sportsnet.ca/mlb/feed/")
+    pl_stories = get_stories("https://www.theguardian.com/football/premierleague/rss")
+    cycling_stories = get_stories("https://www.cyclingnews.com/rss")
+    now = datetime.now().strftime("%A, %B %d · %I:%M %p")
     return f"""<!DOCTYPE html>
 <html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
 <title>My Dashboard</title><style>{CSS}</style></head>
@@ -177,7 +172,11 @@ def sports_template(now, nhl_games, mlb_games, nhl_standings, mlb_standings, pl_
 {render_stories(cycling_stories, 'Cycling', 'tag-cycling')}
 </div></body></html>"""
 
-def news_template(now, cbc_stories, globe_stories):
+@app.route("/news")
+def news():
+    cbc_stories = get_stories("https://www.cbc.ca/cmlink/rss-topstories", 8)
+    globe_stories = get_stories("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/", 8)
+    now = datetime.now().strftime("%A, %B %d · %I:%M %p")
     return f"""<!DOCTYPE html>
 <html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
 <title>My Dashboard</title><style>{CSS}</style></head>
