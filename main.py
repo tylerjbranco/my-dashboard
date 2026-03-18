@@ -149,7 +149,8 @@ def sports():
     mlb_stories = get_stories("https://www.sportsnet.ca/mlb/feed/")
     pl_stories = get_stories("https://www.theguardian.com/football/premierleague/rss")
     cycling_stories = get_stories("https://www.cyclingnews.com/rss")
-    now = datetime.now().strftime("%A, %B %d · %I:%M %p")
+    eastern = pytz.timezone("America/Toronto")
+    now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
     return f"""<!DOCTYPE html>
 <html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
 <title>My Dashboard</title><style>{CSS}</style></head>
@@ -177,7 +178,8 @@ def sports():
 def news():
     cbc_stories = get_stories("https://www.cbc.ca/cmlink/rss-topstories", 8)
     globe_stories = get_stories("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/", 8)
-    now = datetime.now().strftime("%A, %B %d · %I:%M %p")
+    eastern = pytz.timezone("America/Toronto")
+    now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
     return f"""<!DOCTYPE html>
 <html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
 <title>My Dashboard</title><style>{CSS}</style></head>
