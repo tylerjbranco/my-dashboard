@@ -6,6 +6,13 @@ import pytz
 
 app = Flask(__name__)
 
+NHL_DIVISIONS = {
+    "Atlantic": ["Bruins", "Sabres", "Red Wings", "Panthers", "Canadiens", "Senators", "Lightning", "Maple Leafs"],
+    "Metropolitan": ["Hurricanes", "Blue Jackets", "Devils", "Islanders", "Rangers", "Flyers", "Penguins", "Capitals"],
+    "Central": ["Blackhawks", "Avalanche", "Stars", "Wild", "Predators", "Blues", "Jets", "Utah"],
+    "Pacific": ["Ducks", "Flames", "Oilers", "Kings", "Sharks", "Kraken", "Canucks", "Golden Knights"]
+}
+
 def get_scores(sport, league):
     url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard"
     try:
@@ -55,29 +62,113 @@ def render_scores(games, league):
     html += "</div>"
     return html
 
-def render_standings(data, label):
+def render_nhl_standings(data):
     try:
         all_entries = []
         for conference in data.get("children", []):
-            entries = conference["standings"]["entries"]
-            all_entries.extend(entries)
+            all_entries.extend(conference["standings"]["entries"])
+    except:
+        return "<p class='empty'>Standings unavailable</p>"
+
+    html = ""
+    for division, teams in NHL_DIVISIONS.items():
+        division_entries = [e for e in all_entries if e["team"]["shortDisplayName"] in teams]
+        division_entries = sorted(
+            division_entries,
+            key=lambda e: next((s["value"] for s in e["stats"] if s["name"] == "points"), 0),
+            reverse=True
+        )
+        html += f"<div class='division-label'>{division}</div>"
+        html += "<div class='standings'>"
+        html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat'>GP</span><span class='stat'>W</span><span class='stat'>L</span><span class='stat'>OTL</span><span class='stat pts'>PTS</span></div>"
+        for i, entry in enumerate(division_entries):
+            team = entry["team"]["shortDisplayName"]
+            stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
+            gp = stats.get("gamesPlayed", "-")
+            w = stats.get("wins", "-")
+            l = stats.get("losses", "-")
+            otl = stats.get("otLosses", "-")
+            pts = stats.get("points", "-")
+            html += f"""
+            <div class='standing-row'>
+                <span class='pos'>{i+1}</span>
+                <span class='team'>{team}</span>
+                <span class='stat'>{gp}</span>
+                <span class='stat'>{w}</span>
+                <span class='stat'>{l}</span>
+                <span class='stat'>{otl}</span>
+                <span class='stat pts'>{pts}</span>
+            </div>"""
+        html += "</div>"
+    return html
+
+def render_mlb_standings(data):
+    try:
+        all_entries = []
+        for group in data.get("children", []):
+            all_entries.extend(group["standings"]["entries"])
+        if not all_entries:
+            return "<p class='empty'>Regular season hasn't started yet — check back in April!</p>"
+        all_entries = sorted(
+            all_entries,
+            key=lambda e: next((s["value"] for s in e["stats"] if s["name"] == "wins"), 0),
+            reverse=True
+        )
+        html = "<div class='standings'>"
+        html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat'>W</span><span class='stat'>L</span><span class='stat pts'>PCT</span><span class='stat'>GB</span></div>"
+        for i, entry in enumerate(all_entries):
+            team = entry["team"]["shortDisplayName"]
+            stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
+            w = stats.get("wins", "-")
+            l = stats.get("losses", "-")
+            pct = stats.get("winPercent", "-")
+            gb = stats.get("gamesBehind", "-")
+            html += f"""
+            <div class='standing-row'>
+                <span class='pos'>{i+1}</span>
+                <span class='team'>{team}</span>
+                <span class='stat'>{w}</span>
+                <span class='stat'>{l}</span>
+                <span class='stat pts'>{pct}</span>
+                <span class='stat'>{gb}</span>
+            </div>"""
+        html += "</div>"
+        return html
+    except:
+        return "<p class='empty'>Standings unavailable</p>"
+
+def render_pl_standings(data):
+    try:
+        all_entries = []
+        for group in data.get("children", []):
+            all_entries.extend(group["standings"]["entries"])
         all_entries = sorted(
             all_entries,
             key=lambda e: next((s["value"] for s in e["stats"] if s["name"] == "points"), 0),
             reverse=True
-        )[:8]
+        )
     except:
         return "<p class='empty'>Standings unavailable</p>"
+
     html = "<div class='standings'>"
+    html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat'>GP</span><span class='stat'>W</span><span class='stat'>D</span><span class='stat'>L</span><span class='stat pts'>PTS</span></div>"
     for i, entry in enumerate(all_entries):
         team = entry["team"]["shortDisplayName"]
         stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
-        pts = stats.get("points", stats.get("wins", "-"))
+        gp = stats.get("gamesPlayed", "-")
+        w = stats.get("wins", "-")
+        d = stats.get("ties", "-")
+        l = stats.get("losses", "-")
+        pts = stats.get("points", "-")
         html += f"""
         <div class='standing-row'>
             <span class='pos'>{i+1}</span>
             <span class='team'>{team}</span>
-            <span class='pts'>{pts}</span>
+            <span class='stat'>{gp}</span>
+            <span class='stat'>{w}</span>
+            <span class='stat'>{d}</span>
+            <span class='stat'>{l}</span>
+            <span class='stat pts'>{pts}</span>
         </div>"""
     html += "</div>"
     return html
@@ -103,14 +194,15 @@ def render_stories(stories, tag, tag_class):
 CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; max-width: 600px; margin: 0 auto; }
-.header { padding: 16px; border-bottom: 0.5px solid #eee; background: white; position: sticky; top: 0; }
+.header { padding: 16px; border-bottom: 0.5px solid #eee; background: white; position: sticky; top: 0; z-index: 10; }
 .header h1 { font-size: 18px; font-weight: 500; }
 .header .date { font-size: 11px; color: #999; margin-top: 2px; }
-.nav { display: flex; background: white; border-bottom: 0.5px solid #eee; }
+.nav { display: flex; background: white; border-bottom: 0.5px solid #eee; position: sticky; top: 52px; z-index: 10; }
 .nav a { flex: 1; padding: 10px; text-align: center; font-size: 13px; color: #999; text-decoration: none; border-bottom: 2px solid transparent; }
 .nav a.active { color: #111; border-bottom: 2px solid #111; font-weight: 500; }
 .body { padding: 12px 16px; }
-.section-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin: 14px 0 8px; }
+.section-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin: 16px 0 8px; }
+.division-label { font-size: 11px; font-weight: 500; color: #555; margin: 12px 0 4px; padding-left: 2px; }
 .scores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 .score-card { background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 8px 10px; }
 .score-league { font-size: 9px; color: #999; text-transform: uppercase; margin-bottom: 4px; }
@@ -118,11 +210,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .score-num { font-weight: 500; }
 .score-status { font-size: 9px; color: #999; margin-top: 4px; }
 .standings { background: white; border: 0.5px solid #eee; border-radius: 10px; overflow: hidden; margin-bottom: 4px; }
+.standing-header { display: flex; align-items: center; padding: 5px 10px; background: #f9f9f9; border-bottom: 0.5px solid #eee; }
+.standing-header .stat { font-size: 9px; font-weight: 500; color: #999; text-transform: uppercase; width: 30px; text-align: center; }
+.standing-header .pts { color: #111; }
 .standing-row { display: flex; align-items: center; padding: 7px 10px; border-bottom: 0.5px solid #f5f5f5; font-size: 12px; }
 .standing-row:last-child { border-bottom: none; }
-.pos { color: #999; width: 20px; font-size: 11px; }
-.team { flex: 1; }
-.pts { font-weight: 500; font-size: 12px; }
+.pos { color: #999; width: 16px; font-size: 11px; flex-shrink: 0; }
+.team { flex: 1; font-size: 12px; }
+.stat { width: 30px; text-align: center; font-size: 12px; color: #555; flex-shrink: 0; }
+.pts { font-weight: 500; color: #111; }
 .story-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
 .story-item:last-child { border-bottom: none; }
 .tag { font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; margin-top: 2px; }
@@ -162,11 +258,11 @@ def sports():
 {render_scores(nhl_games, 'NHL')}
 {render_scores(mlb_games, 'MLB')}
 <div class='section-label'>NHL standings</div>
-{render_standings(nhl_standings, 'NHL')}
+{render_nhl_standings(nhl_standings)}
 <div class='section-label'>MLB standings</div>
-{render_standings(mlb_standings, 'MLB')}
+{render_mlb_standings(mlb_standings)}
 <div class='section-label'>Premier League table</div>
-{render_standings(pl_standings, 'PL')}
+{render_pl_standings(pl_standings)}
 <div class='section-label'>Latest stories</div>
 {render_stories(nhl_stories, 'NHL', 'tag-nhl')}
 {render_stories(mlb_stories, 'MLB', 'tag-mlb')}
