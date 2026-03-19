@@ -370,11 +370,11 @@ def render_mlb_standings(data):
         html += f"<div class='division-label'>{division}</div>"
         html += "<div class='standings'>"
         html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat-col'>W</span><span class='stat-col'>L</span><span class='stat-col'>PCT</span><span class='pts'>GB</span></div>"
-        for i, team in enumerate(teams):
-            if team not in team_lookup:
-                continue
-            s = team_lookup[team]["stats"]
-            logo = team_lookup[team]["logo"]
+        division_teams = [(team, team_lookup[team]) for team in teams if team in team_lookup]
+        division_teams.sort(key=lambda x: int(x[1]["stats"].get("wins", "0") or "0"), reverse=True)
+        for i, (team, data) in enumerate(division_teams):
+            s = data["stats"]
+            logo = data["logo"]
             w = s.get("wins", "-")
             l = s.get("losses", "-")
             pct = s.get("winPercent", "-")
