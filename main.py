@@ -38,11 +38,11 @@ FLAG_HTML = {
 }
 
 MY_TEAMS = [
-    {"name": "Maple Leafs", "sport": "hockey", "league": "nhl", "keywords": ["Toronto", "Maple Leafs"]},
-    {"name": "Blue Jays", "sport": "baseball", "league": "mlb", "keywords": ["Toronto", "Blue Jays"]},
-    {"name": "Man United", "sport": "soccer", "league": "eng.1", "keywords": ["Manchester United", "Man United"]},
-    {"name": "Raptors", "sport": "basketball", "league": "nba", "keywords": ["Toronto", "Raptors"]},
-    {"name": "Toronto FC", "sport": "soccer", "league": "usa.1", "keywords": ["Toronto FC", "Toronto"]},
+    {"name": "Maple Leafs", "sport": "hockey", "league": "nhl", "keywords": ["Toronto Maple Leafs"]},
+    {"name": "Blue Jays", "sport": "baseball", "league": "mlb", "keywords": ["Toronto Blue Jays"]},
+    {"name": "Man United", "sport": "soccer", "league": "eng.1", "keywords": ["Manchester United"]},
+    {"name": "Raptors", "sport": "basketball", "league": "nba", "keywords": ["Toronto Raptors"]},
+    {"name": "Toronto FC", "sport": "soccer", "league": "usa.1", "keywords": ["Toronto FC"]},
 ]
 
 UCI_WORLD_TOUR_2026 = [
@@ -227,15 +227,24 @@ def find_team_games(games, keywords):
             continue
     return matches
 
-def get_standings(sport, league):
-    url = f"https://site.api.espn.com/apis/v2/sports/{sport}/{league}/standings"
-    try:
-        response = requests.get(url)
-        data = response.json()
-        return data
-    except:
-        return {}
-
+def find_team_games(games, keywords):
+    matches = []
+    for game in games:
+        try:
+            competition = game["competitions"][0]
+            for competitor in competition["competitors"]:
+                team = competitor["team"]
+                full_name = f"{team.get('location', '')} {team.get('name', '')}".strip()
+                short_name = team.get("shortDisplayName", "")
+                for kw in keywords:
+                    if kw.lower() in full_name.lower() or kw.lower() in short_name.lower():
+                        if game not in matches:
+                            matches.append(game)
+                        break
+        except:
+            continue
+    return matches
+    
 def get_stories(url, limit=5):
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
