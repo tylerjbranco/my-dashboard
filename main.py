@@ -1,17 +1,116 @@
 from flask import Flask
 import feedparser
 import requests
-from datetime import datetime
+from datetime import datetime, date
 import pytz
 
 app = Flask(__name__)
 
-NHL_DIVISIONS = {
-    "Atlantic": ["Bruins", "Sabres", "Red Wings", "Panthers", "Canadiens", "Senators", "Lightning", "Maple Leafs"],
-    "Metropolitan": ["Hurricanes", "Blue Jackets", "Devils", "Islanders", "Rangers", "Flyers", "Penguins", "Capitals"],
-    "Central": ["Blackhawks", "Avalanche", "Stars", "Wild", "Predators", "Blues", "Jets", "Utah"],
-    "Pacific": ["Ducks", "Flames", "Oilers", "Kings", "Sharks", "Kraken", "Canucks", "Golden Knights"]
-}
+def get_weather():
+    try:
+        url = "https://api.open-meteo.com/v1/forecast?latitude=43.70&longitude=-79.42&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=America%2FToronto&forecast_days=4"
+        response = requests.get(url)
+        data = response.json()
+
+        weather_codes = {
+            0: ("Clear sky", "☀️"),
+            1: ("Mainly clear", "🌤️"),
+            2: ("Partly cloudy", "⛅"),
+            3: ("Overcast", "☁️"),
+            45: ("Foggy", "🌫️"),
+            48: ("Icy fog", "🌫️"),
+            51: ("Light drizzle", "🌦️"),
+            53: ("Drizzle", "🌦️"),
+            55: ("Heavy drizzle", "🌦️"),
+            61: ("Light rain", "🌧️"),
+            63: ("Rain", "🌧️"),
+            65: ("Heavy rain", "🌧️"),
+            71: ("Light snow", "🌨️"),
+            73: ("Snow", "🌨️"),
+            75: ("Heavy snow", "❄️"),
+            77: ("Snow grains", "❄️"),
+            80: ("Light showers", "🌦️"),
+            81: ("Showers", "🌧️"),
+            82: ("Heavy showers", "🌧️"),
+            85: ("Snow showers", "🌨️"),
+            86: ("Heavy snow showers", "❄️"),
+            95: ("Thunderstorm", "⛈️"),
+            96: ("Thunderstorm", "⛈️"),
+            99: ("Thunderstorm", "⛈️"),
+        }
+
+        current = data["current"]
+        daily = data["daily"]
+
+        current_code = current["weather_code"]
+        current_desc, current_icon = weather_codes.get(current_code, ("Unknown", "🌡️"))
+        current_temp = round(current["temperature_2m"])
+        feels_like = round(current["apparent_temperature"])
+
+        days = []
+        day_names = ["Today", "Tomorrow"]
+        for i in range(1, 4):
+            d = date.fromisoformat(daily["time"][i])
+            name = day_names[i] if i < len(day_names) else d.strftime("%A")
+            code = daily["weather_code"][i]
+            desc, icon = weather_codes.get(code, ("Unknown", "🌡️"))
+            days.append({
+                "name": name,
+                "icon": icon,
+                "desc": desc,
+                "high": round(daily["temperature_2m_max"][i]),
+                "low": round(daily["temperature_2m_min"][i]),
+                "precip": daily["precipitation_probability_max"][i]
+            })
+
+        today_high = round(daily["temperature_2m_max"][0])
+        today_low = round(daily["temperature_2m_min"][0])
+        today_precip = daily["precipitation_probability_max"][0]
+
+        return {
+            "current_temp": current_temp,
+            "feels_like": feels_like,
+            "current_desc": current_desc,
+            "current_icon": current_icon,
+            "today_high": today_high,
+            "today_low": today_low,
+            "today_precip": today_precip,
+            "days": days
+        }
+    except:
+        return None
+
+def render_weather(w):
+    if not w:
+        return "<p class='empty'>Weather unavailable</p>"
+
+    forecast_html = ""
+    for day in w["days"]:
+        forecast_html += f"""
+        <div class='forecast-day'>
+            <div class='forecast-name'>{day['name']}</div>
+            <div class='forecast-icon'>{day['icon']}</div>
+            <div class='forecast-desc'>{day['desc']}</div>
+            <div class='forecast-temps'>{day['high']}° / {day['low']}°</div>
+            <div class='forecast-precip'>{day['precip']}% precip</div>
+        </div>"""
+
+    return f"""
+    <div class='weather-widget'>
+        <div class='weather-current'>
+            <div class='weather-main'>
+                <span class='weather-icon'>{w['current_icon']}</span>
+                <span class='weather-temp'>{w['current_temp']}°C</span>
+            </div>
+            <div class='weather-details'>
+                <div class='weather-desc'>{w['current_desc']}</div>
+                <div class='weather-meta'>Feels like {w['feels_like']}°C · High {w['today_high']}° Low {w['today_low']}° · {w['today_precip']}% precip</div>
+            </div>
+        </div>
+        <div class='weather-forecast'>
+            {forecast_html}
+        </div>
+    </div>"""
 
 def get_scores(sport, league):
     url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard"
@@ -62,113 +161,29 @@ def render_scores(games, league):
     html += "</div>"
     return html
 
-def render_nhl_standings(data):
+def render_standings(data, label):
     try:
         all_entries = []
         for conference in data.get("children", []):
-            all_entries.extend(conference["standings"]["entries"])
-    except:
-        return "<p class='empty'>Standings unavailable</p>"
-
-    html = ""
-    for division, teams in NHL_DIVISIONS.items():
-        division_entries = [e for e in all_entries if e["team"]["shortDisplayName"] in teams]
-        division_entries = sorted(
-            division_entries,
-            key=lambda e: next((s["value"] for s in e["stats"] if s["name"] == "points"), 0),
-            reverse=True
-        )
-        html += f"<div class='division-label'>{division}</div>"
-        html += "<div class='standings'>"
-        html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat'>GP</span><span class='stat'>W</span><span class='stat'>L</span><span class='stat'>OTL</span><span class='stat pts'>PTS</span></div>"
-        for i, entry in enumerate(division_entries):
-            team = entry["team"]["shortDisplayName"]
-            stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
-            gp = stats.get("gamesPlayed", "-")
-            w = stats.get("wins", "-")
-            l = stats.get("losses", "-")
-            otl = stats.get("otLosses", "-")
-            pts = stats.get("points", "-")
-            html += f"""
-            <div class='standing-row'>
-                <span class='pos'>{i+1}</span>
-                <span class='team'>{team}</span>
-                <span class='stat'>{gp}</span>
-                <span class='stat'>{w}</span>
-                <span class='stat'>{l}</span>
-                <span class='stat'>{otl}</span>
-                <span class='stat pts'>{pts}</span>
-            </div>"""
-        html += "</div>"
-    return html
-
-def render_mlb_standings(data):
-    try:
-        all_entries = []
-        for group in data.get("children", []):
-            all_entries.extend(group["standings"]["entries"])
-        if not all_entries:
-            return "<p class='empty'>Regular season hasn't started yet — check back in April!</p>"
-        all_entries = sorted(
-            all_entries,
-            key=lambda e: next((s["value"] for s in e["stats"] if s["name"] == "wins"), 0),
-            reverse=True
-        )
-        html = "<div class='standings'>"
-        html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat'>W</span><span class='stat'>L</span><span class='stat pts'>PCT</span><span class='stat'>GB</span></div>"
-        for i, entry in enumerate(all_entries):
-            team = entry["team"]["shortDisplayName"]
-            stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
-            w = stats.get("wins", "-")
-            l = stats.get("losses", "-")
-            pct = stats.get("winPercent", "-")
-            gb = stats.get("gamesBehind", "-")
-            html += f"""
-            <div class='standing-row'>
-                <span class='pos'>{i+1}</span>
-                <span class='team'>{team}</span>
-                <span class='stat'>{w}</span>
-                <span class='stat'>{l}</span>
-                <span class='stat pts'>{pct}</span>
-                <span class='stat'>{gb}</span>
-            </div>"""
-        html += "</div>"
-        return html
-    except:
-        return "<p class='empty'>Standings unavailable</p>"
-
-def render_pl_standings(data):
-    try:
-        all_entries = []
-        for group in data.get("children", []):
-            all_entries.extend(group["standings"]["entries"])
+            entries = conference["standings"]["entries"]
+            all_entries.extend(entries)
         all_entries = sorted(
             all_entries,
             key=lambda e: next((s["value"] for s in e["stats"] if s["name"] == "points"), 0),
             reverse=True
-        )
+        )[:8]
     except:
         return "<p class='empty'>Standings unavailable</p>"
-
     html = "<div class='standings'>"
-    html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat'>GP</span><span class='stat'>W</span><span class='stat'>D</span><span class='stat'>L</span><span class='stat pts'>PTS</span></div>"
     for i, entry in enumerate(all_entries):
         team = entry["team"]["shortDisplayName"]
         stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
-        gp = stats.get("gamesPlayed", "-")
-        w = stats.get("wins", "-")
-        d = stats.get("ties", "-")
-        l = stats.get("losses", "-")
-        pts = stats.get("points", "-")
+        pts = stats.get("points", stats.get("wins", "-"))
         html += f"""
         <div class='standing-row'>
             <span class='pos'>{i+1}</span>
             <span class='team'>{team}</span>
-            <span class='stat'>{gp}</span>
-            <span class='stat'>{w}</span>
-            <span class='stat'>{d}</span>
-            <span class='stat'>{l}</span>
-            <span class='stat pts'>{pts}</span>
+            <span class='pts'>{pts}</span>
         </div>"""
     html += "</div>"
     return html
@@ -201,8 +216,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .nav a { flex: 1; padding: 10px; text-align: center; font-size: 13px; color: #999; text-decoration: none; border-bottom: 2px solid transparent; }
 .nav a.active { color: #111; border-bottom: 2px solid #111; font-weight: 500; }
 .body { padding: 12px 16px; }
-.section-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin: 16px 0 8px; }
-.division-label { font-size: 11px; font-weight: 500; color: #555; margin: 12px 0 4px; padding-left: 2px; }
+.section-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin: 14px 0 8px; }
+.sport-divider { border: none; border-top: 2px solid #eee; margin: 20px 0; }
+.weather-widget { background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.weather-current { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.weather-main { display: flex; align-items: center; gap: 8px; }
+.weather-icon { font-size: 32px; }
+.weather-temp { font-size: 32px; font-weight: 500; }
+.weather-desc { font-size: 14px; font-weight: 500; color: #111; }
+.weather-meta { font-size: 11px; color: #999; margin-top: 3px; }
+.weather-forecast { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-top: 0.5px solid #eee; padding-top: 12px; }
+.forecast-day { text-align: center; }
+.forecast-name { font-size: 11px; font-weight: 500; color: #666; margin-bottom: 4px; }
+.forecast-icon { font-size: 20px; margin-bottom: 2px; }
+.forecast-desc { font-size: 10px; color: #999; margin-bottom: 2px; }
+.forecast-temps { font-size: 12px; font-weight: 500; color: #111; }
+.forecast-precip { font-size: 10px; color: #999; margin-top: 2px; }
 .scores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 .score-card { background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 8px 10px; }
 .score-league { font-size: 9px; color: #999; text-transform: uppercase; margin-bottom: 4px; }
@@ -210,15 +239,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .score-num { font-weight: 500; }
 .score-status { font-size: 9px; color: #999; margin-top: 4px; }
 .standings { background: white; border: 0.5px solid #eee; border-radius: 10px; overflow: hidden; margin-bottom: 4px; }
-.standing-header { display: flex; align-items: center; padding: 5px 10px; background: #f9f9f9; border-bottom: 0.5px solid #eee; }
-.standing-header .stat { font-size: 9px; font-weight: 500; color: #999; text-transform: uppercase; width: 30px; text-align: center; }
-.standing-header .pts { color: #111; }
 .standing-row { display: flex; align-items: center; padding: 7px 10px; border-bottom: 0.5px solid #f5f5f5; font-size: 12px; }
 .standing-row:last-child { border-bottom: none; }
-.pos { color: #999; width: 16px; font-size: 11px; flex-shrink: 0; }
-.team { flex: 1; font-size: 12px; }
-.stat { width: 30px; text-align: center; font-size: 12px; color: #555; flex-shrink: 0; }
-.pts { font-weight: 500; color: #111; }
+.pos { color: #999; width: 20px; font-size: 11px; }
+.team { flex: 1; }
+.pts { font-weight: 500; font-size: 12px; }
 .story-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
 .story-item:last-child { border-bottom: none; }
 .tag { font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; margin-top: 2px; }
@@ -236,14 +261,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 @app.route("/")
 def sports():
-    nhl_games = get_scores("hockey", "nhl")
+    weather = get_weather()
     mlb_games = get_scores("baseball", "mlb")
+    pl_games = get_scores("soccer", "eng.1")
+    nhl_games = get_scores("hockey", "nhl")
     nhl_standings = get_standings("hockey", "nhl")
     mlb_standings = get_standings("baseball", "mlb")
     pl_standings = get_standings("soccer", "eng.1")
-    nhl_stories = get_stories("https://www.sportsnet.ca/hockey/nhl/feed/")
     mlb_stories = get_stories("https://www.sportsnet.ca/mlb/feed/")
     pl_stories = get_stories("https://www.theguardian.com/football/premierleague/rss")
+    nhl_stories = get_stories("https://www.sportsnet.ca/hockey/nhl/feed/")
     cycling_stories = get_stories("https://www.cyclingnews.com/rss")
     eastern = pytz.timezone("America/Toronto")
     now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
@@ -254,19 +281,31 @@ def sports():
 <div class='header'><h1>My Dashboard</h1><div class='date'>{now}</div></div>
 <div class='nav'><a href='/' class='active'>Sports</a><a href='/news'>News</a></div>
 <div class='body'>
-<div class='section-label'>Today's scores</div>
-{render_scores(nhl_games, 'NHL')}
+<div class='section-label'>Toronto Weather</div>
+{render_weather(weather)}
+<hr class='sport-divider'>
+<div class='section-label'>MLB · Scores</div>
 {render_scores(mlb_games, 'MLB')}
-<div class='section-label'>NHL standings</div>
-{render_nhl_standings(nhl_standings)}
-<div class='section-label'>MLB standings</div>
-{render_mlb_standings(mlb_standings)}
-<div class='section-label'>Premier League table</div>
-{render_pl_standings(pl_standings)}
-<div class='section-label'>Latest stories</div>
-{render_stories(nhl_stories, 'NHL', 'tag-nhl')}
+<div class='section-label'>MLB · Standings</div>
+{render_standings(mlb_standings, 'MLB')}
+<div class='section-label'>MLB · Headlines</div>
 {render_stories(mlb_stories, 'MLB', 'tag-mlb')}
+<hr class='sport-divider'>
+<div class='section-label'>Premier League · Scores</div>
+{render_scores(pl_games, 'PL')}
+<div class='section-label'>Premier League · Standings</div>
+{render_standings(pl_standings, 'PL')}
+<div class='section-label'>Premier League · Headlines</div>
 {render_stories(pl_stories, 'PL', 'tag-pl')}
+<hr class='sport-divider'>
+<div class='section-label'>NHL · Scores</div>
+{render_scores(nhl_games, 'NHL')}
+<div class='section-label'>NHL · Standings</div>
+{render_standings(nhl_standings, 'NHL')}
+<div class='section-label'>NHL · Headlines</div>
+{render_stories(nhl_stories, 'NHL', 'tag-nhl')}
+<hr class='sport-divider'>
+<div class='section-label'>Cycling · Headlines</div>
 {render_stories(cycling_stories, 'Cycling', 'tag-cycling')}
 </div></body></html>"""
 
