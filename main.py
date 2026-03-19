@@ -651,19 +651,14 @@ def news():
 @app.route("/debug")
 def debug():
     html = "<pre>"
-    for name, url in [
-        ("CBC Toronto", "https://www.cbc.ca/cmlink/rss-canada-toronto"),
-        ("BBC", "https://feeds.bbci.co.uk/news/world/rss.xml"),
-        ("Guardian", "https://www.theguardian.com/world/rss"),
-    ]:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-        feed = feedparser.parse(url, request_headers=headers)
-        entry = feed.entries[1] if len(feed.entries) > 1 else {}
-        html += f"=== {name} ===\n"
-        html += f"LINKS: {entry.get('links', 'none')}\n"
-        html += f"MEDIA_CONTENT: {entry.get('media_content', 'none')}\n"
-        html += f"MEDIA_THUMBNAIL: {entry.get('media_thumbnail', 'none')}\n"
-        html += f"SUMMARY: {str(entry.get('summary', 'none'))[:200]}\n\n"
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+    feed = feedparser.parse("https://feeds.bbci.co.uk/news/world/rss.xml", request_headers=headers)
+    entry = feed.entries[1] if len(feed.entries) > 1 else {}
+    html += f"LINKS: {entry.get('links', 'none')}\n"
+    html += f"MEDIA_CONTENT: {entry.get('media_content', 'none')}\n"
+    html += f"MEDIA_THUMBNAIL: {entry.get('media_thumbnail', 'none')}\n"
+    html += f"SUMMARY: {str(entry.get('summary', 'none'))[:300]}\n"
+    html += f"KEYS: {list(entry.keys())}\n"
     html += "</pre>"
     return html
     
