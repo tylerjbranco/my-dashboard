@@ -603,7 +603,7 @@ def render_news_section(sources):
 
 CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; max-width: 600px; margin: 0 auto; }
+body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; max-width: 600px; margin: 0 auto; }
 .header { padding: 16px; border-bottom: 0.5px solid #eee; background: white; position: sticky; top: 0; z-index: 10; }
 .header h1 { font-size: 18px; font-weight: 500; }
 .header .date { font-size: 11px; color: #999; margin-top: 2px; }
@@ -734,7 +734,8 @@ def sports():
 <meta name='apple-mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-status-bar-style' content='default'>
 <link rel='manifest' href='/manifest.json'>
-<title>My Dashboard</title><style>{CSS}</style></head>
+<link href='https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap' rel='stylesheet'>
+<title>My Dashboard</title><style>{CSS}</style>
 <body>
 <div class='header'><h1>My Dashboard</h1><div class='date'>{now_str}</div></div>
 <div class='nav'><a href='/' class='active'>Sports</a><a href='/news'>News</a></div>
@@ -813,7 +814,8 @@ def news():
 <meta name='apple-mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-status-bar-style' content='default'>
 <link rel='manifest' href='/manifest.json'>
-<title>My Dashboard</title><style>{CSS}</style></head>
+<link href='https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap' rel='stylesheet'>
+<title>My Dashboard</title><style>{CSS}</style>
 <body>
 <div class='header'><h1>My Dashboard</h1><div class='date'>{now}</div></div>
 <div class='nav'><a href='/'>Sports</a><a href='/news' class='active'>News</a></div>
