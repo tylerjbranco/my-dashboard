@@ -220,9 +220,13 @@ def get_stories(url, limit=5):
                     break
             if not thumbnail:
                 for mc in entry.get("media_content", []):
-                    if "image" in mc.get("type", "") or mc.get("medium") == "image":
+                    if mc.get("url"):
                         thumbnail = mc.get("url", "")
                         break
+            if not thumbnail:
+                thumbs = entry.get("media_thumbnail", [])
+                if thumbs:
+                    thumbnail = thumbs[0].get("url", "")
             stories.append({
                 "title": title,
                 "link": link,
@@ -647,20 +651,6 @@ def news():
 <div class='section-label'>Global</div>
 {global_html}
 </div></body></html>"""
-
-@app.route("/debug")
-def debug():
-    html = "<pre>"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-    feed = feedparser.parse("https://www.theguardian.com/world/rss", request_headers=headers)
-    entry = feed.entries[1] if len(feed.entries) > 1 else {}
-    html += f"LINKS: {entry.get('links', 'none')}\n"
-    html += f"MEDIA_CONTENT: {entry.get('media_content', 'none')}\n"
-    html += f"MEDIA_THUMBNAIL: {entry.get('media_thumbnail', 'none')}\n"
-    html += f"SUMMARY: {str(entry.get('summary', 'none'))[:300]}\n"
-    html += f"KEYS: {list(entry.keys())}\n"
-    html += "</pre>"
-    return html
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
