@@ -6,6 +6,84 @@ import pytz
 
 app = Flask(__name__)
 
+UCI_WORLD_TOUR_2026 = [
+    ("Tour Down Under", "AU", "2026-01-20", "2026-01-25"),
+    ("UAE Tour", "AE", "2026-02-22", "2026-02-28"),
+    ("Omloop Het Nieuwsblad", "BE", "2026-02-28", "2026-02-28"),
+    ("Strade Bianche", "IT", "2026-03-07", "2026-03-07"),
+    ("Paris-Nice", "FR", "2026-03-08", "2026-03-15"),
+    ("Tirreno-Adriatico", "IT", "2026-03-11", "2026-03-17"),
+    ("Milan-San Remo", "IT", "2026-03-21", "2026-03-21"),
+    ("Volta a Catalunya", "ES", "2026-03-23", "2026-03-29"),
+    ("E3 Saxo Bank Classic", "BE", "2026-03-27", "2026-03-27"),
+    ("Gent-Wevelgem", "BE", "2026-03-29", "2026-03-29"),
+    ("Dwars door Vlaanderen", "BE", "2026-04-01", "2026-04-01"),
+    ("Tour of Flanders", "BE", "2026-04-05", "2026-04-05"),
+    ("Paris-Roubaix", "FR", "2026-04-12", "2026-04-12"),
+    ("Amstel Gold Race", "NL", "2026-04-19", "2026-04-19"),
+    ("La Flèche Wallonne", "BE", "2026-04-22", "2026-04-22"),
+    ("Liège-Bastogne-Liège", "BE", "2026-04-26", "2026-04-26"),
+    ("Tour de Romandie", "CH", "2026-04-28", "2026-05-03"),
+    ("Eschborn-Frankfurt", "DE", "2026-05-01", "2026-05-01"),
+    ("Giro d'Italia", "IT", "2026-05-09", "2026-05-31"),
+    ("Critérium du Dauphiné", "FR", "2026-06-07", "2026-06-14"),
+    ("Swiss Tour", "CH", "2026-06-14", "2026-06-21"),
+    ("Tour de France", "FR", "2026-07-04", "2026-07-26"),
+    ("Classica San Sebastián", "ES", "2026-08-01", "2026-08-01"),
+    ("Tour de Pologne", "PL", "2026-08-04", "2026-08-09"),
+    ("La Vuelta España", "ES", "2026-08-15", "2026-09-06"),
+    ("Bretagne Classic", "FR", "2026-08-30", "2026-08-30"),
+    ("Grand Prix Cycliste de Québec", "CA", "2026-09-11", "2026-09-11"),
+    ("Grand Prix Cycliste de Montréal", "CA", "2026-09-13", "2026-09-13"),
+    ("Il Lombardia", "IT", "2026-10-03", "2026-10-03"),
+    ("Gree-Tour of Guangxi", "CN", "2026-10-13", "2026-10-18"),
+]
+
+def get_cycling_calendar():
+    today = date.today()
+    races = []
+    for name, country, start_str, end_str in UCI_WORLD_TOUR_2026:
+        start = date.fromisoformat(start_str)
+        end = date.fromisoformat(end_str)
+        if end < today:
+            status = "completed"
+        elif start <= today <= end:
+            status = "live"
+        else:
+            status = "upcoming"
+        races.append({
+            "name": name,
+            "country": country,
+            "start": start,
+            "end": end,
+            "status": status
+        })
+    return races
+
+def render_cycling_calendar(races):
+    html = "<div class='standings'>"
+    for race in races:
+        if race["status"] == "completed":
+            continue
+        if race["start"] == race["end"]:
+            date_str = race["start"].strftime("%b %d")
+        else:
+            date_str = f"{race['start'].strftime('%b %d')} – {race['end'].strftime('%b %d')}"
+        if race["status"] == "live":
+            status_badge = "<span class='live-badge'>Live</span>"
+            row_class = "standing-row live-row"
+        else:
+            status_badge = ""
+            row_class = "standing-row"
+        html += f"""
+        <div class='{row_class}'>
+            <span class='race-date'>{date_str}</span>
+            <span class='team'>{race['name']} {status_badge}</span>
+            <span class='race-country'>{race['country']}</span>
+        </div>"""
+    html += "</div>"
+    return html
+
 def get_weather():
     try:
         url = "https://api.open-meteo.com/v1/forecast?latitude=43.70&longitude=-79.42&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=America%2FToronto&forecast_days=4"
@@ -239,11 +317,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .score-num { font-weight: 500; }
 .score-status { font-size: 9px; color: #999; margin-top: 4px; }
 .standings { background: white; border: 0.5px solid #eee; border-radius: 10px; overflow: hidden; margin-bottom: 4px; }
-.standing-row { display: flex; align-items: center; padding: 7px 10px; border-bottom: 0.5px solid #f5f5f5; font-size: 12px; }
+.standing-row { display: flex; align-items: center; padding: 7px 10px; border-bottom: 0.5px solid #f5f5f5; font-size: 12px; gap: 8px; }
 .standing-row:last-child { border-bottom: none; }
+.live-row { background: #fff9f0; }
 .pos { color: #999; width: 20px; font-size: 11px; }
 .team { flex: 1; }
 .pts { font-weight: 500; font-size: 12px; }
+.race-date { font-size: 11px; color: #999; white-space: nowrap; min-width: 80px; }
+.race-country { font-size: 11px; color: #999; }
+.live-badge { background: #fee2e2; color: #991b1b; font-size: 9px; font-weight: 500; padding: 1px 6px; border-radius: 20px; margin-left: 6px; }
 .story-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
 .story-item:last-child { border-bottom: none; }
 .tag { font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; margin-top: 2px; }
@@ -272,6 +354,7 @@ def sports():
     pl_stories = get_stories("https://www.theguardian.com/football/premierleague/rss")
     nhl_stories = get_stories("https://www.sportsnet.ca/hockey/nhl/feed/")
     cycling_stories = get_stories("https://www.cyclingnews.com/rss")
+    cycling_calendar = get_cycling_calendar()
     eastern = pytz.timezone("America/Toronto")
     now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
     return f"""<!DOCTYPE html>
@@ -305,6 +388,8 @@ def sports():
 <div class='section-label'>NHL · Headlines</div>
 {render_stories(nhl_stories, 'NHL', 'tag-nhl')}
 <hr class='sport-divider'>
+<div class='section-label'>Cycling · Upcoming Races</div>
+{render_cycling_calendar(cycling_calendar)}
 <div class='section-label'>Cycling · Headlines</div>
 {render_stories(cycling_stories, 'Cycling', 'tag-cycling')}
 </div></body></html>"""
