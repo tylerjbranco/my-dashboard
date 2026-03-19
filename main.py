@@ -302,11 +302,13 @@ def get_youtube_videos(channel_id, limit=2):
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
         feed = feedparser.parse(url, request_headers=headers)
         videos = []
-        for entry in feed.entries[:limit]:
+        for entry in feed.entries:
             title = entry.get("title", "No title")
             link = entry.get("link", "#")
             published = entry.get("published", "")
             video_id = entry.get("yt_videoid", "")
+            if "/shorts/" in link:
+                continue
             thumbnail = f"https://i.ytimg.com/vi/{video_id}/mqdefault.jpg" if video_id else ""
             videos.append({
                 "title": title,
@@ -314,6 +316,8 @@ def get_youtube_videos(channel_id, limit=2):
                 "published": published,
                 "thumbnail": thumbnail
             })
+            if len(videos) >= limit:
+                break
         return videos
     except:
         return []
