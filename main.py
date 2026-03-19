@@ -37,6 +37,14 @@ FLAG_HTML = {
     "CN": "&#x1F1E8;&#x1F1F3;",
 }
 
+MY_TEAMS = [
+    {"name": "Maple Leafs", "sport": "hockey", "league": "nhl", "keywords": ["Toronto", "Maple Leafs"]},
+    {"name": "Blue Jays", "sport": "baseball", "league": "mlb", "keywords": ["Toronto", "Blue Jays"]},
+    {"name": "Man United", "sport": "soccer", "league": "eng.1", "keywords": ["Manchester United", "Man United"]},
+    {"name": "Raptors", "sport": "basketball", "league": "nba", "keywords": ["Toronto", "Raptors"]},
+    {"name": "Toronto FC", "sport": "soccer", "league": "usa.1", "keywords": ["Toronto FC", "Toronto"]},
+]
+
 UCI_WORLD_TOUR_2026 = [
     ("Tour Down Under", "AU", "2026-01-20", "2026-01-25"),
     ("UAE Tour", "AE", "2026-02-22", "2026-02-28"),
@@ -202,6 +210,23 @@ def get_scores(sport, league, for_date=None):
     except:
         return []
 
+def find_team_games(games, keywords):
+    matches = []
+    for game in games:
+        try:
+            competition = game["competitions"][0]
+            home = competition["competitors"][0]["team"]
+            away = competition["competitors"][1]["team"]
+            home_name = f"{home.get('location', '')} {home.get('name', '')}"
+            away_name = f"{away.get('location', '')} {away.get('name', '')}"
+            for kw in keywords:
+                if kw.lower() in home_name.lower() or kw.lower() in away_name.lower():
+                    matches.append(game)
+                    break
+        except:
+            continue
+    return matches
+
 def get_standings(sport, league):
     url = f"https://site.api.espn.com/apis/v2/sports/{sport}/{league}/standings"
     try:
@@ -280,18 +305,23 @@ def render_game_card(game):
         league_slug = "mlb"
     elif "s:70~" in uid:
         league_slug = "nhl"
-    elif "s:600~" in uid or "soccer" in uid:
+    elif "s:600~" in uid:
         league_slug = "soccer"
+    elif "s:40~" in uid:
+        league_slug = "nba"
     else:
-        league_slug = "nhl"
+        league_slug = "soccer"
     game_url = f"https://www.espn.com/{league_slug}/game/_/gameId/{game_id}"
     home_bold = ""
     away_bold = ""
     if state == "post":
-        if int(home["score"]) > int(away["score"]):
-            home_bold = "font-weight: 600;"
-        elif int(away["score"]) > int(home["score"]):
-            away_bold = "font-weight: 600;"
+        try:
+            if int(home["score"]) > int(away["score"]):
+                home_bold = "font-weight: 600;"
+            elif int(away["score"]) > int(home["score"]):
+                away_bold = "font-weight: 600;"
+        except:
+            pass
     return f"""
     <a href='{game_url}' target='_blank' class='score-card-link'>
         <div class='score-card'>
@@ -329,6 +359,26 @@ def render_scores(yesterday_games, today_games):
         html += "</div>"
     if not yesterday_games and not today_games:
         html += "<p class='empty'>No games yesterday or today</p>"
+    return html
+
+def render_my_teams(teams_data):
+    if not teams_data:
+        return "<p class='empty'>No recent games found</p>"
+    html = "<div class='scores-grid'>"
+    for team in teams_data:
+        if team.get("game"):
+            html += render_game_card(team["game"])
+        else:
+            html += f"""
+            <div class='score-card'>
+                <div class='score-row'>
+                    <div class='score-team'>
+                        <span style='color:#999; font-size:12px;'>{team['name']}</span>
+                    </div>
+                </div>
+                <div class='score-status'>No recent game</div>
+            </div>"""
+    html += "</div>"
     return html
 
 def render_nhl_standings(data):
@@ -420,6 +470,44 @@ def render_pl_standings(data):
         all_entries = []
         for conference in data.get("children", []):
             for entry in conference["standings"]["entries"]:
+                all_entries.append(entry)
+        all_entries = sorted(
+            all_entries,
+            key=lambda e: next((s["value"] for s in e["stats"] if s["name"] == "points"), 0),
+            reverse=True
+        )
+    except:
+        return "<p class='empty'>Standings unavailable</p>"
+    html = "<div class='standings'>"
+    html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat-col'>GP</span><span class='stat-col'>W</span><span class='stat-col'>D</span><span class='stat-col'>L</span><span class='pts'>PTS</span></div>"
+    for i, entry in enumerate(all_entries):
+        team = entry["team"]["shortDisplayName"]
+        stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
+        logo = entry["team"].get("logos", [{}])[0].get("href", "") if entry["team"].get("logos") else ""
+        gp = stats.get("gamesPlayed", "-")
+        w = stats.get("wins", "-")
+        d = stats.get("ties", "-")
+        l = stats.get("losses", "-")
+        pts = stats.get("points", "-")
+        logo_html = f'<img class="team-logo-sm" src="{logo}" alt="">' if logo else ""
+        html += f"""
+        <div class='standing-row'>
+            <span class='pos'>{i+1}</span>
+            <span class='team'>{logo_html}{team}</span>
+            <span class='stat-col'>{gp}</span>
+            <span class='stat-col'>{w}</span>
+            <span class='stat-col'>{d}</span>
+            <span class='stat-col'>{l}</span>
+            <span class='pts'>{pts}</span>
+        </div>"""
+    html += "</div>"
+    return html
+
+def render_ucl_standings(data):
+    try:
+        all_entries = []
+        for group in data.get("children", []):
+            for entry in group["standings"]["entries"]:
                 all_entries.append(entry)
         all_entries = sorted(
             all_entries,
@@ -560,7 +648,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .tag-nhl { background: #dbeafe; color: #1e40af; }
 .tag-mlb { background: #fee2e2; color: #991b1b; }
 .tag-pl { background: #dcfce7; color: #166534; }
+.tag-ucl { background: #ede9fe; color: #5b21b6; }
 .tag-cycling { background: #fef9c3; color: #854d0e; }
+.tag-nba { background: #fef9c3; color: #854d0e; }
+.tag-mls { background: #dcfce7; color: #166534; }
 .tag-cbc { background: #ede9fe; color: #5b21b6; }
 .tag-globe { background: #f3f4f6; color: #374151; }
 .tag-bbc { background: #fee2e2; color: #991b1b; }
@@ -580,19 +671,45 @@ def sports():
 
     weather = get_weather()
 
+    # Fetch all scores needed
     mlb_yesterday = get_scores("baseball", "mlb", yesterday)
     mlb_today = get_scores("baseball", "mlb", today)
     pl_yesterday = get_scores("soccer", "eng.1", yesterday)
     pl_today = get_scores("soccer", "eng.1", today)
     nhl_yesterday = get_scores("hockey", "nhl", yesterday)
     nhl_today = get_scores("hockey", "nhl", today)
+    ucl_yesterday = get_scores("soccer", "uefa.champions", yesterday)
+    ucl_today = get_scores("soccer", "uefa.champions", today)
+    nba_yesterday = get_scores("basketball", "nba", yesterday)
+    nba_today = get_scores("basketball", "nba", today)
+    mls_yesterday = get_scores("soccer", "usa.1", yesterday)
+    mls_today = get_scores("soccer", "usa.1", today)
 
+    # My Teams
+    teams_data = []
+    all_yesterday = mlb_yesterday + pl_yesterday + nhl_yesterday + ucl_yesterday + nba_yesterday + mls_yesterday
+    all_today = mlb_today + pl_today + nhl_today + ucl_today + nba_today + mls_today
+
+    for team in MY_TEAMS:
+        yesterday_games = find_team_games(all_yesterday, team["keywords"])
+        today_games = find_team_games(all_today, team["keywords"])
+        game = None
+        if today_games:
+            game = today_games[0]
+        elif yesterday_games:
+            game = yesterday_games[0]
+        teams_data.append({"name": team["name"], "game": game})
+
+    # Standings
     nhl_standings = get_standings("hockey", "nhl")
     mlb_standings = get_standings("baseball", "mlb")
     pl_standings = get_standings("soccer", "eng.1")
+    ucl_standings = get_standings("soccer", "uefa.champions")
 
+    # Stories
     mlb_stories = get_stories("https://www.sportsnet.ca/mlb/feed/")
     pl_stories = get_stories("https://www.theguardian.com/football/premierleague/rss")
+    ucl_stories = get_stories("https://www.theguardian.com/football/championsleague/rss")
     nhl_stories = get_stories("https://www.sportsnet.ca/hockey/nhl/feed/")
     cycling_stories = get_stories("https://www.cyclingnews.com/rss")
     cycling_calendar = get_cycling_calendar()
@@ -613,6 +730,9 @@ def sports():
 <div class='section-label'>Toronto Weather</div>
 {render_weather(weather)}
 <hr class='sport-divider'>
+<div class='section-label'>My Teams</div>
+{render_my_teams(teams_data)}
+<hr class='sport-divider'>
 <div class='section-label'>MLB · Scores</div>
 {render_scores(mlb_yesterday, mlb_today)}
 <div class='section-label'>MLB · Standings</div>
@@ -629,6 +749,14 @@ def sports():
 {render_stories(pl_stories, 'PL', 'tag-pl')}
 {athletic_link('https://www.nytimes.com/athletic/football/premier-league/', 'Premier League')}
 <hr class='sport-divider'>
+<div class='section-label'>Champions League · Scores</div>
+{render_scores(ucl_yesterday, ucl_today)}
+<div class='section-label'>Champions League · League Phase Standings</div>
+{render_ucl_standings(ucl_standings)}
+<div class='section-label'>Champions League · Headlines</div>
+{render_stories(ucl_stories, 'UCL', 'tag-ucl')}
+{athletic_link('https://www.nytimes.com/athletic/football/champions-league/', 'Champions League')}
+<hr class='sport-divider'>
 <div class='section-label'>NHL · Scores</div>
 {render_scores(nhl_yesterday, nhl_today)}
 <div class='section-label'>NHL · Standings</div>
@@ -636,6 +764,12 @@ def sports():
 <div class='section-label'>NHL · Headlines</div>
 {render_stories(nhl_stories, 'NHL', 'tag-nhl')}
 {athletic_link('https://theathletic.com/nhl/', 'NHL')}
+<hr class='sport-divider'>
+<div class='section-label'>Raptors · Scores</div>
+{render_scores(nba_yesterday, nba_today)}
+<hr class='sport-divider'>
+<div class='section-label'>Toronto FC · Scores</div>
+{render_scores(mls_yesterday, mls_today)}
 <hr class='sport-divider'>
 <div class='section-label'>Cycling · Upcoming Races</div>
 {render_cycling_calendar(cycling_calendar)}
