@@ -22,6 +22,21 @@ MLB_DIVISIONS = {
     "NL West": ["Diamondbacks", "Rockies", "Dodgers", "Padres", "Giants"],
 }
 
+FLAG_HTML = {
+    "AU": "&#x1F1E6;&#x1F1FA;",
+    "AE": "&#x1F1E6;&#x1F1EA;",
+    "BE": "&#x1F1E7;&#x1F1EA;",
+    "IT": "&#x1F1EE;&#x1F1F9;",
+    "FR": "&#x1F1EB;&#x1F1F7;",
+    "ES": "&#x1F1EA;&#x1F1F8;",
+    "NL": "&#x1F1F3;&#x1F1F1;",
+    "CH": "&#x1F1E8;&#x1F1ED;",
+    "DE": "&#x1F1E9;&#x1F1EA;",
+    "PL": "&#x1F1F5;&#x1F1F1;",
+    "CA": "&#x1F1E8;&#x1F1E6;",
+    "CN": "&#x1F1E8;&#x1F1F3;",
+}
+
 UCI_WORLD_TOUR_2026 = [
     ("Tour Down Under", "AU", "2026-01-20", "2026-01-25"),
     ("UAE Tour", "AE", "2026-02-22", "2026-02-28"),
@@ -91,13 +106,12 @@ def render_cycling_calendar(races):
         else:
             status_badge = ""
             row_class = "standing-row"
-        code = race["country"]
-        flag_chars = "".join(f"&#{ord(c) + 127397};" for c in code)
+        flag = FLAG_HTML.get(race["country"], race["country"])
         html += f"""
         <div class='{row_class}'>
             <span class='race-date'>{date_str}</span>
             <span class='team'>{race['name']} {status_badge}</span>
-            <span class='race-country'>{flag_chars}</span>
+            <span class='race-country'>{flag}</span>
         </div>"""
     html += "</div>"
     return html
@@ -528,7 +542,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .stat-col { width: 30px; text-align: center; font-size: 11px; color: #555; flex-shrink: 0; }
 .pts { width: 30px; text-align: center; font-weight: 500; font-size: 12px; flex-shrink: 0; }
 .race-date { font-size: 11px; color: #999; white-space: nowrap; min-width: 80px; }
-.race-country { font-size: 11px; color: #999; }
+.race-country { font-size: 16px; flex-shrink: 0; }
 .live-badge { background: #fee2e2; color: #991b1b; font-size: 9px; font-weight: 500; padding: 1px 6px; border-radius: 20px; margin-left: 6px; }
 .athletic-link { display: flex; align-items: center; gap: 8px; padding: 8px 0 2px; text-decoration: none; }
 .athletic-link span { font-size: 12px; color: #999; }
