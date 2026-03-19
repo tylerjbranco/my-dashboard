@@ -847,29 +847,9 @@ def manifest():
 @app.route("/debug")
 def debug():
     import traceback
-    eastern = pytz.timezone("America/Toronto")
-    today = datetime.now(eastern).date()
-    yesterday = today - timedelta(days=1)
     try:
-        all_yesterday = (get_scores("baseball", "mlb", yesterday) +
-                        get_scores("soccer", "eng.1", yesterday) +
-                        get_scores("hockey", "nhl", yesterday) +
-                        get_scores("soccer", "uefa.champions", yesterday) +
-                        get_scores("basketball", "nba", yesterday) +
-                        get_scores("soccer", "usa.1", yesterday))
-        all_today = (get_scores("baseball", "mlb", today) +
-                    get_scores("soccer", "eng.1", today) +
-                    get_scores("hockey", "nhl", today) +
-                    get_scores("soccer", "uefa.champions", today) +
-                    get_scores("basketball", "nba", today) +
-                    get_scores("soccer", "usa.1", today))
-        teams_data = []
-        for team in MY_TEAMS:
-            yesterday_games = find_team_games(all_yesterday, team["keywords"])
-            today_games = find_team_games(all_today, team["keywords"])
-            game = today_games[0] if today_games else (yesterday_games[0] if yesterday_games else None)
-            teams_data.append({"name": team["name"], "game": game})
-        return f"<pre>OK: {[(t['name'], t['game'] is not None) for t in teams_data]}</pre>"
+        result = sports()
+        return "OK - page rendered successfully"
     except Exception as e:
         return f"<pre>ERROR: {traceback.format_exc()}</pre>"
         
