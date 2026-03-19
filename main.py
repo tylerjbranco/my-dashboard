@@ -203,7 +203,6 @@ def get_stories(url, limit=5):
         for entry in feed.entries[:limit * 2]:
             title = entry.get("title", "No title")
             published = entry.get("published", "")
-
             link = entry.get("link", "")
             if not link or not link.startswith("http"):
                 for l in entry.get("links", []):
@@ -214,7 +213,6 @@ def get_stories(url, limit=5):
                 link = entry.get("id", "")
             if not link or not link.startswith("http"):
                 continue
-
             thumbnail = ""
             for l in entry.get("links", []):
                 if l.get("rel") == "enclosure" and "image" in l.get("type", ""):
@@ -225,7 +223,6 @@ def get_stories(url, limit=5):
                     if "image" in mc.get("type", "") or mc.get("medium") == "image":
                         thumbnail = mc.get("url", "")
                         break
-
             stories.append({
                 "title": title,
                 "link": link,
@@ -252,7 +249,6 @@ def render_game_card(game):
     state = game["status"]["type"]["state"]
     game_id = game["id"]
     uid = game.get("uid", "")
-
     if "s:1~" in uid:
         league_slug = "mlb"
     elif "s:70~" in uid:
@@ -261,9 +257,7 @@ def render_game_card(game):
         league_slug = "soccer"
     else:
         league_slug = "nhl"
-
     game_url = f"https://www.espn.com/{league_slug}/game/_/gameId/{game_id}"
-
     home_bold = ""
     away_bold = ""
     if state == "post":
@@ -271,7 +265,6 @@ def render_game_card(game):
             home_bold = "font-weight: 600;"
         elif int(away["score"]) > int(home["score"]):
             away_bold = "font-weight: 600;"
-
     return f"""
     <a href='{game_url}' target='_blank' class='score-card-link'>
         <div class='score-card'>
@@ -292,7 +285,7 @@ def render_game_card(game):
             <div class='score-status'>{status}</div>
         </div>
     </a>"""
-    
+
 def render_scores(yesterday_games, today_games):
     html = ""
     if yesterday_games:
@@ -319,14 +312,12 @@ def render_nhl_standings(data):
                 all_entries.append(entry)
     except:
         return "<p class='empty'>Standings unavailable</p>"
-
     team_lookup = {}
     for entry in all_entries:
         name = entry["team"]["shortDisplayName"]
         stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
         logo = entry["team"].get("logos", [{}])[0].get("href", "") if entry["team"].get("logos") else ""
         team_lookup[name] = {"stats": stats, "logo": logo}
-
     html = ""
     for division, teams in NHL_DIVISIONS.items():
         html += f"<div class='division-label'>{division}</div>"
@@ -364,14 +355,12 @@ def render_mlb_standings(data):
                 all_entries.append(entry)
     except:
         return "<p class='empty'>Standings unavailable</p>"
-
     team_lookup = {}
     for entry in all_entries:
         name = entry["team"]["shortDisplayName"]
         stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
         logo = entry["team"].get("logos", [{}])[0].get("href", "") if entry["team"].get("logos") else ""
         team_lookup[name] = {"stats": stats, "logo": logo}
-
     html = ""
     for division, teams in MLB_DIVISIONS.items():
         html += f"<div class='division-label'>{division}</div>"
@@ -412,7 +401,6 @@ def render_pl_standings(data):
         )
     except:
         return "<p class='empty'>Standings unavailable</p>"
-
     html = "<div class='standings'>"
     html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat-col'>GP</span><span class='stat-col'>W</span><span class='stat-col'>D</span><span class='stat-col'>L</span><span class='pts'>PTS</span></div>"
     for i, entry in enumerate(all_entries):
@@ -456,6 +444,29 @@ def render_stories(stories, tag, tag_class):
         </div>"""
     return html
 
+def render_news_section(sources):
+    html = ""
+    for source_name, tag_class, stories in sources:
+        if not stories:
+            continue
+        for entry in stories:
+            title = entry.get("title", "No title")
+            link = entry.get("link", "#")
+            published = entry.get("published", "")
+            thumbnail = entry.get("thumbnail", "")
+            thumb_html = f'<img class="news-thumb" src="{thumbnail}" alt="">' if thumbnail else "<div class='news-thumb-placeholder'></div>"
+            html += f"""
+            <div class='news-item'>
+                {thumb_html}
+                <div class='news-content'>
+                    <a href='{link}' target='_blank'>{title}</a>
+                    <div class='story-meta'><span class='tag {tag_class}'>{source_name}</span> · {published}</div>
+                </div>
+            </div>"""
+    if not html:
+        html = "<p class='empty'>No stories available</p>"
+    return html
+
 CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; max-width: 600px; margin: 0 auto; }
@@ -470,6 +481,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .scores-section-label { font-size: 11px; color: #999; margin: 8px 0 6px; font-style: italic; }
 .division-label { font-size: 11px; font-weight: 500; color: #555; margin: 10px 0 4px; padding-left: 2px; }
 .sport-divider { border: none; border-top: 2px solid #eee; margin: 20px 0; }
+.news-divider { border: none; border-top: 1px solid #eee; margin: 16px 0; }
 .weather-widget { background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
 .weather-current { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .weather-main { display: flex; align-items: center; gap: 8px; }
@@ -485,6 +497,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .forecast-temps { font-size: 12px; font-weight: 500; color: #111; }
 .forecast-precip { font-size: 10px; color: #999; margin-top: 2px; }
 .scores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 8px; }
+.score-card-link { text-decoration: none; color: inherit; display: block; }
 .score-card { background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 8px 10px; }
 .score-team { display: flex; align-items: center; gap: 6px; flex: 1; }
 .score-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin: 3px 0; }
@@ -506,18 +519,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .live-badge { background: #fee2e2; color: #991b1b; font-size: 9px; font-weight: 500; padding: 1px 6px; border-radius: 20px; margin-left: 6px; }
 .story-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
 .story-item:last-child { border-bottom: none; }
-.tag { font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; margin-top: 2px; }
+.news-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
+.news-item:last-child { border-bottom: none; }
+.news-thumb { width: 72px; height: 52px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.news-thumb-placeholder { width: 72px; height: 52px; background: #f0f0f0; border-radius: 6px; flex-shrink: 0; }
+.news-content { flex: 1; }
+.news-content a { font-size: 13px; color: #111; text-decoration: none; line-height: 1.4; display: block; margin-bottom: 4px; }
+.news-content a:hover { text-decoration: underline; }
+.tag { font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
 .tag-nhl { background: #dbeafe; color: #1e40af; }
 .tag-mlb { background: #fee2e2; color: #991b1b; }
 .tag-pl { background: #dcfce7; color: #166534; }
 .tag-cycling { background: #fef9c3; color: #854d0e; }
 .tag-cbc { background: #ede9fe; color: #5b21b6; }
 .tag-globe { background: #f3f4f6; color: #374151; }
+.tag-bbc { background: #fee2e2; color: #991b1b; }
+.tag-guardian { background: #dcfce7; color: #166534; }
 .story-item a { font-size: 13px; color: #111; text-decoration: none; line-height: 1.4; }
 .story-item a:hover { text-decoration: underline; }
 .story-meta { font-size: 10px; color: #999; margin-top: 2px; }
 .empty { font-size: 13px; color: #999; padding: 8px 0; }
-.score-card-link { text-decoration: none; color: inherit; display: block; }
 """
 
 @app.route("/")
@@ -587,10 +608,29 @@ def sports():
 
 @app.route("/news")
 def news():
-    cbc_stories = get_stories("https://www.cbc.ca/cmlink/rss-topstories", 8)
-    globe_stories = get_stories("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/", 8)
     eastern = pytz.timezone("America/Toronto")
     now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
+
+    cbc_toronto = get_stories("https://www.cbc.ca/cmlink/rss-canada-toronto", 6)
+    cbc_canada = get_stories("https://www.cbc.ca/cmlink/rss-topstories", 5)
+    globe_canada = get_stories("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/", 5)
+    bbc_world = get_stories("https://feeds.bbci.co.uk/news/world/rss.xml", 4)
+    guardian_world = get_stories("https://www.theguardian.com/world/rss", 4)
+    globe_world = get_stories("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/world/", 4)
+
+    local_html = render_news_section([
+        ("CBC Toronto", "tag-cbc", cbc_toronto),
+    ])
+    national_html = render_news_section([
+        ("CBC", "tag-cbc", cbc_canada),
+        ("Globe & Mail", "tag-globe", globe_canada),
+    ])
+    global_html = render_news_section([
+        ("BBC", "tag-bbc", bbc_world),
+        ("Guardian", "tag-guardian", guardian_world),
+        ("Globe & Mail", "tag-globe", globe_world),
+    ])
+
     return f"""<!DOCTYPE html>
 <html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
 <title>My Dashboard</title><style>{CSS}</style></head>
@@ -598,11 +638,15 @@ def news():
 <div class='header'><h1>My Dashboard</h1><div class='date'>{now}</div></div>
 <div class='nav'><a href='/'>Sports</a><a href='/news' class='active'>News</a></div>
 <div class='body'>
-<div class='section-label'>CBC</div>
-{render_stories(cbc_stories, 'CBC', 'tag-cbc')}
-<div class='section-label'>Globe and Mail</div>
-{render_stories(globe_stories, 'Globe', 'tag-globe')}
+<div class='section-label'>Local · Toronto</div>
+{local_html}
+<hr class='news-divider'>
+<div class='section-label'>National · Canada</div>
+{national_html}
+<hr class='news-divider'>
+<div class='section-label'>Global</div>
+{global_html}
 </div></body></html>"""
-    
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
