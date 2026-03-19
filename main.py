@@ -409,8 +409,10 @@ def render_stories(stories, tag, tag_class):
     html = ""
     for entry in stories:
         title = entry.get("title", "No title")
-        link = entry.get("link", "#")
+        link = entry.get("link", "")
         published = entry.get("published", "")
+        if not link or not link.startswith("http"):
+            continue
         html += f"""
         <div class='story-item'>
             <span class='tag {tag_class}'>{tag}</span>
@@ -419,6 +421,8 @@ def render_stories(stories, tag, tag_class):
                 <div class='story-meta'>{published}</div>
             </div>
         </div>"""
+    if not html:
+        return "<p class='empty'>No stories available</p>"
     return html
 
 CSS = """
