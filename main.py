@@ -600,7 +600,10 @@ def sports():
     now_str = now.strftime("%A, %B %d · %I:%M %p")
 
     return f"""<!DOCTYPE html>
-<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<html><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='mobile-web-app-capable' content='yes'>
+<meta name='apple-mobile-web-app-capable' content='yes'>
+<meta name='apple-mobile-web-app-status-bar-style' content='default'>
 <title>My Dashboard</title><style>{CSS}</style></head>
 <body>
 <div class='header'><h1>My Dashboard</h1><div class='date'>{now_str}</div></div>
@@ -666,7 +669,10 @@ def news():
     ])
 
     return f"""<!DOCTYPE html>
-<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<html><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='mobile-web-app-capable' content='yes'>
+<meta name='apple-mobile-web-app-capable' content='yes'>
+<meta name='apple-mobile-web-app-status-bar-style' content='default'>
 <title>My Dashboard</title><style>{CSS}</style></head>
 <body>
 <div class='header'><h1>My Dashboard</h1><div class='date'>{now}</div></div>
