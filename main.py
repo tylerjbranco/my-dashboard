@@ -239,6 +239,13 @@ def get_stories(url, limit=5):
     except:
         return []
 
+def athletic_link(url, label):
+    return f"""
+    <a href='{url}' target='_blank' class='athletic-link'>
+        <img src='https://theathletic.com/static-gcp/icons/apple-touch-icon.png' class='athletic-logo' alt='The Athletic'>
+        <span>More {label} coverage on The Athletic</span>
+    </a>"""
+
 def render_game_card(game):
     competition = game["competitions"][0]
     home = competition["competitors"][0]
@@ -521,12 +528,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .race-date { font-size: 11px; color: #999; white-space: nowrap; min-width: 80px; }
 .race-country { font-size: 11px; color: #999; }
 .live-badge { background: #fee2e2; color: #991b1b; font-size: 9px; font-weight: 500; padding: 1px 6px; border-radius: 20px; margin-left: 6px; }
+.athletic-link { display: flex; align-items: center; gap: 8px; padding: 8px 0 2px; text-decoration: none; }
+.athletic-link span { font-size: 12px; color: #999; }
+.athletic-link:hover span { color: #111; text-decoration: underline; }
+.athletic-logo { width: 20px; height: 20px; border-radius: 4px; }
 .story-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
 .story-item:last-child { border-bottom: none; }
 .news-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
 .news-item:last-child { border-bottom: none; }
 .news-thumb { width: 72px; height: 52px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
-.news-thumb-placeholder { width: 72px; height: 52px; background: #f0f0f0; border-radius: 6px; flex-shrink: 0; }
 .news-content { flex: 1; min-width: 0; }
 .news-content a { font-size: 13px; color: #111; text-decoration: none; line-height: 1.4; display: block; margin-bottom: 4px; }
 .news-content a:hover { text-decoration: underline; }
@@ -589,6 +599,7 @@ def sports():
 {render_mlb_standings(mlb_standings)}
 <div class='section-label'>MLB · Headlines</div>
 {render_stories(mlb_stories, 'MLB', 'tag-mlb')}
+{athletic_link('https://theathletic.com/mlb/', 'MLB')}
 <hr class='sport-divider'>
 <div class='section-label'>Premier League · Scores</div>
 {render_scores(pl_yesterday, pl_today)}
@@ -596,6 +607,7 @@ def sports():
 {render_pl_standings(pl_standings)}
 <div class='section-label'>Premier League · Headlines</div>
 {render_stories(pl_stories, 'PL', 'tag-pl')}
+{athletic_link('https://theathletic.com/soccer/premier-league/', 'Premier League')}
 <hr class='sport-divider'>
 <div class='section-label'>NHL · Scores</div>
 {render_scores(nhl_yesterday, nhl_today)}
@@ -603,11 +615,13 @@ def sports():
 {render_nhl_standings(nhl_standings)}
 <div class='section-label'>NHL · Headlines</div>
 {render_stories(nhl_stories, 'NHL', 'tag-nhl')}
+{athletic_link('https://theathletic.com/nhl/', 'NHL')}
 <hr class='sport-divider'>
 <div class='section-label'>Cycling · Upcoming Races</div>
 {render_cycling_calendar(cycling_calendar)}
 <div class='section-label'>Cycling · Headlines</div>
 {render_stories(cycling_stories, 'Cycling', 'tag-cycling')}
+{athletic_link('https://theathletic.com/cycling/', 'Cycling')}
 </div></body></html>"""
 
 @app.route("/news")
@@ -651,6 +665,6 @@ def news():
 <div class='section-label'>Global</div>
 {global_html}
 </div></body></html>"""
-    
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
