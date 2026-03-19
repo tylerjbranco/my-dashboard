@@ -6,6 +6,23 @@ import pytz
 
 app = Flask(__name__)
 
+COUNTRY_FLAGS = {
+    "AU": "🇦🇺",
+    "AE": "🇦🇪",
+    "BE": "🇧🇪",
+    "IT": "🇮🇹",
+    "FR": "🇫🇷",
+    "ES": "🇪🇸",
+    "NL": "🇳🇱",
+    "CH": "🇨🇭",
+    "DE": "🇩🇪",
+    "PL": "🇵🇱",
+    "CA": "🇨🇦",
+    "CN": "🇨🇳",
+    "GB": "🇬🇧",
+    "US": "🇺🇸",
+}
+
 UCI_WORLD_TOUR_2026 = [
     ("Tour Down Under", "AU", "2026-01-20", "2026-01-25"),
     ("UAE Tour", "AE", "2026-02-22", "2026-02-28"),
@@ -54,6 +71,7 @@ def get_cycling_calendar():
         races.append({
             "name": name,
             "country": country,
+            "flag": COUNTRY_FLAGS.get(country, "🏳️"),
             "start": start,
             "end": end,
             "status": status
@@ -79,7 +97,7 @@ def render_cycling_calendar(races):
         <div class='{row_class}'>
             <span class='race-date'>{date_str}</span>
             <span class='team'>{race['name']} {status_badge}</span>
-            <span class='race-country'>{race['country']}</span>
+            <span class='race-flag'>{race['flag']}</span>
         </div>"""
     html += "</div>"
     return html
@@ -324,7 +342,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .team { flex: 1; }
 .pts { font-weight: 500; font-size: 12px; }
 .race-date { font-size: 11px; color: #999; white-space: nowrap; min-width: 80px; }
-.race-country { font-size: 11px; color: #999; }
+.race-flag { font-size: 16px; }
 .live-badge { background: #fee2e2; color: #991b1b; font-size: 9px; font-weight: 500; padding: 1px 6px; border-radius: 20px; margin-left: 6px; }
 .story-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
 .story-item:last-child { border-bottom: none; }
