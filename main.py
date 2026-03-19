@@ -91,11 +91,13 @@ def render_cycling_calendar(races):
         else:
             status_badge = ""
             row_class = "standing-row"
+        code = race["country"]
+        flag_chars = "".join(f"&#{ord(c) + 127397};" for c in code)
         html += f"""
         <div class='{row_class}'>
             <span class='race-date'>{date_str}</span>
             <span class='team'>{race['name']} {status_badge}</span>
-            <span class='race-country'>{race['country']}</span>
+            <span class='race-country'>{flag_chars}</span>
         </div>"""
     html += "</div>"
     return html
