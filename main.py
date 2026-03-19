@@ -45,6 +45,22 @@ MY_TEAMS = [
     {"name": "Toronto FC", "keywords": ["Toronto FC"]},
 ]
 
+YOUTUBE_CHANNELS = [
+    ("Abroad in Japan", "UCHL9bfHTxCMi-7vfxQ-AYtg"),
+    ("Chris Remo", "UCAWnFCJGAP7YPti-gQSe1ng"),
+    ("GCN Racing", "UCu7phdCr-raU7OaJfEpHZww"),
+    ("Global Cycling Network", "UCuTaETsuCOkJ0H_GAztWt0Q"),
+    ("Foolish Bailey", "UCGob7q-tONG83_39Rj1M8Cw"),
+    ("Foolish Baseball", "UCbW12JIVAdi5NugdakbU33A"),
+]
+
+PODCAST_FEEDS = [
+    ("At The Letters", "https://feeds.simplecast.com/R14Ca9Ii"),
+    ("Talkin' Baseball", "https://feeds.simplecast.com/06DZNq60"),
+    ("Wake N Jake", "https://feeds.simplecast.com/0IMFN2cF"),
+    ("Baseball Today", "https://feeds.simplecast.com/9pM3N4cY"),
+]
+
 UCI_WORLD_TOUR_2026 = [
     ("Tour Down Under", "AU", "2026-01-20", "2026-01-25"),
     ("UAE Tour", "AE", "2026-02-22", "2026-02-28"),
@@ -280,6 +296,66 @@ def get_stories(url, limit=5):
         return stories
     except:
         return []
+
+def get_youtube_videos(channel_id, limit=2):
+    url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        feed = feedparser.parse(url, request_headers=headers)
+        videos = []
+        for entry in feed.entries[:limit]:
+            title = entry.get("title", "No title")
+            link = entry.get("link", "#")
+            published = entry.get("published", "")
+            thumbnail = ""
+            for mc in entry.get("media_content", []):
+                if mc.get("url"):
+                    thumbnail = mc.get("url", "")
+                    break
+            if not thumbnail:
+                thumbs = entry.get("media_thumbnail", [])
+                if thumbs:
+                    thumbnail = thumbs[0].get("url", "")
+            videos.append({
+                "title": title,
+                "link": link,
+                "published": published,
+                "thumbnail": thumbnail
+            })
+        return videos
+    except:
+        return []
+
+def get_podcast_episodes(url, limit=2):
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        feed = feedparser.parse(url, request_headers=headers)
+        episodes = []
+        for entry in feed.entries[:limit]:
+            title = entry.get("title", "No title")
+            link = entry.get("link", "")
+            if not link or not link.startswith("http"):
+                link = entry.get("id", "#")
+            published = entry.get("published", "")
+            duration = ""
+            if hasattr(entry, "itunes_duration"):
+                duration = entry.itunes_duration
+            thumbnail = ""
+            thumbs = entry.get("media_thumbnail", [])
+            if thumbs:
+                thumbnail = thumbs[0].get("url", "")
+            if not thumbnail and feed.feed.get("image"):
+                thumbnail = feed.feed.image.get("href", "")
+            episodes.append({
+                "title": title,
+                "link": link,
+                "published": published,
+                "duration": duration,
+                "thumbnail": thumbnail
+            })
+        return episodes, feed.feed.get("title", "")
+    except:
+        return [], ""
 
 def athletic_link(url, label):
     return f"""
@@ -601,6 +677,48 @@ def render_news_section(sources):
         html = "<p class='empty'>No stories available</p>"
     return html
 
+def render_videos(channels_data):
+    html = ""
+    for channel_name, videos in channels_data:
+        if not videos:
+            continue
+        html += f"<div class='division-label'>{channel_name}</div>"
+        for video in videos:
+            thumbnail = video.get("thumbnail", "")
+            thumb_html = f'<img class="news-thumb" src="{thumbnail}" alt="">' if thumbnail else ""
+            html += f"""
+            <div class='news-item'>
+                {thumb_html}
+                <div class='news-content'>
+                    <a href='{video["link"]}' target='_blank'>{video["title"]}</a>
+                    <div class='story-meta'>{video["published"]}</div>
+                </div>
+            </div>"""
+    if not html:
+        html = "<p class='empty'>No videos available</p>"
+    return html
+
+def render_podcasts(podcasts_data):
+    html = ""
+    for podcast_name, episodes, artwork in podcasts_data:
+        if not episodes:
+            continue
+        html += f"<div class='division-label'>{podcast_name}</div>"
+        for episode in episodes:
+            thumb_html = f'<img class="news-thumb" src="{artwork}" alt="">' if artwork else ""
+            duration = f" · {episode['duration']}" if episode.get("duration") else ""
+            html += f"""
+            <div class='news-item'>
+                {thumb_html}
+                <div class='news-content'>
+                    <a href='{episode["link"]}' target='_blank'>{episode["title"]}</a>
+                    <div class='story-meta'>{episode["published"]}{duration}</div>
+                </div>
+            </div>"""
+    if not html:
+        html = "<p class='empty'>No episodes available</p>"
+    return html
+
 CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; max-width: 600px; margin: 0 auto; }
@@ -688,6 +806,10 @@ HEAD = """<meta charset='utf-8'><meta name='viewport' content='width=device-widt
 <link href='https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap' rel='stylesheet'>
 <title>Tyler's Briefing</title>"""
 
+NAV_SPORTS = "<div class='nav'><a href='/' class='active'>Sports</a><a href='/news'>News</a><a href='/media'>Media</a></div>"
+NAV_NEWS = "<div class='nav'><a href='/'>Sports</a><a href='/news' class='active'>News</a><a href='/media'>Media</a></div>"
+NAV_MEDIA = "<div class='nav'><a href='/'>Sports</a><a href='/news'>News</a><a href='/media' class='active'>Media</a></div>"
+
 @app.route("/")
 def sports():
     eastern = pytz.timezone("America/Toronto")
@@ -741,7 +863,7 @@ def sports():
 <html><head>{HEAD}<style>{CSS}</style></head>
 <body>
 <div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now_str}</div></div>
-<div class='nav'><a href='/' class='active'>Sports</a><a href='/news'>News</a></div>
+{NAV_SPORTS}
 <div class='body'>
 <div class='section-label'>Toronto Weather</div>
 {render_weather(weather)}
@@ -815,7 +937,7 @@ def news():
 <html><head>{HEAD}<style>{CSS}</style></head>
 <body>
 <div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now}</div></div>
-<div class='nav'><a href='/'>Sports</a><a href='/news' class='active'>News</a></div>
+{NAV_NEWS}
 <div class='body'>
 <div class='section-label'>Local · Toronto</div>
 {local_html}
@@ -825,6 +947,37 @@ def news():
 <hr class='news-divider'>
 <div class='section-label'>Global</div>
 {global_html}
+</div></body></html>"""
+
+@app.route("/media")
+def media():
+    eastern = pytz.timezone("America/Toronto")
+    now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
+
+    channels_data = []
+    for channel_name, channel_id in YOUTUBE_CHANNELS:
+        videos = get_youtube_videos(channel_id, limit=2)
+        channels_data.append((channel_name, videos))
+
+    podcasts_data = []
+    for podcast_name, feed_url in PODCAST_FEEDS:
+        episodes, feed_title = get_podcast_episodes(feed_url, limit=2)
+        artwork = ""
+        if episodes and episodes[0].get("thumbnail"):
+            artwork = episodes[0]["thumbnail"]
+        podcasts_data.append((podcast_name, episodes, artwork))
+
+    return f"""<!DOCTYPE html>
+<html><head>{HEAD}<style>{CSS}</style></head>
+<body>
+<div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now}</div></div>
+{NAV_MEDIA}
+<div class='body'>
+<div class='section-label'>Videos</div>
+{render_videos(channels_data)}
+<hr class='news-divider'>
+<div class='section-label'>Podcasts</div>
+{render_podcasts(podcasts_data)}
 </div></body></html>"""
 
 @app.route("/manifest.json")
