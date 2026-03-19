@@ -54,10 +54,10 @@ YOUTUBE_CHANNELS = [
 ]
 
 PODCAST_FEEDS = [
-    ("At The Letters", "https://feeds.simplecast.com/R14Ca9Ii"),
-    ("Talkin' Baseball", "https://feeds.simplecast.com/06DZNq60"),
-    ("Wake N Jake", "https://feeds.simplecast.com/0IMFN2cF"),
-    ("Baseball Today", "https://feeds.simplecast.com/9pM3N4cY"),
+    ("At The Letters", "https://feeds.simplecast.com/R14Ca9Ii", "https://open.spotify.com/show/4qDVNDRRFU3voSTRDZGSdU"),
+    ("Talkin' Baseball", "https://feeds.simplecast.com/06DZNq60", "https://open.spotify.com/show/09USaYF2LTQpNwBXnFGbAT"),
+    ("Wake N Jake", "https://feeds.simplecast.com/0IMFN2cF", "https://open.spotify.com/show/5NVyHnDVsk3TEXjnRNI2vj"),
+    ("Baseball Today", "https://feeds.simplecast.com/9pM3N4cY", "https://open.spotify.com/show/3qg6lL01V36LLogc6f6d6b"),
 ]
 
 UCI_WORLD_TOUR_2026 = [
@@ -696,10 +696,10 @@ def render_videos(channels_data):
 
 def render_podcasts(podcasts_data):
     html = ""
-    for podcast_name, episodes, artwork in podcasts_data:
+    for podcast_name, episodes, artwork, spotify_url in podcasts_data:
         if not episodes:
             continue
-        html += f"<div class='division-label'>{podcast_name}</div>"
+        html += f"<div class='division-label'><a href='{spotify_url}' target='_blank' style='color:#555; text-decoration:none;'>{podcast_name} ↗</a></div>"
         for episode in episodes:
             thumb_html = f'<img class="news-thumb" src="{artwork}" alt="">' if artwork else ""
             duration = f" · {episode['duration']}" if episode.get("duration") else ""
@@ -707,7 +707,7 @@ def render_podcasts(podcasts_data):
             <div class='news-item'>
                 {thumb_html}
                 <div class='news-content'>
-                    <a href='{episode["link"]}' target='_blank'>{episode["title"]}</a>
+                    <a href='{spotify_url}' target='_blank'>{episode["title"]}</a>
                     <div class='story-meta'>{episode["published"]}{duration}</div>
                 </div>
             </div>"""
@@ -956,12 +956,20 @@ def media():
         channels_data.append((channel_name, videos))
 
     podcasts_data = []
-    for podcast_name, feed_url in PODCAST_FEEDS:
+    for podcast_name, feed_url, spotify_url in PODCAST_FEEDS:
         episodes, feed_title = get_podcast_episodes(feed_url, limit=2)
         artwork = ""
         if episodes and episodes[0].get("thumbnail"):
             artwork = episodes[0]["thumbnail"]
-        podcasts_data.append((podcast_name, episodes, artwork))
+        if not artwork:
+            try:
+                headers = {"User-Agent": "Mozilla/5.0"}
+                feed = feedparser.parse(feed_url, request_headers=headers)
+                if feed.feed.get("image"):
+                    artwork = feed.feed.image.get("href", "")
+            except:
+                pass
+        podcasts_data.append((podcast_name, episodes, artwork, spotify_url))
 
     return f"""<!DOCTYPE html>
 <html><head>{HEAD}<style>{CSS}</style></head>
@@ -987,4 +995,4 @@ def manifest():
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0, port=8080)
