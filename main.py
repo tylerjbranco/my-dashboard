@@ -573,5 +573,17 @@ def news():
 {render_stories(globe_stories, 'Globe', 'tag-globe')}
 </div></body></html>"""
 
+@app.route("/debug")
+def debug():
+    feed = feedparser.parse("https://www.sportsnet.ca/hockey/nhl/feed/", 
+        request_headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"})
+    html = "<pre>"
+    for entry in feed.entries[:3]:
+        html += f"TITLE: {entry.get('title', 'none')}\n"
+        html += f"LINK: {entry.get('link', 'none')}\n"
+        html += f"KEYS: {list(entry.keys())}\n\n"
+    html += "</pre>"
+    return html
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
