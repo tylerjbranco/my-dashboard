@@ -38,10 +38,10 @@ FLAG_HTML = {
 }
 
 MY_TEAMS = [
-    {"name": "Maple Leafs", "keywords": ["Toronto Maple Leafs"]},
-    {"name": "Blue Jays", "keywords": ["Toronto Blue Jays"]},
-    {"name": "Man United", "keywords": ["Manchester United"]},
-    {"name": "Raptors", "keywords": ["Toronto Raptors"]},
+    {"name": "Toronto Maple Leafs", "keywords": ["Toronto Maple Leafs"]},
+    {"name": "Toronto Blue Jays", "keywords": ["Toronto Blue Jays"]},
+    {"name": "Manchester United", "keywords": ["Manchester United"]},
+    {"name": "Toronto Raptors", "keywords": ["Toronto Raptors"]},
     {"name": "Toronto FC", "keywords": ["Toronto FC"]},
 ]
 
