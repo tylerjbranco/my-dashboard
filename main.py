@@ -47,7 +47,6 @@ MY_TEAMS = [
 
 YOUTUBE_CHANNELS = [
     ("Abroad in Japan", "UCHL9bfHTxCMi-7vfxQ-AYtg"),
-    ("Chris Remo", "UCAWnFCJGAP7YPti-gQSe1ng"),
     ("GCN Racing", "UCu7phdCr-raU7OaJfEpHZww"),
     ("Global Cycling Network", "UCuTaETsuCOkJ0H_GAztWt0Q"),
     ("Foolish Bailey", "UCGob7q-tONG83_39Rj1M8Cw"),
@@ -307,15 +306,8 @@ def get_youtube_videos(channel_id, limit=2):
             title = entry.get("title", "No title")
             link = entry.get("link", "#")
             published = entry.get("published", "")
-            thumbnail = ""
-            for mc in entry.get("media_content", []):
-                if mc.get("url"):
-                    thumbnail = mc.get("url", "")
-                    break
-            if not thumbnail:
-                thumbs = entry.get("media_thumbnail", [])
-                if thumbs:
-                    thumbnail = thumbs[0].get("url", "")
+            video_id = entry.get("yt_videoid", "")
+            thumbnail = f"https://i.ytimg.com/vi/{video_id}/mqdefault.jpg" if video_id else ""
             videos.append({
                 "title": title,
                 "link": link,
