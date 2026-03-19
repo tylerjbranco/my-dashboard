@@ -242,7 +242,7 @@ def get_stories(url, limit=5):
 def athletic_link(url, label):
     return f"""
     <a href='{url}' target='_blank' class='athletic-link'>
-        <img src='https://theathletic.com/static-gcp/icons/apple-touch-icon.png' class='athletic-logo' alt='The Athletic'>
+        <span class='athletic-badge'>A</span>
         <span>More {label} coverage on The Athletic</span>
     </a>"""
 
@@ -531,7 +531,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .athletic-link { display: flex; align-items: center; gap: 8px; padding: 8px 0 2px; text-decoration: none; }
 .athletic-link span { font-size: 12px; color: #999; }
 .athletic-link:hover span { color: #111; text-decoration: underline; }
-.athletic-logo { width: 20px; height: 20px; border-radius: 4px; }
+.athletic-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background: #111; color: white; font-size: 11px; font-weight: 600; flex-shrink: 0; }
 .story-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
 .story-item:last-child { border-bottom: none; }
 .news-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; align-items: flex-start; }
@@ -607,7 +607,7 @@ def sports():
 {render_pl_standings(pl_standings)}
 <div class='section-label'>Premier League · Headlines</div>
 {render_stories(pl_stories, 'PL', 'tag-pl')}
-{athletic_link('https://theathletic.com/soccer/premier-league/', 'Premier League')}
+{athletic_link('https://www.nytimes.com/athletic/football/premier-league/', 'Premier League')}
 <hr class='sport-divider'>
 <div class='section-label'>NHL · Scores</div>
 {render_scores(nhl_yesterday, nhl_today)}
