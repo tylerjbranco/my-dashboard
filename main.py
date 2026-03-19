@@ -984,7 +984,6 @@ def media():
 def manifest():
     return jsonify({
         "name": "Tyler's Briefing",
-        "short_name": "Briefing",
         "start_url": "/",
         "display": "standalone",
         "background_color": "#f5f5f5",
