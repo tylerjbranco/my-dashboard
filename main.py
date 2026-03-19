@@ -652,7 +652,7 @@ def news():
 def debug():
     html = "<pre>"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-    feed = feedparser.parse("https://feeds.bbci.co.uk/news/world/rss.xml", request_headers=headers)
+    feed = feedparser.parse("https://www.theguardian.com/world/rss", request_headers=headers)
     entry = feed.entries[1] if len(feed.entries) > 1 else {}
     html += f"LINKS: {entry.get('links', 'none')}\n"
     html += f"MEDIA_CONTENT: {entry.get('media_content', 'none')}\n"
