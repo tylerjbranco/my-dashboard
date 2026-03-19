@@ -458,7 +458,7 @@ def render_news_section(sources):
             link = entry.get("link", "#")
             published = entry.get("published", "")
             thumbnail = entry.get("thumbnail", "")
-            thumb_html = f'<img class="news-thumb" src="{thumbnail}" alt="">' if thumbnail else "<div class='news-thumb-placeholder'></div>"
+            thumb_html = f'<img class="news-thumb" src="{thumbnail}" alt="">' if thumbnail else ""
             html += f"""
             <div class='news-item'>
                 {thumb_html}
@@ -527,7 +527,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .news-item:last-child { border-bottom: none; }
 .news-thumb { width: 72px; height: 52px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
 .news-thumb-placeholder { width: 72px; height: 52px; background: #f0f0f0; border-radius: 6px; flex-shrink: 0; }
-.news-content { flex: 1; }
+.news-content { flex: 1; min-width: 0; }
 .news-content a { font-size: 13px; color: #111; text-decoration: none; line-height: 1.4; display: block; margin-bottom: 4px; }
 .news-content a:hover { text-decoration: underline; }
 .tag { font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
