@@ -199,7 +199,42 @@ def get_stories(url, limit=5):
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
         feed = feedparser.parse(url, request_headers=headers)
-        return feed.entries[:limit]
+        stories = []
+        for entry in feed.entries[:limit * 2]:
+            title = entry.get("title", "No title")
+            published = entry.get("published", "")
+
+            link = entry.get("link", "")
+            if not link or not link.startswith("http"):
+                for l in entry.get("links", []):
+                    if l.get("rel") == "alternate" and l.get("type") == "text/html":
+                        link = l.get("href", "")
+                        break
+            if not link or not link.startswith("http"):
+                link = entry.get("id", "")
+            if not link or not link.startswith("http"):
+                continue
+
+            thumbnail = ""
+            for l in entry.get("links", []):
+                if l.get("rel") == "enclosure" and "image" in l.get("type", ""):
+                    thumbnail = l.get("href", "")
+                    break
+            if not thumbnail:
+                for mc in entry.get("media_content", []):
+                    if "image" in mc.get("type", "") or mc.get("medium") == "image":
+                        thumbnail = mc.get("url", "")
+                        break
+
+            stories.append({
+                "title": title,
+                "link": link,
+                "published": published,
+                "thumbnail": thumbnail
+            })
+            if len(stories) >= limit:
+                break
+        return stories
     except:
         return []
 
@@ -409,10 +444,8 @@ def render_stories(stories, tag, tag_class):
     html = ""
     for entry in stories:
         title = entry.get("title", "No title")
-        link = entry.get("link", "")
+        link = entry.get("link", "#")
         published = entry.get("published", "")
-        if not link or not link.startswith("http"):
-            continue
         html += f"""
         <div class='story-item'>
             <span class='tag {tag_class}'>{tag}</span>
@@ -421,8 +454,6 @@ def render_stories(stories, tag, tag_class):
                 <div class='story-meta'>{published}</div>
             </div>
         </div>"""
-    if not html:
-        return "<p class='empty'>No stories available</p>"
     return html
 
 CSS = """
@@ -572,19 +603,6 @@ def news():
 <div class='section-label'>Globe and Mail</div>
 {render_stories(globe_stories, 'Globe', 'tag-globe')}
 </div></body></html>"""
-
-@app.route("/debug")
-def debug():
-    feed = feedparser.parse("https://www.sportsnet.ca/hockey/nhl/feed/", 
-        request_headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"})
-    html = "<pre>"
-    for entry in feed.entries[1:3]:
-        html += f"TITLE: {entry.get('title', 'none')}\n"
-        html += f"LINK: {entry.get('link', 'none')}\n"
-        html += f"ID: {entry.get('id', 'none')}\n"
-        html += f"LINKS: {entry.get('links', 'none')}\n\n"
-    html += "</pre>"
-    return html
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
