@@ -350,11 +350,11 @@ def render_nhl_standings(data):
         html += f"<div class='division-label'>{division}</div>"
         html += "<div class='standings'>"
         html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat-col'>GP</span><span class='stat-col'>W</span><span class='stat-col'>L</span><span class='stat-col'>OTL</span><span class='pts'>PTS</span></div>"
-       division_teams = [(team, team_lookup[team]) for team in teams if team in team_lookup]
-division_teams.sort(key=lambda x: int(x[1]["stats"].get("points", "0") or "0"), reverse=True)
-for i, (team, data) in enumerate(division_teams):
-    s = data["stats"]
-    logo = data["logo"]
+        division_teams = [(team, team_lookup[team]) for team in teams if team in team_lookup]
+        division_teams.sort(key=lambda x: int(x[1]["stats"].get("points", "0") or "0"), reverse=True)
+        for i, (team, data) in enumerate(division_teams):
+            s = data["stats"]
+            logo = data["logo"]
             gp = s.get("gamesPlayed", "-")
             w = s.get("wins", "-")
             l = s.get("losses", "-")
@@ -600,7 +600,7 @@ def sports():
     now_str = now.strftime("%A, %B %d · %I:%M %p")
 
     return f"""<!DOCTYPE html>
-<html><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
 <meta name='mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-status-bar-style' content='default'>
@@ -670,7 +670,7 @@ def news():
     ])
 
     return f"""<!DOCTYPE html>
-<html><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
 <meta name='mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-status-bar-style' content='default'>
