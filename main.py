@@ -679,6 +679,15 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .empty { font-size: 13px; color: #999; padding: 8px 0; }
 """
 
+HEAD = """<meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='mobile-web-app-capable' content='yes'>
+<meta name='apple-mobile-web-app-capable' content='yes'>
+<meta name='apple-mobile-web-app-status-bar-style' content='default'>
+<link rel='manifest' href='/manifest.json'>
+<link rel='icon' href='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📰</text></svg>'>
+<link href='https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap' rel='stylesheet'>
+<title>Tyler's Briefing</title>"""
+
 @app.route("/")
 def sports():
     eastern = pytz.timezone("America/Toronto")
@@ -729,15 +738,9 @@ def sports():
     now_str = now.strftime("%A, %B %d · %I:%M %p")
 
     return f"""<!DOCTYPE html>
-<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
-<meta name='mobile-web-app-capable' content='yes'>
-<meta name='apple-mobile-web-app-capable' content='yes'>
-<meta name='apple-mobile-web-app-status-bar-style' content='default'>
-<link rel='manifest' href='/manifest.json'>
-<link href='https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap' rel='stylesheet'>
-<title>My Dashboard</title><style>{CSS}</style>
+<html><head>{HEAD}<style>{CSS}</style></head>
 <body>
-<div class='header'><h1>My Dashboard</h1><div class='date'>{now_str}</div></div>
+<div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now_str}</div></div>
 <div class='nav'><a href='/' class='active'>Sports</a><a href='/news'>News</a></div>
 <div class='body'>
 <div class='section-label'>Toronto Weather</div>
@@ -809,15 +812,9 @@ def news():
     ])
 
     return f"""<!DOCTYPE html>
-<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
-<meta name='mobile-web-app-capable' content='yes'>
-<meta name='apple-mobile-web-app-capable' content='yes'>
-<meta name='apple-mobile-web-app-status-bar-style' content='default'>
-<link rel='manifest' href='/manifest.json'>
-<link href='https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap' rel='stylesheet'>
-<title>My Dashboard</title><style>{CSS}</style>
+<html><head>{HEAD}<style>{CSS}</style></head>
 <body>
-<div class='header'><h1>My Dashboard</h1><div class='date'>{now}</div></div>
+<div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now}</div></div>
 <div class='nav'><a href='/'>Sports</a><a href='/news' class='active'>News</a></div>
 <div class='body'>
 <div class='section-label'>Local · Toronto</div>
@@ -833,8 +830,8 @@ def news():
 @app.route("/manifest.json")
 def manifest():
     return jsonify({
-        "name": "My Dashboard",
-        "short_name": "Dashboard",
+        "name": "Tyler's Briefing",
+        "short_name": "Briefing",
         "start_url": "/",
         "display": "standalone",
         "background_color": "#f5f5f5",
