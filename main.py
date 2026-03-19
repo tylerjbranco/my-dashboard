@@ -6,22 +6,8 @@ import pytz
 
 app = Flask(__name__)
 
-COUNTRY_FLAGS = {
-    "AU": "🇦🇺",
-    "AE": "🇦🇪",
-    "BE": "🇧🇪",
-    "IT": "🇮🇹",
-    "FR": "🇫🇷",
-    "ES": "🇪🇸",
-    "NL": "🇳🇱",
-    "CH": "🇨🇭",
-    "DE": "🇩🇪",
-    "PL": "🇵🇱",
-    "CA": "🇨🇦",
-    "CN": "🇨🇳",
-    "GB": "🇬🇧",
-    "US": "🇺🇸",
-}
+def country_flag(code):
+    return chr(ord(code[0]) + 127397) + chr(ord(code[1]) + 127397)
 
 UCI_WORLD_TOUR_2026 = [
     ("Tour Down Under", "AU", "2026-01-20", "2026-01-25"),
@@ -71,7 +57,7 @@ def get_cycling_calendar():
         races.append({
             "name": name,
             "country": country,
-            "flag": COUNTRY_FLAGS.get(country, "🏳️"),
+            "flag": country_flag(country),
             "start": start,
             "end": end,
             "status": status
