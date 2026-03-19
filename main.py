@@ -215,6 +215,17 @@ def render_game_card(game):
     away_logo = away["team"].get("logo", "")
     status = game["status"]["type"]["shortDetail"]
     state = game["status"]["type"]["state"]
+    sport_slug = competition.get("type", {}).get("abbreviation", "")
+    game_id = game["id"]
+
+    league_slug = "nhl"
+    if "baseball" in game.get("uid", ""):
+        league_slug = "mlb"
+    elif "soccer" in game.get("uid", ""):
+        league_slug = "soccer"
+
+    game_url = f"https://www.espn.com/{league_slug}/game/_/gameId/{game_id}"
+
     home_bold = ""
     away_bold = ""
     if state == "post":
@@ -222,24 +233,27 @@ def render_game_card(game):
             home_bold = "font-weight: 600;"
         elif int(away["score"]) > int(home["score"]):
             away_bold = "font-weight: 600;"
+
     return f"""
-    <div class='score-card'>
-        <div class='score-row'>
-            <div class='score-team'>
-                {'<img class="team-logo" src="' + away_logo + '" alt="">' if away_logo else ''}
-                <span style='{away_bold}'>{away_team}</span>
+    <a href='{game_url}' target='_blank' class='score-card-link'>
+        <div class='score-card'>
+            <div class='score-row'>
+                <div class='score-team'>
+                    {'<img class="team-logo" src="' + away_logo + '" alt="">' if away_logo else ''}
+                    <span style='{away_bold}'>{away_team}</span>
+                </div>
+                <span class='score-num' style='{away_bold}'>{away_score}</span>
             </div>
-            <span class='score-num' style='{away_bold}'>{away_score}</span>
-        </div>
-        <div class='score-row'>
-            <div class='score-team'>
-                {'<img class="team-logo" src="' + home_logo + '" alt="">' if home_logo else ''}
-                <span style='{home_bold}'>{home_team}</span>
+            <div class='score-row'>
+                <div class='score-team'>
+                    {'<img class="team-logo" src="' + home_logo + '" alt="">' if home_logo else ''}
+                    <span style='{home_bold}'>{home_team}</span>
+                </div>
+                <span class='score-num' style='{home_bold}'>{home_score}</span>
             </div>
-            <span class='score-num' style='{home_bold}'>{home_score}</span>
+            <div class='score-status'>{status}</div>
         </div>
-        <div class='score-status'>{status}</div>
-    </div>"""
+    </a>"""
 
 def render_scores(yesterday_games, today_games):
     html = ""
@@ -465,6 +479,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .story-item a:hover { text-decoration: underline; }
 .story-meta { font-size: 10px; color: #999; margin-top: 2px; }
 .empty { font-size: 13px; color: #999; padding: 8px 0; }
+.score-card-link { text-decoration: none; color: inherit; display: block; }
 """
 
 @app.route("/")
