@@ -215,14 +215,17 @@ def render_game_card(game):
     away_logo = away["team"].get("logo", "")
     status = game["status"]["type"]["shortDetail"]
     state = game["status"]["type"]["state"]
-    sport_slug = competition.get("type", {}).get("abbreviation", "")
     game_id = game["id"]
+    uid = game.get("uid", "")
 
-    league_slug = "nhl"
-    if "baseball" in game.get("uid", ""):
+    if "s:1~" in uid:
         league_slug = "mlb"
-    elif "soccer" in game.get("uid", ""):
+    elif "s:70~" in uid:
+        league_slug = "nhl"
+    elif "s:600~" in uid or "soccer" in uid:
         league_slug = "soccer"
+    else:
+        league_slug = "nhl"
 
     game_url = f"https://www.espn.com/{league_slug}/game/_/gameId/{game_id}"
 
@@ -254,7 +257,7 @@ def render_game_card(game):
             <div class='score-status'>{status}</div>
         </div>
     </a>"""
-
+    
 def render_scores(yesterday_games, today_games):
     html = ""
     if yesterday_games:
