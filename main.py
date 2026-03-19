@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 import feedparser
 import requests
 from datetime import datetime, date, timedelta
@@ -604,6 +604,7 @@ def sports():
 <meta name='mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-status-bar-style' content='default'>
+<link rel='manifest' href='/manifest.json'>
 <title>My Dashboard</title><style>{CSS}</style></head>
 <body>
 <div class='header'><h1>My Dashboard</h1><div class='date'>{now_str}</div></div>
@@ -673,6 +674,7 @@ def news():
 <meta name='mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-status-bar-style' content='default'>
+<link rel='manifest' href='/manifest.json'>
 <title>My Dashboard</title><style>{CSS}</style></head>
 <body>
 <div class='header'><h1>My Dashboard</h1><div class='date'>{now}</div></div>
@@ -687,6 +689,17 @@ def news():
 <div class='section-label'>Global</div>
 {global_html}
 </div></body></html>"""
+
+@app.route("/manifest.json")
+def manifest():
+    return jsonify({
+        "name": "My Dashboard",
+        "short_name": "Dashboard",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#f5f5f5",
+        "theme_color": "#ffffff"
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
