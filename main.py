@@ -38,11 +38,11 @@ FLAG_HTML = {
 }
 
 MY_TEAMS = [
-    {"name": "Maple Leafs", "sport": "hockey", "league": "nhl", "keywords": ["Toronto Maple Leafs"]},
-    {"name": "Blue Jays", "sport": "baseball", "league": "mlb", "keywords": ["Toronto Blue Jays"]},
-    {"name": "Man United", "sport": "soccer", "league": "eng.1", "keywords": ["Manchester United"]},
-    {"name": "Raptors", "sport": "basketball", "league": "nba", "keywords": ["Toronto Raptors"]},
-    {"name": "Toronto FC", "sport": "soccer", "league": "usa.1", "keywords": ["Toronto FC"]},
+    {"name": "Maple Leafs", "keywords": ["Toronto Maple Leafs"]},
+    {"name": "Blue Jays", "keywords": ["Toronto Blue Jays"]},
+    {"name": "Man United", "keywords": ["Manchester United"]},
+    {"name": "Raptors", "keywords": ["Toronto Raptors"]},
+    {"name": "Toronto FC", "keywords": ["Toronto FC"]},
 ]
 
 UCI_WORLD_TOUR_2026 = [
@@ -363,23 +363,41 @@ def render_scores(yesterday_games, today_games):
     return html
 
 def render_my_teams(teams_data):
-    if not teams_data:
-        return "<p class='empty'>No recent games found</p>"
-    html = "<div class='scores-grid'>"
+    has_any = any(t["yesterday_game"] or t["today_game"] for t in teams_data)
+    if not has_any:
+        return "<p class='empty'>No recent or upcoming games</p>"
+    html = ""
     for team in teams_data:
-        if team.get("game"):
-            html += render_game_card(team["game"])
+        if team["yesterday_game"] or team["today_game"]:
+            if team["yesterday_game"] and team["today_game"]:
+                html += "<div class='scores-section-label'>Yesterday</div>"
+                html += "<div class='scores-grid'>"
+                html += render_game_card(team["yesterday_game"])
+                html += "</div>"
+                html += "<div class='scores-section-label'>Today</div>"
+                html += "<div class='scores-grid'>"
+                html += render_game_card(team["today_game"])
+                html += "</div>"
+            elif team["yesterday_game"]:
+                html += "<div class='scores-grid'>"
+                html += render_game_card(team["yesterday_game"])
+                html += "</div>"
+            elif team["today_game"]:
+                html += "<div class='scores-grid'>"
+                html += render_game_card(team["today_game"])
+                html += "</div>"
         else:
             html += f"""
-            <div class='score-card'>
-                <div class='score-row'>
-                    <div class='score-team'>
-                        <span style='color:#999; font-size:12px;'>{team['name']}</span>
+            <div class='scores-grid'>
+                <div class='score-card'>
+                    <div class='score-row'>
+                        <div class='score-team'>
+                            <span style='color:#999; font-size:12px;'>{team['name']}</span>
+                        </div>
                     </div>
+                    <div class='score-status'>No recent game</div>
                 </div>
-                <div class='score-status'>No recent game</div>
             </div>"""
-    html += "</div>"
     return html
 
 def render_nhl_standings(data):
@@ -651,8 +669,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .tag-pl { background: #dcfce7; color: #166534; }
 .tag-ucl { background: #ede9fe; color: #5b21b6; }
 .tag-cycling { background: #fef9c3; color: #854d0e; }
-.tag-nba { background: #fef9c3; color: #854d0e; }
-.tag-mls { background: #dcfce7; color: #166534; }
 .tag-cbc { background: #ede9fe; color: #5b21b6; }
 .tag-globe { background: #f3f4f6; color: #374151; }
 .tag-bbc { background: #fee2e2; color: #991b1b; }
@@ -692,8 +708,11 @@ def sports():
     for team in MY_TEAMS:
         yesterday_games = find_team_games(all_yesterday, team["keywords"])
         today_games = find_team_games(all_today, team["keywords"])
-        game = today_games[0] if today_games else (yesterday_games[0] if yesterday_games else None)
-        teams_data.append({"name": team["name"], "game": game})
+        teams_data.append({
+            "name": team["name"],
+            "yesterday_game": yesterday_games[0] if yesterday_games else None,
+            "today_game": today_games[0] if today_games else None,
+        })
 
     nhl_standings = get_standings("hockey", "nhl")
     mlb_standings = get_standings("baseball", "mlb")
@@ -757,12 +776,6 @@ def sports():
 <div class='section-label'>NHL · Headlines</div>
 {render_stories(nhl_stories, 'NHL', 'tag-nhl')}
 {athletic_link('https://theathletic.com/nhl/', 'NHL')}
-<hr class='sport-divider'>
-<div class='section-label'>Raptors · Scores</div>
-{render_scores(nba_yesterday, nba_today)}
-<hr class='sport-divider'>
-<div class='section-label'>Toronto FC · Scores</div>
-{render_scores(mls_yesterday, mls_today)}
 <hr class='sport-divider'>
 <div class='section-label'>Cycling · Upcoming Races</div>
 {render_cycling_calendar(cycling_calendar)}
