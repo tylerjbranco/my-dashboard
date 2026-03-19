@@ -835,5 +835,30 @@ def manifest():
         "theme_color": "#ffffff"
     })
 
+@app.route("/debug")
+def debug():
+    eastern = pytz.timezone("America/Toronto")
+    today = datetime.now(eastern).date()
+    yesterday = today - timedelta(days=1)
+    html = "<pre>"
+    for sport, league, label in [
+        ("hockey", "nhl", "NHL"),
+        ("basketball", "nba", "NBA"),
+        ("soccer", "usa.1", "MLS"),
+    ]:
+        games = get_scores(sport, league, yesterday) + get_scores(sport, league, today)
+        html += f"=== {label} ({len(games)} games) ===\n"
+        for game in games[:3]:
+            try:
+                competition = game["competitions"][0]
+                home = competition["competitors"][0]["team"]
+                away = competition["competitors"][1]["team"]
+                html += f"HOME: {home.get('location','')} {home.get('name','')} | shortDisplayName: {home.get('shortDisplayName','')}\n"
+                html += f"AWAY: {away.get('location','')} {away.get('name','')} | shortDisplayName: {away.get('shortDisplayName','')}\n\n"
+            except Exception as e:
+                html += f"Error: {e}\n"
+    html += "</pre>"
+    return html
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
