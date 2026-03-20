@@ -316,7 +316,7 @@ def get_stories(url, limit=5):
     except:
         return []
 
-def get_youtube_videos(channel_id, limit=2, playlist_id=None):
+def get_youtube_videos(channel_id=None, limit=2, playlist_id=None):
     if playlist_id:
         url = f"https://www.youtube.com/feeds/videos.xml?playlist_id={playlist_id}"
     else:
@@ -948,7 +948,6 @@ NAV_MEDIA = "<div class='nav'><a href='/'>Sports</a><a href='/news'>News</a><a h
 
 CLOCK_AND_WEATHER_JS = """
 <script>
-// Update clock with local time
 function updateClock() {
     const now = new Date();
     const options = { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
@@ -957,7 +956,6 @@ function updateClock() {
 }
 updateClock();
 
-// Update weather based on location
 if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(position) {
         const lat = position.coords.latitude;
@@ -966,7 +964,6 @@ if (navigator.geolocation) {
             .then(r => r.json())
             .then(data => {
                 if (data.error) return;
-                document.getElementById('weather-city').textContent = data.city;
                 document.querySelector('.weather-temp').textContent = data.current_temp + '°C';
                 document.querySelector('.weather-icon').textContent = data.current_icon;
                 document.querySelector('.weather-desc').innerHTML = data.current_desc + ' · <span id="weather-city">' + data.city + '</span>';
@@ -1146,13 +1143,13 @@ def media():
 
     data = fetch_all_media()
 
-channels_data = []
-for channel_name, _ in YOUTUBE_CHANNELS:
-    videos = data["videos"].get(channel_name, [])
-    channels_data.append((channel_name, videos))
-for playlist_name, _ in YOUTUBE_PLAYLISTS:
-    videos = data["videos"].get(playlist_name, [])
-    channels_data.append((playlist_name, videos))
+    channels_data = []
+    for channel_name, _ in YOUTUBE_CHANNELS:
+        videos = data["videos"].get(channel_name, [])
+        channels_data.append((channel_name, videos))
+    for playlist_name, _ in YOUTUBE_PLAYLISTS:
+        videos = data["videos"].get(playlist_name, [])
+        channels_data.append((playlist_name, videos))
 
     podcasts_data = []
     for podcast_name, feed_url, spotify_url in PODCAST_FEEDS:
