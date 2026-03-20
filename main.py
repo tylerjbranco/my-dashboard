@@ -54,6 +54,10 @@ YOUTUBE_CHANNELS = [
     ("Foolish Baseball", "UCbW12JIVAdi5NugdakbU33A"),
 ]
 
+YOUTUBE_PLAYLISTS = [
+    ("About That", "PLeyJPHbRnGaZeajS8uAtr8cyc19TYBZZ9"),
+]
+
 PODCAST_FEEDS = [
     ("At The Letters", "https://feeds.simplecast.com/R14Ca9Ii", "https://open.spotify.com/show/4qDVNDRRFU3voSTRDZGSdU"),
     ("Talkin' Baseball", "https://feeds.simplecast.com/06DZNq60", "https://open.spotify.com/show/09USaYF2LTQpNwBXnFGbAT"),
@@ -312,8 +316,11 @@ def get_stories(url, limit=5):
     except:
         return []
 
-def get_youtube_videos(channel_id, limit=2):
-    url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+def get_youtube_videos(channel_id, limit=2, playlist_id=None):
+    if playlist_id:
+        url = f"https://www.youtube.com/feeds/videos.xml?playlist_id={playlist_id}"
+    else:
+        url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
         feed = feedparser.parse(url, request_headers=headers)
@@ -428,6 +435,8 @@ def fetch_all_news():
 def fetch_all_media():
     results = {"videos": {}, "podcasts": {}}
     video_tasks = {name: (get_youtube_videos, (cid, 2)) for name, cid in YOUTUBE_CHANNELS}
+    playlist_tasks = {name: (get_youtube_videos, (None, 2, pid)) for name, pid in YOUTUBE_PLAYLISTS}
+    video_tasks.update(playlist_tasks)
     podcast_tasks = {name: (get_podcast_episodes, (url, 2)) for name, url, _ in PODCAST_FEEDS}
     all_tasks = {**{f"v_{k}": v for k, v in video_tasks.items()},
                  **{f"p_{k}": v for k, v in podcast_tasks.items()}}
@@ -1137,10 +1146,13 @@ def media():
 
     data = fetch_all_media()
 
-    channels_data = []
-    for channel_name, _ in YOUTUBE_CHANNELS:
-        videos = data["videos"].get(channel_name, [])
-        channels_data.append((channel_name, videos))
+channels_data = []
+for channel_name, _ in YOUTUBE_CHANNELS:
+    videos = data["videos"].get(channel_name, [])
+    channels_data.append((channel_name, videos))
+for playlist_name, _ in YOUTUBE_PLAYLISTS:
+    videos = data["videos"].get(playlist_name, [])
+    channels_data.append((playlist_name, videos))
 
     podcasts_data = []
     for podcast_name, feed_url, spotify_url in PODCAST_FEEDS:
