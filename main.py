@@ -48,6 +48,23 @@ MY_TEAMS = [
     {"name": "Toronto FC", "keywords": ["Toronto FC"]},
 ]
 
+FIXTURE_LEAGUES = [
+    ("hockey", "nhl"),
+    ("baseball", "mlb"),
+    ("soccer", "eng.1"),
+    ("basketball", "nba"),
+    ("soccer", "usa.1"),
+]
+
+LEAGUE_EMOJI = {
+    "nhl": "🏒",
+    "mlb": "⚾",
+    "eng.1": "⚽",
+    "nba": "🏀",
+    "usa.1": "⚽",
+    "uefa.champions": "⚽",
+}
+
 YOUTUBE_CHANNELS = [
     ("Abroad in Japan", "UCHL9bfHTxCMi-7vfxQ-AYtg"),
     ("GCN Racing", "UCu7phdCr-raU7OaJfEpHZww"),
@@ -150,20 +167,15 @@ def render_cycling_calendar(races):
 def get_fpl_data():
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-
         bootstrap = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/", headers=headers, timeout=10).json()
         entry = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/", headers=headers, timeout=10).json()
-
         current_event = entry.get("current_event", 1)
         picks_data = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/event/{current_event}/picks/", headers=headers, timeout=10).json()
-
         player_map = {p["id"]: p for p in bootstrap.get("elements", [])}
         events = bootstrap.get("events", [])
-
         current_gw = next((e for e in events if e.get("is_current")), None)
         next_gw = next((e for e in events if e.get("is_next")), None)
         active_gw = current_gw or next_gw
-
         deadline_str = ""
         next_gw_name = ""
         if next_gw:
@@ -174,24 +186,19 @@ def get_fpl_data():
                 dt = datetime.fromisoformat(deadline_raw.replace("Z", "+00:00"))
                 dt_eastern = dt.astimezone(eastern)
                 deadline_str = dt_eastern.strftime("%a %b %d · %I:%M %p")
-
         gw_name = active_gw.get("name", f"Gameweek {current_event}") if active_gw else f"Gameweek {current_event}"
         gw_points = entry.get("summary_event_points", 0)
         gw_rank = entry.get("summary_event_rank", 0)
         overall_points = entry.get("summary_overall_points", 0)
         overall_rank = entry.get("summary_overall_rank", 0)
-
         history = picks_data.get("entry_history", {})
         team_value = history.get("value", 0) / 10
         bank = history.get("bank", 0) / 10
         points_on_bench = history.get("points_on_bench", 0)
-
         picks = picks_data.get("picks", [])
         starters = [p for p in picks if p["position"] <= 11]
         bench = [p for p in picks if p["position"] > 11]
-
         position_labels = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
-
         def format_player(pick):
             player = player_map.get(pick["element"], {})
             name = player.get("web_name", "Unknown")
@@ -202,24 +209,20 @@ def get_fpl_data():
             elif pick["is_vice_captain"]:
                 suffix = " (v)"
             return f"{name}{suffix}", pos
-
         by_position = {1: [], 2: [], 3: [], 4: []}
         for pick in starters:
             name, pos = format_player(pick)
             by_position[pick["element_type"]].append((name, pos))
-
         bench_names = []
         for pick in bench:
             name, pos = format_player(pick)
             bench_names.append(f"{name} ({pos})")
-
         auto_subs = picks_data.get("automatic_subs", [])
         auto_sub_strs = []
         for sub in auto_subs:
             player_in = player_map.get(sub["element_in"], {}).get("web_name", "?")
             player_out = player_map.get(sub["element_out"], {}).get("web_name", "?")
             auto_sub_strs.append(f"{player_in} ↔ {player_out}")
-
         return {
             "gw_name": gw_name,
             "next_gw_name": next_gw_name,
@@ -236,15 +239,13 @@ def get_fpl_data():
             "auto_subs": auto_sub_strs,
             "current_event": current_event,
         }
-    except Exception as e:
+    except:
         return None
 
 def render_fpl(fpl):
     if not fpl:
         return "<p class='empty'>FPL data unavailable</p>"
-
     position_order = [(1, "GK"), (2, "DEF"), (3, "MID"), (4, "FWD")]
-
     squad_html = ""
     for pos_id, pos_label in position_order:
         players = fpl["by_position"].get(pos_id, [])
@@ -262,19 +263,14 @@ def render_fpl(fpl):
             clean_name = name.replace(" ©", "").replace(" (v)", "")
             squad_html += f"<div class='fpl-player'>{badge}<span class='fpl-player-name'>{clean_name}</span><span class='fpl-pos-badge'>{pos_label}</span></div>"
         squad_html += "</div>"
-
     bench_html = " · ".join(fpl["bench_names"]) if fpl["bench_names"] else ""
-
     auto_sub_html = ""
     if fpl["auto_subs"]:
         auto_sub_html = f"<div class='fpl-auto-subs'>Auto subs: {' · '.join(fpl['auto_subs'])}</div>"
-
     deadline_html = ""
     if fpl["deadline_str"] and fpl["next_gw_name"]:
         deadline_html = f"<div class='fpl-deadline'>Next deadline · {fpl['next_gw_name']}: {fpl['deadline_str']}</div>"
-
     team_url = f"https://fantasy.premierleague.com/entry/{FPL_TEAM_ID}/event/{fpl['current_event']}"
-
     return f"""
     <div class='fpl-widget'>
         <div class='fpl-header'>
@@ -303,9 +299,7 @@ def render_fpl(fpl):
                 <div class='fpl-stat-sub'>&nbsp;</div>
             </div>
         </div>
-        <div class='fpl-squad'>
-            {squad_html}
-        </div>
+        <div class='fpl-squad'>{squad_html}</div>
         {auto_sub_html}
         <div class='fpl-bench'>Bench: {bench_html}</div>
     </div>"""
@@ -410,6 +404,17 @@ def get_scores(sport, league, for_date=None):
         return data.get("events", [])
     except:
         return []
+
+def get_scores_range(sport, league, start_date, end_date):
+    try:
+        start_str = start_date.strftime("%Y%m%d")
+        end_str = end_date.strftime("%Y%m%d")
+        url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard?dates={start_str}-{end_str}"
+        response = requests.get(url, timeout=8)
+        data = response.json()
+        return data.get("events", []), league
+    except:
+        return [], league
 
 def get_standings(sport, league):
     url = f"https://site.api.espn.com/apis/v2/sports/{sport}/{league}/standings"
@@ -578,7 +583,7 @@ def fetch_all_sports(today, yesterday):
                 results[key] = [] if "standings" not in key else {}
     return results
 
-def fetch_all_news(weather=None):
+def fetch_all_news():
     tasks = {
         "cbc_toronto": (get_stories, ("https://www.cbc.ca/cmlink/rss-canada-toronto", 6)),
         "cbc_canada": (get_stories, ("https://www.cbc.ca/cmlink/rss-topstories", 5)),
@@ -714,21 +719,18 @@ def render_my_teams(teams_data):
     no_game = [t for t in teams_data if not t["yesterday_game"] and not t["today_game"]]
 
     html = ""
-
     if yesterday_cards:
         html += "<div class='scores-section-label'>Yesterday</div>"
         html += "<div class='scores-grid'>"
         for game in yesterday_cards:
             html += render_game_card(game)
         html += "</div>"
-
     if today_cards:
         html += "<div class='scores-section-label'>Today</div>"
         html += "<div class='scores-grid'>"
         for game in today_cards:
             html += render_game_card(game)
         html += "</div>"
-
     if no_game:
         html += "<div class='scores-grid'>"
         for team in no_game:
@@ -742,7 +744,6 @@ def render_my_teams(teams_data):
                 <div class='score-status'>No recent game</div>
             </div>"""
         html += "</div>"
-
     return html
 
 def render_nhl_standings(data):
@@ -1086,6 +1087,20 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .fpl-vice { background: #666; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
 .fpl-bench { font-size: 11px; color: #999; margin-top: 6px; }
 .fpl-auto-subs { font-size: 11px; color: #854d0e; background: #fef9c3; border-radius: 6px; padding: 4px 8px; margin-top: 6px; }
+.fixture-toggle { display: flex; align-items: center; gap: 6px; padding: 8px 0; cursor: pointer; border: none; background: none; font-family: inherit; font-size: 12px; color: #999; width: 100%; text-align: left; }
+.fixture-toggle:hover { color: #111; }
+.fixture-toggle .toggle-arrow { transition: transform 0.2s; display: inline-block; }
+.fixture-toggle.open .toggle-arrow { transform: rotate(180deg); }
+.fixture-calendar { display: none; margin-top: 4px; }
+.fixture-calendar.open { display: block; }
+.fixture-date-group { margin-bottom: 10px; }
+.fixture-date-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.fixture-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid #f0f0f0; font-size: 12px; }
+.fixture-row:last-child { border-bottom: none; }
+.fixture-emoji { font-size: 13px; flex-shrink: 0; }
+.fixture-teams { flex: 1; color: #111; }
+.fixture-time { font-size: 11px; color: #999; white-space: nowrap; }
+.fixture-loading { font-size: 12px; color: #999; padding: 8px 0; }
 
 @media (prefers-color-scheme: dark) {
   body { background: #111; color: #eee; }
@@ -1132,6 +1147,11 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .fpl-captain { background: #eee; color: #111; }
   .fpl-bench { color: #888; }
   .race-link { color: #eee; }
+  .fixture-toggle { color: #888; }
+  .fixture-toggle:hover { color: #eee; }
+  .fixture-teams { color: #eee; }
+  .fixture-row { border-bottom-color: #2c2c2e; }
+  .fixture-date-label { color: #888; }
 }
 """
 
@@ -1184,8 +1204,129 @@ if (navigator.geolocation) {
             });
     }, function() {});
 }
+
+function toggleFixtures() {
+    const btn = document.getElementById('fixture-toggle-btn');
+    const cal = document.getElementById('fixture-calendar');
+    const isOpen = cal.classList.contains('open');
+    if (isOpen) {
+        cal.classList.remove('open');
+        btn.classList.remove('open');
+        return;
+    }
+    btn.classList.add('open');
+    cal.classList.add('open');
+    if (cal.dataset.loaded) return;
+    cal.dataset.loaded = 'true';
+    cal.innerHTML = "<div class='fixture-loading'>Loading fixtures...</div>";
+    fetch('/fixtures')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.dates || data.dates.length === 0) {
+                cal.innerHTML = "<p class='empty'>No upcoming fixtures found</p>";
+                return;
+            }
+            let html = '';
+            data.dates.forEach(group => {
+                html += `<div class='fixture-date-group'>
+                    <div class='fixture-date-label'>${group.label}</div>`;
+                group.games.forEach(game => {
+                    html += `<div class='fixture-row'>
+                        <span class='fixture-emoji'>${game.emoji}</span>
+                        <span class='fixture-teams'>${game.away} vs ${game.home}</span>
+                        <span class='fixture-time'>${game.time}</span>
+                    </div>`;
+                });
+                html += '</div>';
+            });
+            cal.innerHTML = html;
+        })
+        .catch(() => {
+            cal.innerHTML = "<p class='empty'>Fixtures unavailable</p>";
+        });
+}
 </script>
 """
+
+@app.route("/fixtures")
+def fixtures():
+    try:
+        eastern = pytz.timezone("America/Toronto")
+        today = datetime.now(eastern).date()
+        start = today + timedelta(days=1)
+        end = today + timedelta(days=10)
+
+        all_keywords = []
+        for team in MY_TEAMS:
+            all_keywords.extend(team["keywords"])
+
+        tasks = {}
+        for sport, league in FIXTURE_LEAGUES:
+            tasks[league] = (get_scores_range, (sport, league, start, end))
+
+        results = {}
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(fn, *args): key for key, (fn, args) in tasks.items()}
+            for future in as_completed(futures):
+                key = futures[future]
+                try:
+                    games, league = future.result()
+                    results[league] = games
+                except:
+                    results[key] = []
+
+        by_date = {}
+        for league, games in results.items():
+            emoji = LEAGUE_EMOJI.get(league, "🏆")
+            for game in games:
+                try:
+                    competition = game["competitions"][0]
+                    competitors = competition["competitors"]
+                    home_team = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
+                    away_team = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
+                    home_name = home_team["team"].get("shortDisplayName", "")
+                    away_name = away_team["team"].get("shortDisplayName", "")
+                    home_full = f"{home_team['team'].get('location', '')} {home_team['team'].get('name', '')}".strip()
+                    away_full = f"{away_team['team'].get('location', '')} {away_team['team'].get('name', '')}".strip()
+
+                    is_my_team = False
+                    for kw in all_keywords:
+                        if (kw.lower() in home_full.lower() or kw.lower() in away_full.lower()):
+                            is_my_team = True
+                            break
+                    if not is_my_team:
+                        continue
+
+                    date_str = game["date"]
+                    dt_utc = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                    dt_eastern = dt_utc.astimezone(eastern)
+                    date_key = dt_eastern.date().isoformat()
+                    time_str = dt_eastern.strftime("%-I:%M %p") if hasattr(dt_eastern, 'strftime') else dt_eastern.strftime("%I:%M %p").lstrip("0")
+
+                    if date_key not in by_date:
+                        by_date[date_key] = []
+                    by_date[date_key].append({
+                        "emoji": emoji,
+                        "home": home_name,
+                        "away": away_name,
+                        "time": time_str,
+                    })
+                except:
+                    continue
+
+        output = []
+        for d in sorted(by_date.keys()):
+            dt = date.fromisoformat(d)
+            days_away = (dt - today).days
+            if days_away == 1:
+                label = f"Tomorrow · {dt.strftime('%a %b %d')}"
+            else:
+                label = dt.strftime("%a %b %d")
+            output.append({"label": label, "games": by_date[d]})
+
+        return jsonify({"dates": output})
+    except Exception as e:
+        return jsonify({"dates": [], "error": str(e)})
 
 @app.route("/weather")
 def weather_api():
@@ -1204,9 +1345,7 @@ def weather_api():
 def news():
     eastern = pytz.timezone("America/Toronto")
     now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
-
     data = fetch_all_news()
-
     weather = data.get("weather")
     local_html = render_news_section([("CBC Toronto", "tag-cbc", data.get("cbc_toronto", []))])
     national_html = render_news_section([
@@ -1218,7 +1357,6 @@ def news():
         ("Guardian", "tag-guardian", data.get("guardian_world", [])),
         ("Globe & Mail", "tag-globe", data.get("globe_world", [])),
     ])
-
     return f"""<!DOCTYPE html>
 <html><head>{HEAD}<style>{CSS}</style></head>
 <body>
@@ -1246,9 +1384,7 @@ def sports():
     now = datetime.now(eastern)
     today = now.date()
     yesterday = today - timedelta(days=1)
-
     data = fetch_all_sports(today, yesterday)
-
     fpl = data.get("fpl")
     mlb_yesterday = data.get("mlb_yesterday", [])
     mlb_today = data.get("mlb_today", [])
@@ -1262,10 +1398,8 @@ def sports():
     nba_today = data.get("nba_today", [])
     mls_yesterday = data.get("mls_yesterday", [])
     mls_today = data.get("mls_today", [])
-
     all_yesterday = mlb_yesterday + pl_yesterday + nhl_yesterday + ucl_yesterday + nba_yesterday + mls_yesterday
     all_today = mlb_today + pl_today + nhl_today + ucl_today + nba_today + mls_today
-
     teams_data = []
     for team in MY_TEAMS:
         yesterday_games = find_team_games(all_yesterday, team["keywords"])
@@ -1275,7 +1409,6 @@ def sports():
             "yesterday_game": yesterday_games[0] if yesterday_games else None,
             "today_game": today_games[0] if today_games else None,
         })
-
     nhl_standings = data.get("nhl_standings", {})
     mlb_standings = data.get("mlb_standings", {})
     pl_standings = data.get("pl_standings", {})
@@ -1286,9 +1419,7 @@ def sports():
     nhl_stories = data.get("nhl_stories", [])
     cycling_stories = data.get("cycling_stories", [])
     cycling_calendar = get_cycling_calendar()
-
     now_str = now.strftime("%A, %B %d · %I:%M %p")
-
     return f"""<!DOCTYPE html>
 <html><head>{HEAD}<style>{CSS}</style></head>
 <body>
@@ -1297,6 +1428,10 @@ def sports():
 <div class='body'>
 <div class='section-label'>My Teams</div>
 {render_my_teams(teams_data)}
+<button class='fixture-toggle' id='fixture-toggle-btn' onclick='toggleFixtures()'>
+    <span class='toggle-arrow'>▾</span> Upcoming Fixtures
+</button>
+<div class='fixture-calendar' id='fixture-calendar'></div>
 <hr class='sport-divider'>
 <div class='section-label'>MLB · Scores</div>
 {render_scores(mlb_yesterday, mlb_today)}
@@ -1345,9 +1480,7 @@ def sports():
 def media():
     eastern = pytz.timezone("America/Toronto")
     now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
-
     data = fetch_all_media()
-
     channels_data = []
     for channel_name, _ in YOUTUBE_CHANNELS:
         videos = data["videos"].get(channel_name, [])
@@ -1355,7 +1488,6 @@ def media():
     for playlist_name, _ in YOUTUBE_PLAYLISTS:
         videos = data["videos"].get(playlist_name, [])
         channels_data.append((playlist_name, videos))
-
     podcasts_data = []
     for podcast_name, feed_url, spotify_url in PODCAST_FEEDS:
         episodes, _ = data["podcasts"].get(podcast_name, ([], ""))
@@ -1371,7 +1503,6 @@ def media():
             except:
                 pass
         podcasts_data.append((podcast_name, episodes, artwork, spotify_url))
-
     return f"""<!DOCTYPE html>
 <html><head>{HEAD}<style>{CSS}</style></head>
 <body>
