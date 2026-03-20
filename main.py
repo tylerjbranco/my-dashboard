@@ -1231,11 +1231,11 @@ function toggleFixtures() {
             data.dates.forEach(group => {
                 html += `<div class='fixture-date-group'>
                     <div class='fixture-date-label'>${group.label}</div>`;
-                group.games.forEach(game => {
-                    const awayLogo = game.away_logo ? `<img src="${game.away_logo}" class="fixture-logo" alt="">` : '';
-                    const homeLogo = game.home_logo ? `<img src="${game.home_logo}" class="fixture-logo" alt="">` : '';
+               group.games.forEach(game => {
+                    const myLogo = game.my_logo ? `<img src="${game.my_logo}" class="fixture-logo" alt="">` : '';
+                    const oppLogo = game.opp_logo ? `<img src="${game.opp_logo}" class="fixture-logo" alt="">` : '';
                     html += `<div class='fixture-row'>
-                        <span class='fixture-teams'>${awayLogo} ${game.away} vs ${homeLogo} ${game.home}</span>
+                        <span class='fixture-teams'>${myLogo} ${game.my_name} ${game.versus} ${oppLogo} ${game.opp_name}</span>
                         <span class='fixture-time'>${game.time}</span>
                     </div>`;
                 });
@@ -1307,16 +1307,37 @@ def fixtures():
 
                     if date_key not in by_date:
                         by_date[date_key] = []
-                    home_logo = home_team["team"].get("logo", "")
-                    away_logo = away_team["team"].get("logo", "")
-                    by_date[date_key].append({
-                        "emoji": emoji,
-                        "home": home_name,
-                        "away": away_name,
-                        "home_logo": home_logo,
-                        "away_logo": away_logo,
-                        "time": time_str,
-                    })
+                   home_logo = home_team["team"].get("logo", "")
+away_logo = away_team["team"].get("logo", "")
+
+# Figure out which team is "my team" and format accordingly
+my_team_is_home = False
+for kw in all_keywords:
+    if kw.lower() in home_full.lower():
+        my_team_is_home = True
+        break
+
+if my_team_is_home:
+    my_name = home_name
+    my_logo = home_logo
+    opp_name = away_name
+    opp_logo = away_logo
+    versus = "vs"
+else:
+    my_name = away_name
+    my_logo = away_logo
+    opp_name = home_name
+    opp_logo = home_logo
+    versus = "@"
+
+by_date[date_key].append({
+    "my_name": my_name,
+    "my_logo": my_logo,
+    "opp_name": opp_name,
+    "opp_logo": opp_logo,
+    "versus": versus,
+    "time": time_str,
+})
                 except:
                     continue
 
