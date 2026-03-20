@@ -1098,6 +1098,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .fixture-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid #f0f0f0; font-size: 12px; }
 .fixture-row:last-child { border-bottom: none; }
 .fixture-emoji { font-size: 13px; flex-shrink: 0; }
+.fixture-logo { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
 .fixture-teams { flex: 1; color: #111; }
 .fixture-time { font-size: 11px; color: #999; white-space: nowrap; }
 .fixture-loading { font-size: 12px; color: #999; padding: 8px 0; }
@@ -1231,11 +1232,14 @@ function toggleFixtures() {
                 html += `<div class='fixture-date-group'>
                     <div class='fixture-date-label'>${group.label}</div>`;
                 group.games.forEach(game => {
+                    const awayLogo = game.away_logo ? `<img src="${game.away_logo}" class="fixture-logo" alt="">` : game.emoji;
+                    const homeLogo = game.home_logo ? `<img src="${game.home_logo}" class="fixture-logo" alt="">` : game.emoji;
                     html += `<div class='fixture-row'>
-                        <span class='fixture-emoji'>${game.emoji}</span>
+                        ${awayLogo}
                         <span class='fixture-teams'>${game.away} vs ${game.home}</span>
+                        ${homeLogo}
                         <span class='fixture-time'>${game.time}</span>
-                    </div>`;
+                </div>`;
                 });
                 html += '</div>';
             });
@@ -1284,8 +1288,8 @@ def fixtures():
                     competitors = competition["competitors"]
                     home_team = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
                     away_team = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
-                    home_name = home_team["team"].get("shortDisplayName", "")
-                    away_name = away_team["team"].get("shortDisplayName", "")
+                    home_name = f"{home_team['team'].get('location', '')} {home_team['team'].get('name', '')}".strip()
+                    away_name = f"{away_team['team'].get('location', '')} {away_team['team'].get('name', '')}".strip()
                     home_full = f"{home_team['team'].get('location', '')} {home_team['team'].get('name', '')}".strip()
                     away_full = f"{away_team['team'].get('location', '')} {away_team['team'].get('name', '')}".strip()
 
@@ -1305,10 +1309,14 @@ def fixtures():
 
                     if date_key not in by_date:
                         by_date[date_key] = []
+                    home_logo = home_team["team"].get("logo", "")
+                    away_logo = away_team["team"].get("logo", "")
                     by_date[date_key].append({
                         "emoji": emoji,
                         "home": home_name,
                         "away": away_name,
+                        "home_logo": home_logo,
+                        "away_logo": away_logo,
                         "time": time_str,
                     })
                 except:
