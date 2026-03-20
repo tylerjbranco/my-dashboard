@@ -3,6 +3,7 @@ import feedparser
 import requests
 from datetime import datetime, date, timedelta
 import pytz
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 app = Flask(__name__)
 
@@ -142,7 +143,7 @@ def render_cycling_calendar(races):
 def get_weather():
     try:
         url = "https://api.open-meteo.com/v1/forecast?latitude=43.70&longitude=-79.42&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=America%2FToronto&forecast_days=4"
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
         data = response.json()
         weather_codes = {
             0: ("Clear sky", "☀️"), 1: ("Mainly clear", "🌤️"), 2: ("Partly cloudy", "⛅"),
@@ -219,7 +220,7 @@ def get_scores(sport, league, for_date=None):
             url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard?dates={date_str}"
         else:
             url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard"
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
         data = response.json()
         return data.get("events", [])
     except:
@@ -228,7 +229,7 @@ def get_scores(sport, league, for_date=None):
 def get_standings(sport, league):
     url = f"https://site.api.espn.com/apis/v2/sports/{sport}/{league}/standings"
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
         data = response.json()
         return data
     except:
@@ -352,6 +353,84 @@ def get_podcast_episodes(url, limit=2):
         return episodes, feed.feed.get("title", "")
     except:
         return [], ""
+
+def fetch_all_sports(today, yesterday):
+    tasks = {
+        "mlb_today": (get_scores, ("baseball", "mlb", today)),
+        "mlb_yesterday": (get_scores, ("baseball", "mlb", yesterday)),
+        "pl_today": (get_scores, ("soccer", "eng.1", today)),
+        "pl_yesterday": (get_scores, ("soccer", "eng.1", yesterday)),
+        "nhl_today": (get_scores, ("hockey", "nhl", today)),
+        "nhl_yesterday": (get_scores, ("hockey", "nhl", yesterday)),
+        "ucl_today": (get_scores, ("soccer", "uefa.champions", today)),
+        "ucl_yesterday": (get_scores, ("soccer", "uefa.champions", yesterday)),
+        "nba_today": (get_scores, ("basketball", "nba", today)),
+        "nba_yesterday": (get_scores, ("basketball", "nba", yesterday)),
+        "mls_today": (get_scores, ("soccer", "usa.1", today)),
+        "mls_yesterday": (get_scores, ("soccer", "usa.1", yesterday)),
+        "nhl_standings": (get_standings, ("hockey", "nhl")),
+        "mlb_standings": (get_standings, ("baseball", "mlb")),
+        "pl_standings": (get_standings, ("soccer", "eng.1")),
+        "ucl_standings": (get_standings, ("soccer", "uefa.champions")),
+        "weather": (get_weather, ()),
+        "mlb_stories": (get_stories, ("https://www.sportsnet.ca/mlb/feed/",)),
+        "pl_stories": (get_stories, ("https://www.theguardian.com/football/premierleague/rss",)),
+        "ucl_stories": (get_stories, ("https://www.theguardian.com/football/championsleague/rss",)),
+        "nhl_stories": (get_stories, ("https://www.sportsnet.ca/hockey/nhl/feed/",)),
+        "cycling_stories": (get_stories, ("https://www.cyclingnews.com/rss",)),
+    }
+    results = {}
+    with ThreadPoolExecutor(max_workers=12) as executor:
+        futures = {executor.submit(fn, *args): key for key, (fn, args) in tasks.items()}
+        for future in as_completed(futures):
+            key = futures[future]
+            try:
+                results[key] = future.result()
+            except:
+                results[key] = [] if "standings" not in key else {}
+    return results
+
+def fetch_all_news():
+    tasks = {
+        "cbc_toronto": (get_stories, ("https://www.cbc.ca/cmlink/rss-canada-toronto", 6)),
+        "cbc_canada": (get_stories, ("https://www.cbc.ca/cmlink/rss-topstories", 5)),
+        "globe_canada": (get_stories, ("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/", 5)),
+        "bbc_world": (get_stories, ("https://feeds.bbci.co.uk/news/world/rss.xml", 4)),
+        "guardian_world": (get_stories, ("https://www.theguardian.com/world/rss", 4)),
+        "globe_world": (get_stories, ("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/world/", 4)),
+    }
+    results = {}
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = {executor.submit(fn, *args): key for key, (fn, args) in tasks.items()}
+        for future in as_completed(futures):
+            key = futures[future]
+            try:
+                results[key] = future.result()
+            except:
+                results[key] = []
+    return results
+
+def fetch_all_media():
+    results = {"videos": {}, "podcasts": {}}
+    video_tasks = {name: (get_youtube_videos, (cid, 2)) for name, cid in YOUTUBE_CHANNELS}
+    podcast_tasks = {name: (get_podcast_episodes, (url, 2)) for name, url, _ in PODCAST_FEEDS}
+    all_tasks = {**{f"v_{k}": v for k, v in video_tasks.items()},
+                 **{f"p_{k}": v for k, v in podcast_tasks.items()}}
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(fn, *args): key for key, (fn, args) in all_tasks.items()}
+        for future in as_completed(futures):
+            key = futures[future]
+            try:
+                if key.startswith("v_"):
+                    results["videos"][key[2:]] = future.result()
+                else:
+                    results["podcasts"][key[2:]] = future.result()
+            except:
+                if key.startswith("v_"):
+                    results["videos"][key[2:]] = []
+                else:
+                    results["podcasts"][key[2:]] = ([], "")
+    return results
 
 def athletic_link(url, label):
     return f"""
@@ -813,20 +892,21 @@ def sports():
     today = now.date()
     yesterday = today - timedelta(days=1)
 
-    weather = get_weather()
+    data = fetch_all_sports(today, yesterday)
 
-    mlb_yesterday = get_scores("baseball", "mlb", yesterday)
-    mlb_today = get_scores("baseball", "mlb", today)
-    pl_yesterday = get_scores("soccer", "eng.1", yesterday)
-    pl_today = get_scores("soccer", "eng.1", today)
-    nhl_yesterday = get_scores("hockey", "nhl", yesterday)
-    nhl_today = get_scores("hockey", "nhl", today)
-    ucl_yesterday = get_scores("soccer", "uefa.champions", yesterday)
-    ucl_today = get_scores("soccer", "uefa.champions", today)
-    nba_yesterday = get_scores("basketball", "nba", yesterday)
-    nba_today = get_scores("basketball", "nba", today)
-    mls_yesterday = get_scores("soccer", "usa.1", yesterday)
-    mls_today = get_scores("soccer", "usa.1", today)
+    weather = data.get("weather")
+    mlb_yesterday = data.get("mlb_yesterday", [])
+    mlb_today = data.get("mlb_today", [])
+    pl_yesterday = data.get("pl_yesterday", [])
+    pl_today = data.get("pl_today", [])
+    nhl_yesterday = data.get("nhl_yesterday", [])
+    nhl_today = data.get("nhl_today", [])
+    ucl_yesterday = data.get("ucl_yesterday", [])
+    ucl_today = data.get("ucl_today", [])
+    nba_yesterday = data.get("nba_yesterday", [])
+    nba_today = data.get("nba_today", [])
+    mls_yesterday = data.get("mls_yesterday", [])
+    mls_today = data.get("mls_today", [])
 
     all_yesterday = mlb_yesterday + pl_yesterday + nhl_yesterday + ucl_yesterday + nba_yesterday + mls_yesterday
     all_today = mlb_today + pl_today + nhl_today + ucl_today + nba_today + mls_today
@@ -841,16 +921,15 @@ def sports():
             "today_game": today_games[0] if today_games else None,
         })
 
-    nhl_standings = get_standings("hockey", "nhl")
-    mlb_standings = get_standings("baseball", "mlb")
-    pl_standings = get_standings("soccer", "eng.1")
-    ucl_standings = get_standings("soccer", "uefa.champions")
-
-    mlb_stories = get_stories("https://www.sportsnet.ca/mlb/feed/")
-    pl_stories = get_stories("https://www.theguardian.com/football/premierleague/rss")
-    ucl_stories = get_stories("https://www.theguardian.com/football/championsleague/rss")
-    nhl_stories = get_stories("https://www.sportsnet.ca/hockey/nhl/feed/")
-    cycling_stories = get_stories("https://www.cyclingnews.com/rss")
+    nhl_standings = data.get("nhl_standings", {})
+    mlb_standings = data.get("mlb_standings", {})
+    pl_standings = data.get("pl_standings", {})
+    ucl_standings = data.get("ucl_standings", {})
+    mlb_stories = data.get("mlb_stories", [])
+    pl_stories = data.get("pl_stories", [])
+    ucl_stories = data.get("ucl_stories", [])
+    nhl_stories = data.get("nhl_stories", [])
+    cycling_stories = data.get("cycling_stories", [])
     cycling_calendar = get_cycling_calendar()
 
     now_str = now.strftime("%A, %B %d · %I:%M %p")
@@ -911,22 +990,17 @@ def news():
     eastern = pytz.timezone("America/Toronto")
     now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
 
-    cbc_toronto = get_stories("https://www.cbc.ca/cmlink/rss-canada-toronto", 6)
-    cbc_canada = get_stories("https://www.cbc.ca/cmlink/rss-topstories", 5)
-    globe_canada = get_stories("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/", 5)
-    bbc_world = get_stories("https://feeds.bbci.co.uk/news/world/rss.xml", 4)
-    guardian_world = get_stories("https://www.theguardian.com/world/rss", 4)
-    globe_world = get_stories("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/world/", 4)
+    data = fetch_all_news()
 
-    local_html = render_news_section([("CBC Toronto", "tag-cbc", cbc_toronto)])
+    local_html = render_news_section([("CBC Toronto", "tag-cbc", data.get("cbc_toronto", []))])
     national_html = render_news_section([
-        ("CBC", "tag-cbc", cbc_canada),
-        ("Globe & Mail", "tag-globe", globe_canada),
+        ("CBC", "tag-cbc", data.get("cbc_canada", [])),
+        ("Globe & Mail", "tag-globe", data.get("globe_canada", [])),
     ])
     global_html = render_news_section([
-        ("BBC", "tag-bbc", bbc_world),
-        ("Guardian", "tag-guardian", guardian_world),
-        ("Globe & Mail", "tag-globe", globe_world),
+        ("BBC", "tag-bbc", data.get("bbc_world", [])),
+        ("Guardian", "tag-guardian", data.get("guardian_world", [])),
+        ("Globe & Mail", "tag-globe", data.get("globe_world", [])),
     ])
 
     return f"""<!DOCTYPE html>
@@ -950,14 +1024,16 @@ def media():
     eastern = pytz.timezone("America/Toronto")
     now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
 
+    data = fetch_all_media()
+
     channels_data = []
-    for channel_name, channel_id in YOUTUBE_CHANNELS:
-        videos = get_youtube_videos(channel_id, limit=2)
+    for channel_name, _ in YOUTUBE_CHANNELS:
+        videos = data["videos"].get(channel_name, [])
         channels_data.append((channel_name, videos))
 
     podcasts_data = []
     for podcast_name, feed_url, spotify_url in PODCAST_FEEDS:
-        episodes, feed_title = get_podcast_episodes(feed_url, limit=2)
+        episodes, _ = data["podcasts"].get(podcast_name, ([], ""))
         artwork = ""
         if episodes and episodes[0].get("thumbnail"):
             artwork = episodes[0]["thumbnail"]
