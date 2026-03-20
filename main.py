@@ -708,38 +708,41 @@ def render_my_teams(teams_data):
     has_any = any(t["yesterday_game"] or t["today_game"] for t in teams_data)
     if not has_any:
         return "<p class='empty'>No recent or upcoming games</p>"
+
+    yesterday_cards = [t["yesterday_game"] for t in teams_data if t["yesterday_game"]]
+    today_cards = [t["today_game"] for t in teams_data if t["today_game"]]
+    no_game = [t for t in teams_data if not t["yesterday_game"] and not t["today_game"]]
+
     html = ""
-    for team in teams_data:
-        if team["yesterday_game"] or team["today_game"]:
-            if team["yesterday_game"] and team["today_game"]:
-                html += "<div class='scores-section-label'>Yesterday</div>"
-                html += "<div class='scores-grid'>"
-                html += render_game_card(team["yesterday_game"])
-                html += "</div>"
-                html += "<div class='scores-section-label'>Today</div>"
-                html += "<div class='scores-grid'>"
-                html += render_game_card(team["today_game"])
-                html += "</div>"
-            elif team["yesterday_game"]:
-                html += "<div class='scores-grid'>"
-                html += render_game_card(team["yesterday_game"])
-                html += "</div>"
-            elif team["today_game"]:
-                html += "<div class='scores-grid'>"
-                html += render_game_card(team["today_game"])
-                html += "</div>"
-        else:
+
+    if yesterday_cards:
+        html += "<div class='scores-section-label'>Yesterday</div>"
+        html += "<div class='scores-grid'>"
+        for game in yesterday_cards:
+            html += render_game_card(game)
+        html += "</div>"
+
+    if today_cards:
+        html += "<div class='scores-section-label'>Today</div>"
+        html += "<div class='scores-grid'>"
+        for game in today_cards:
+            html += render_game_card(game)
+        html += "</div>"
+
+    if no_game:
+        html += "<div class='scores-grid'>"
+        for team in no_game:
             html += f"""
-            <div class='scores-grid'>
-                <div class='score-card'>
-                    <div class='score-row'>
-                        <div class='score-team'>
-                            <span style='color:#999; font-size:12px;'>{team['name']}</span>
-                        </div>
+            <div class='score-card'>
+                <div class='score-row'>
+                    <div class='score-team'>
+                        <span style='color:#999; font-size:12px;'>{team['name']}</span>
                     </div>
-                    <div class='score-status'>No recent game</div>
                 </div>
+                <div class='score-status'>No recent game</div>
             </div>"""
+        html += "</div>"
+
     return html
 
 def render_nhl_standings(data):
