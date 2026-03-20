@@ -68,37 +68,84 @@ PODCAST_FEEDS = [
 ]
 
 UCI_WORLD_TOUR_2026 = [
-    ("Tour Down Under", "AU", "2026-01-20", "2026-01-25"),
-    ("UAE Tour", "AE", "2026-02-22", "2026-02-28"),
-    ("Omloop Het Nieuwsblad", "BE", "2026-02-28", "2026-02-28"),
-    ("Strade Bianche", "IT", "2026-03-07", "2026-03-07"),
-    ("Paris-Nice", "FR", "2026-03-08", "2026-03-15"),
-    ("Tirreno-Adriatico", "IT", "2026-03-11", "2026-03-17"),
-    ("Milan-San Remo", "IT", "2026-03-21", "2026-03-21"),
-    ("Volta a Catalunya", "ES", "2026-03-23", "2026-03-29"),
-    ("E3 Saxo Bank Classic", "BE", "2026-03-27", "2026-03-27"),
-    ("Gent-Wevelgem", "BE", "2026-03-29", "2026-03-29"),
-    ("Dwars door Vlaanderen", "BE", "2026-04-01", "2026-04-01"),
-    ("Tour of Flanders", "BE", "2026-04-05", "2026-04-05"),
-    ("Paris-Roubaix", "FR", "2026-04-12", "2026-04-12"),
-    ("Amstel Gold Race", "NL", "2026-04-19", "2026-04-19"),
-    ("La Flèche Wallonne", "BE", "2026-04-22", "2026-04-22"),
-    ("Liège-Bastogne-Liège", "BE", "2026-04-26", "2026-04-26"),
-    ("Tour de Romandie", "CH", "2026-04-28", "2026-05-03"),
-    ("Eschborn-Frankfurt", "DE", "2026-05-01", "2026-05-01"),
-    ("Giro d'Italia", "IT", "2026-05-09", "2026-05-31"),
-    ("Critérium du Dauphiné", "FR", "2026-06-07", "2026-06-14"),
-    ("Swiss Tour", "CH", "2026-06-14", "2026-06-21"),
-    ("Tour de France", "FR", "2026-07-04", "2026-07-26"),
-    ("Classica San Sebastián", "ES", "2026-08-01", "2026-08-01"),
-    ("Tour de Pologne", "PL", "2026-08-04", "2026-08-09"),
-    ("La Vuelta España", "ES", "2026-08-15", "2026-09-06"),
-    ("Bretagne Classic", "FR", "2026-08-30", "2026-08-30"),
-    ("Grand Prix Cycliste de Québec", "CA", "2026-09-11", "2026-09-11"),
-    ("Grand Prix Cycliste de Montréal", "CA", "2026-09-13", "2026-09-13"),
-    ("Il Lombardia", "IT", "2026-10-03", "2026-10-03"),
-    ("Gree-Tour of Guangxi", "CN", "2026-10-13", "2026-10-18"),
+    ("Tour Down Under", "AU", "2026-01-20", "2026-01-25", "tour-down-under"),
+    ("UAE Tour", "AE", "2026-02-22", "2026-02-28", "uae-tour"),
+    ("Omloop Het Nieuwsblad", "BE", "2026-02-28", "2026-02-28", "omloop-het-nieuwsblad"),
+    ("Strade Bianche", "IT", "2026-03-07", "2026-03-07", "strade-bianche"),
+    ("Paris-Nice", "FR", "2026-03-08", "2026-03-15", "paris-nice"),
+    ("Tirreno-Adriatico", "IT", "2026-03-11", "2026-03-17", "tirreno-adriatico"),
+    ("Milan-San Remo", "IT", "2026-03-21", "2026-03-21", "milano-sanremo"),
+    ("Volta a Catalunya", "ES", "2026-03-23", "2026-03-29", "volta-a-catalunya"),
+    ("E3 Saxo Bank Classic", "BE", "2026-03-27", "2026-03-27", "e3-saxo-bank-classic"),
+    ("Gent-Wevelgem", "BE", "2026-03-29", "2026-03-29", "gent-wevelgem"),
+    ("Dwars door Vlaanderen", "BE", "2026-04-01", "2026-04-01", "dwars-door-vlaanderen"),
+    ("Tour of Flanders", "BE", "2026-04-05", "2026-04-05", "ronde-van-vlaanderen"),
+    ("Paris-Roubaix", "FR", "2026-04-12", "2026-04-12", "paris-roubaix"),
+    ("Amstel Gold Race", "NL", "2026-04-19", "2026-04-19", "amstel-gold-race"),
+    ("La Flèche Wallonne", "BE", "2026-04-22", "2026-04-22", "la-fleche-wallonne"),
+    ("Liège-Bastogne-Liège", "BE", "2026-04-26", "2026-04-26", "liege-bastogne-liege"),
+    ("Tour de Romandie", "CH", "2026-04-28", "2026-05-03", "tour-de-romandie"),
+    ("Eschborn-Frankfurt", "DE", "2026-05-01", "2026-05-01", "eschborn-frankfurt"),
+    ("Giro d'Italia", "IT", "2026-05-09", "2026-05-31", "giro-d-italia"),
+    ("Critérium du Dauphiné", "FR", "2026-06-07", "2026-06-14", "criterium-du-dauphine"),
+    ("Swiss Tour", "CH", "2026-06-14", "2026-06-21", "tour-de-suisse"),
+    ("Tour de France", "FR", "2026-07-04", "2026-07-26", "tour-de-france"),
+    ("Classica San Sebastián", "ES", "2026-08-01", "2026-08-01", "clasica-de-san-sebastian"),
+    ("Tour de Pologne", "PL", "2026-08-04", "2026-08-09", "tour-de-pologne"),
+    ("La Vuelta España", "ES", "2026-08-15", "2026-09-06", "vuelta-a-espana"),
+    ("Bretagne Classic", "FR", "2026-08-30", "2026-08-30", "bretagne-classic-ouest-france"),
+    ("Grand Prix Cycliste de Québec", "CA", "2026-09-11", "2026-09-11", "gp-quebec"),
+    ("Grand Prix Cycliste de Montréal", "CA", "2026-09-13", "2026-09-13", "gp-montreal"),
+    ("Il Lombardia", "IT", "2026-10-03", "2026-10-03", "il-lombardia"),
+    ("Gree-Tour of Guangxi", "CN", "2026-10-13", "2026-10-18", "tour-of-guangxi"),
 ]
+
+def get_cycling_calendar():
+    today = date.today()
+    races = []
+    for name, country, start_str, end_str, pcs_slug in UCI_WORLD_TOUR_2026:
+        start = date.fromisoformat(start_str)
+        end = date.fromisoformat(end_str)
+        if end < today:
+            status = "completed"
+        elif start <= today <= end:
+            status = "live"
+        else:
+            status = "upcoming"
+        races.append({
+            "name": name,
+            "country": country,
+            "start": start,
+            "end": end,
+            "status": status,
+            "pcs_url": f"https://www.procyclingstats.com/race/{pcs_slug}/2026",
+        })
+    return races
+
+def render_cycling_calendar(races):
+    html = "<div class='standings'>"
+    for race in races:
+        if race["status"] == "completed":
+            continue
+        if race["start"] == race["end"]:
+            date_str = race["start"].strftime("%b %d")
+        else:
+            date_str = f"{race['start'].strftime('%b %d')} – {race['end'].strftime('%b %d')}"
+        if race["status"] == "live":
+            status_badge = "<span class='live-badge'>Live</span>"
+            row_class = "standing-row live-row"
+        else:
+            status_badge = ""
+            row_class = "standing-row"
+        flag = FLAG_HTML.get(race["country"], race["country"])
+        html += f"""
+        <div class='{row_class}'>
+            <span class='race-date'>{date_str}</span>
+            <span class='team'><a href='{race['pcs_url']}' target='_blank' class='race-link'>{race['name']}</a> {status_badge}</span>
+            <span class='race-country'>{flag}</span>
+        </div>"""
+    html += "</div>"
+    return html
 
 def get_fpl_data():
     try:
@@ -156,7 +203,6 @@ def get_fpl_data():
                 suffix = " (v)"
             return f"{name}{suffix}", pos
 
-        starter_rows = []
         by_position = {1: [], 2: [], 3: [], 4: []}
         for pick in starters:
             name, pos = format_player(pick)
@@ -188,6 +234,7 @@ def get_fpl_data():
             "by_position": by_position,
             "bench_names": bench_names,
             "auto_subs": auto_sub_strs,
+            "current_event": current_event,
         }
     except Exception as e:
         return None
@@ -196,16 +243,14 @@ def render_fpl(fpl):
     if not fpl:
         return "<p class='empty'>FPL data unavailable</p>"
 
-    position_order = [
-        (1, "GK"), (2, "DEF"), (3, "MID"), (4, "FWD")
-    ]
+    position_order = [(1, "GK"), (2, "DEF"), (3, "MID"), (4, "FWD")]
 
     squad_html = ""
     for pos_id, pos_label in position_order:
         players = fpl["by_position"].get(pos_id, [])
         if not players:
             continue
-        squad_html += f"<div class='fpl-position-row'>"
+        squad_html += "<div class='fpl-position-row'>"
         for name, pos in players:
             is_captain = "©" in name
             is_vice = "(v)" in name
@@ -219,6 +264,7 @@ def render_fpl(fpl):
         squad_html += "</div>"
 
     bench_html = " · ".join(fpl["bench_names"]) if fpl["bench_names"] else ""
+
     auto_sub_html = ""
     if fpl["auto_subs"]:
         auto_sub_html = f"<div class='fpl-auto-subs'>Auto subs: {' · '.join(fpl['auto_subs'])}</div>"
@@ -227,10 +273,12 @@ def render_fpl(fpl):
     if fpl["deadline_str"] and fpl["next_gw_name"]:
         deadline_html = f"<div class='fpl-deadline'>Next deadline · {fpl['next_gw_name']}: {fpl['deadline_str']}</div>"
 
+    team_url = f"https://fantasy.premierleague.com/entry/{FPL_TEAM_ID}/event/{fpl['current_event']}"
+
     return f"""
     <div class='fpl-widget'>
         <div class='fpl-header'>
-            <div class='fpl-gw'>{fpl['gw_name']}</div>
+            <div class='fpl-gw'><a href='{team_url}' target='_blank' class='fpl-team-link'>{fpl['gw_name']} ↗</a></div>
             {deadline_html}
         </div>
         <div class='fpl-stats'>
@@ -261,52 +309,6 @@ def render_fpl(fpl):
         {auto_sub_html}
         <div class='fpl-bench'>Bench: {bench_html}</div>
     </div>"""
-
-def get_cycling_calendar():
-    today = date.today()
-    races = []
-    for name, country, start_str, end_str in UCI_WORLD_TOUR_2026:
-        start = date.fromisoformat(start_str)
-        end = date.fromisoformat(end_str)
-        if end < today:
-            status = "completed"
-        elif start <= today <= end:
-            status = "live"
-        else:
-            status = "upcoming"
-        races.append({
-            "name": name,
-            "country": country,
-            "start": start,
-            "end": end,
-            "status": status
-        })
-    return races
-
-def render_cycling_calendar(races):
-    html = "<div class='standings'>"
-    for race in races:
-        if race["status"] == "completed":
-            continue
-        if race["start"] == race["end"]:
-            date_str = race["start"].strftime("%b %d")
-        else:
-            date_str = f"{race['start'].strftime('%b %d')} – {race['end'].strftime('%b %d')}"
-        if race["status"] == "live":
-            status_badge = "<span class='live-badge'>Live</span>"
-            row_class = "standing-row live-row"
-        else:
-            status_badge = ""
-            row_class = "standing-row"
-        flag = FLAG_HTML.get(race["country"], race["country"])
-        html += f"""
-        <div class='{row_class}'>
-            <span class='race-date'>{date_str}</span>
-            <span class='team'>{race['name']} {status_badge}</span>
-            <span class='race-country'>{flag}</span>
-        </div>"""
-    html += "</div>"
-    return html
 
 def get_weather(lat=43.70, lon=-79.42):
     try:
@@ -558,7 +560,6 @@ def fetch_all_sports(today, yesterday):
         "mlb_standings": (get_standings, ("baseball", "mlb")),
         "pl_standings": (get_standings, ("soccer", "eng.1")),
         "ucl_standings": (get_standings, ("soccer", "uefa.champions")),
-        "weather": (get_weather, ()),
         "fpl": (get_fpl_data, ()),
         "mlb_stories": (get_stories, ("https://www.sportsnet.ca/mlb/feed/",)),
         "pl_stories": (get_stories, ("https://www.theguardian.com/football/premierleague/rss",)),
@@ -577,7 +578,7 @@ def fetch_all_sports(today, yesterday):
                 results[key] = [] if "standings" not in key else {}
     return results
 
-def fetch_all_news():
+def fetch_all_news(weather=None):
     tasks = {
         "cbc_toronto": (get_stories, ("https://www.cbc.ca/cmlink/rss-canada-toronto", 6)),
         "cbc_canada": (get_stories, ("https://www.cbc.ca/cmlink/rss-topstories", 5)),
@@ -585,16 +586,17 @@ def fetch_all_news():
         "bbc_world": (get_stories, ("https://feeds.bbci.co.uk/news/world/rss.xml", 4)),
         "guardian_world": (get_stories, ("https://www.theguardian.com/world/rss", 4)),
         "globe_world": (get_stories, ("https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/world/", 4)),
+        "weather": (get_weather, ()),
     }
     results = {}
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=7) as executor:
         futures = {executor.submit(fn, *args): key for key, (fn, args) in tasks.items()}
         for future in as_completed(futures):
             key = futures[future]
             try:
                 results[key] = future.result()
             except:
-                results[key] = []
+                results[key] = [] if key != "weather" else None
     return results
 
 def fetch_all_media():
@@ -1032,6 +1034,8 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .pts { width: 30px; text-align: center; font-weight: 500; font-size: 12px; flex-shrink: 0; }
 .race-date { font-size: 11px; color: #999; white-space: nowrap; min-width: 80px; }
 .race-country { font-size: 16px; flex-shrink: 0; }
+.race-link { color: #111; text-decoration: none; }
+.race-link:hover { text-decoration: underline; }
 .live-badge { background: #fee2e2; color: #991b1b; font-size: 9px; font-weight: 500; padding: 1px 6px; border-radius: 20px; margin-left: 6px; }
 .athletic-link { display: flex; align-items: center; gap: 8px; padding: 8px 0 2px; text-decoration: none; }
 .athletic-link span { font-size: 12px; color: #999; }
@@ -1062,6 +1066,8 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .fpl-widget { background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 12px 14px; }
 .fpl-header { margin-bottom: 12px; }
 .fpl-gw { font-size: 14px; font-weight: 500; color: #111; }
+.fpl-team-link { color: #111; text-decoration: none; }
+.fpl-team-link:hover { text-decoration: underline; }
 .fpl-deadline { font-size: 11px; color: #999; margin-top: 2px; }
 .fpl-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
 .fpl-stat { background: #f5f5f5; border-radius: 8px; padding: 8px; text-align: center; }
@@ -1115,12 +1121,14 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .empty { color: #888; }
   .fpl-widget { background: #1c1c1e; border-color: #2c2c2e; }
   .fpl-gw { color: #eee; }
+  .fpl-team-link { color: #eee; }
   .fpl-stat { background: #2c2c2e; }
   .fpl-stat-value { color: #eee; }
   .fpl-player { background: #1a2a3a; }
   .fpl-player-name { color: #eee; }
   .fpl-captain { background: #eee; color: #111; }
   .fpl-bench { color: #888; }
+  .race-link { color: #eee; }
 }
 """
 
@@ -1133,9 +1141,9 @@ HEAD = """<meta charset='utf-8'><meta name='viewport' content='width=device-widt
 <link href='https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap' rel='stylesheet'>
 <title>Tyler's Briefing</title>"""
 
-NAV_SPORTS = "<div class='nav'><a href='/' class='active'>Sports</a><a href='/news'>News</a><a href='/media'>Media</a></div>"
-NAV_NEWS = "<div class='nav'><a href='/'>Sports</a><a href='/news' class='active'>News</a><a href='/media'>Media</a></div>"
-NAV_MEDIA = "<div class='nav'><a href='/'>Sports</a><a href='/news'>News</a><a href='/media' class='active'>Media</a></div>"
+NAV_NEWS = "<div class='nav'><a href='/' class='active'>News</a><a href='/sports'>Sports</a><a href='/media'>Media</a></div>"
+NAV_SPORTS = "<div class='nav'><a href='/'>News</a><a href='/sports' class='active'>Sports</a><a href='/media'>Media</a></div>"
+NAV_MEDIA = "<div class='nav'><a href='/'>News</a><a href='/sports'>Sports</a><a href='/media' class='active'>Media</a></div>"
 
 CLOCK_AND_WEATHER_JS = """
 <script>
@@ -1190,6 +1198,46 @@ def weather_api():
         return jsonify({"error": "unavailable"})
 
 @app.route("/")
+def news():
+    eastern = pytz.timezone("America/Toronto")
+    now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
+
+    data = fetch_all_news()
+
+    weather = data.get("weather")
+    local_html = render_news_section([("CBC Toronto", "tag-cbc", data.get("cbc_toronto", []))])
+    national_html = render_news_section([
+        ("CBC", "tag-cbc", data.get("cbc_canada", [])),
+        ("Globe & Mail", "tag-globe", data.get("globe_canada", [])),
+    ])
+    global_html = render_news_section([
+        ("BBC", "tag-bbc", data.get("bbc_world", [])),
+        ("Guardian", "tag-guardian", data.get("guardian_world", [])),
+        ("Globe & Mail", "tag-globe", data.get("globe_world", [])),
+    ])
+
+    return f"""<!DOCTYPE html>
+<html><head>{HEAD}<style>{CSS}</style></head>
+<body>
+<div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now}</div></div>
+{NAV_NEWS}
+<div class='body'>
+<div class='section-label'>Weather</div>
+{render_weather(weather)}
+<hr class='news-divider'>
+<div class='section-label'>Local · Toronto</div>
+{local_html}
+<hr class='news-divider'>
+<div class='section-label'>National · Canada</div>
+{national_html}
+<hr class='news-divider'>
+<div class='section-label'>Global</div>
+{global_html}
+</div>
+{CLOCK_AND_WEATHER_JS}
+</body></html>"""
+
+@app.route("/sports")
 def sports():
     eastern = pytz.timezone("America/Toronto")
     now = datetime.now(eastern)
@@ -1198,7 +1246,6 @@ def sports():
 
     data = fetch_all_sports(today, yesterday)
 
-    weather = data.get("weather")
     fpl = data.get("fpl")
     mlb_yesterday = data.get("mlb_yesterday", [])
     mlb_today = data.get("mlb_today", [])
@@ -1245,9 +1292,6 @@ def sports():
 <div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now_str}</div></div>
 {NAV_SPORTS}
 <div class='body'>
-<div class='section-label'>Weather</div>
-{render_weather(weather)}
-<hr class='sport-divider'>
 <div class='section-label'>My Teams</div>
 {render_my_teams(teams_data)}
 <hr class='sport-divider'>
@@ -1266,6 +1310,8 @@ def sports():
 <div class='section-label'>Premier League · Headlines</div>
 {render_stories(pl_stories, 'PL', 'tag-pl')}
 {athletic_link('https://www.nytimes.com/athletic/football/premier-league/', 'Premier League')}
+<div class='section-label'>FPL · {fpl['gw_name'] if fpl else 'Fantasy Premier League'}</div>
+{render_fpl(fpl)}
 <hr class='sport-divider'>
 <div class='section-label'>Champions League · Scores</div>
 {render_scores(ucl_yesterday, ucl_today)}
@@ -1283,50 +1329,11 @@ def sports():
 {render_stories(nhl_stories, 'NHL', 'tag-nhl')}
 {athletic_link('https://theathletic.com/nhl/', 'NHL')}
 <hr class='sport-divider'>
-<div class='section-label'>FPL · {fpl['gw_name'] if fpl else 'Fantasy Premier League'}</div>
-{render_fpl(fpl)}
-<hr class='sport-divider'>
 <div class='section-label'>Cycling · Upcoming Races</div>
 {render_cycling_calendar(cycling_calendar)}
 <div class='section-label'>Cycling · Headlines</div>
 {render_stories(cycling_stories, 'Cycling', 'tag-cycling')}
 {athletic_link('https://theathletic.com/cycling/', 'Cycling')}
-</div>
-{CLOCK_AND_WEATHER_JS}
-</body></html>"""
-
-@app.route("/news")
-def news():
-    eastern = pytz.timezone("America/Toronto")
-    now = datetime.now(eastern).strftime("%A, %B %d · %I:%M %p")
-
-    data = fetch_all_news()
-
-    local_html = render_news_section([("CBC Toronto", "tag-cbc", data.get("cbc_toronto", []))])
-    national_html = render_news_section([
-        ("CBC", "tag-cbc", data.get("cbc_canada", [])),
-        ("Globe & Mail", "tag-globe", data.get("globe_canada", [])),
-    ])
-    global_html = render_news_section([
-        ("BBC", "tag-bbc", data.get("bbc_world", [])),
-        ("Guardian", "tag-guardian", data.get("guardian_world", [])),
-        ("Globe & Mail", "tag-globe", data.get("globe_world", [])),
-    ])
-
-    return f"""<!DOCTYPE html>
-<html><head>{HEAD}<style>{CSS}</style></head>
-<body>
-<div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now}</div></div>
-{NAV_NEWS}
-<div class='body'>
-<div class='section-label'>Local · Toronto</div>
-{local_html}
-<hr class='news-divider'>
-<div class='section-label'>National · Canada</div>
-{national_html}
-<hr class='news-divider'>
-<div class='section-label'>Global</div>
-{global_html}
 </div>
 {CLOCK_AND_WEATHER_JS}
 </body></html>"""
