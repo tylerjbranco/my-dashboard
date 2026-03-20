@@ -713,11 +713,9 @@ def render_my_teams(teams_data):
     has_any = any(t["yesterday_game"] or t["today_game"] for t in teams_data)
     if not has_any:
         return "<p class='empty'>No recent or upcoming games</p>"
-
     yesterday_cards = [t["yesterday_game"] for t in teams_data if t["yesterday_game"]]
     today_cards = [t["today_game"] for t in teams_data if t["today_game"]]
     no_game = [t for t in teams_data if not t["yesterday_game"] and not t["today_game"]]
-
     html = ""
     if yesterday_cards:
         html += "<div class='scores-section-label'>Yesterday</div>"
@@ -1095,11 +1093,10 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .fixture-calendar.open { display: block; }
 .fixture-date-group { margin-bottom: 10px; }
 .fixture-date-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-.fixture-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid #f0f0f0; font-size: 12px; }
+.fixture-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 0.5px solid #f0f0f0; font-size: 12px; }
 .fixture-row:last-child { border-bottom: none; }
-.fixture-emoji { font-size: 13px; flex-shrink: 0; }
 .fixture-logo { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
-.fixture-teams { flex: 1; color: #111; }
+.fixture-teams { flex: 1; color: #111; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .fixture-time { font-size: 11px; color: #999; white-space: nowrap; }
 .fixture-loading { font-size: 12px; color: #999; padding: 8px 0; }
 
@@ -1187,20 +1184,21 @@ if (navigator.geolocation) {
             .then(r => r.json())
             .then(data => {
                 if (data.error) return;
-                document.querySelector('.weather-temp').textContent = data.current_temp + '°C';
+                document.querySelector('.weather-temp').textContent = data.current_temp + '\u00b0C';
                 document.querySelector('.weather-icon').textContent = data.current_icon;
-                document.querySelector('.weather-desc').innerHTML = data.current_desc + ' · <span id="weather-city">' + data.city + '</span>';
-                document.querySelector('.weather-meta').textContent = 'Feels like ' + data.feels_like + '°C · High ' + data.today_high + '° Low ' + data.today_low + '° · ' + data.today_precip + '% precip';
+                document.querySelector('.weather-desc').innerHTML = data.current_desc + ' \u00b7 <span id="weather-city">' + data.city + '</span>';
+                document.querySelector('.weather-meta').textContent = 'Feels like ' + data.feels_like + '\u00b0C \u00b7 High ' + data.today_high + '\u00b0 Low ' + data.today_low + '\u00b0 \u00b7 ' + data.today_precip + '% precip';
                 const forecastEl = document.getElementById('weather-forecast');
                 if (forecastEl && data.days) {
-                    forecastEl.innerHTML = data.days.map(day => `
-                        <div class='forecast-day'>
-                            <div class='forecast-name'>${day.name}</div>
-                            <div class='forecast-icon'>${day.icon}</div>
-                            <div class='forecast-desc'>${day.desc}</div>
-                            <div class='forecast-temps'>${day.high}° / ${day.low}°</div>
-                            <div class='forecast-precip'>${day.precip}% precip</div>
-                        </div>`).join('');
+                    forecastEl.innerHTML = data.days.map(day =>
+                        '<div class="forecast-day">' +
+                        '<div class="forecast-name">' + day.name + '</div>' +
+                        '<div class="forecast-icon">' + day.icon + '</div>' +
+                        '<div class="forecast-desc">' + day.desc + '</div>' +
+                        '<div class="forecast-temps">' + day.high + '\u00b0 / ' + day.low + '\u00b0</div>' +
+                        '<div class="forecast-precip">' + day.precip + '% precip</div>' +
+                        '</div>'
+                    ).join('');
                 }
             });
     }, function() {});
@@ -1219,32 +1217,31 @@ function toggleFixtures() {
     cal.classList.add('open');
     if (cal.dataset.loaded) return;
     cal.dataset.loaded = 'true';
-    cal.innerHTML = "<div class='fixture-loading'>Loading fixtures...</div>";
+    cal.innerHTML = '<div class="fixture-loading">Loading fixtures...</div>';
     fetch('/fixtures')
         .then(r => r.json())
         .then(data => {
             if (!data.dates || data.dates.length === 0) {
-                cal.innerHTML = "<p class='empty'>No upcoming fixtures found</p>";
+                cal.innerHTML = '<p class="empty">No upcoming fixtures found</p>';
                 return;
             }
             let html = '';
             data.dates.forEach(group => {
-                html += `<div class='fixture-date-group'>
-                    <div class='fixture-date-label'>${group.label}</div>`;
-               group.games.forEach(game => {
-                    const myLogo = game.my_logo ? `<img src="${game.my_logo}" class="fixture-logo" alt="">` : '';
-                    const oppLogo = game.opp_logo ? `<img src="${game.opp_logo}" class="fixture-logo" alt="">` : '';
-                    html += `<div class='fixture-row'>
-                        <span class='fixture-teams'>${myLogo} ${game.my_name} ${game.versus} ${oppLogo} ${game.opp_name}</span>
-                        <span class='fixture-time'>${game.time}</span>
-                    </div>`;
+                html += '<div class="fixture-date-group"><div class="fixture-date-label">' + group.label + '</div>';
+                group.games.forEach(game => {
+                    const myLogo = game.my_logo ? '<img src="' + game.my_logo + '" class="fixture-logo" alt="">' : '';
+                    const oppLogo = game.opp_logo ? '<img src="' + game.opp_logo + '" class="fixture-logo" alt="">' : '';
+                    html += '<div class="fixture-row">' +
+                        '<span class="fixture-teams">' + myLogo + ' ' + game.my_name + ' ' + game.versus + ' ' + oppLogo + ' ' + game.opp_name + '</span>' +
+                        '<span class="fixture-time">' + game.time + '</span>' +
+                        '</div>';
                 });
                 html += '</div>';
             });
             cal.innerHTML = html;
         })
         .catch(() => {
-            cal.innerHTML = "<p class='empty'>Fixtures unavailable</p>";
+            cal.innerHTML = '<p class="empty">Fixtures unavailable</p>';
         });
 }
 </script>
@@ -1286,58 +1283,53 @@ def fixtures():
                     competitors = competition["competitors"]
                     home_team = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
                     away_team = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
-                    home_name = home_team['team'].get('displayName', '') or f"{home_team['team'].get('location', '')} {home_team['team'].get('name', '')}".strip()
-                    away_name = away_team['team'].get('displayName', '') or f"{away_team['team'].get('location', '')} {away_team['team'].get('name', '')}".strip()
+
+                    home_name = home_team["team"].get("displayName", "") or f"{home_team['team'].get('location', '')} {home_team['team'].get('name', '')}".strip()
+                    away_name = away_team["team"].get("displayName", "") or f"{away_team['team'].get('location', '')} {away_team['team'].get('name', '')}".strip()
                     home_full = f"{home_team['team'].get('location', '')} {home_team['team'].get('name', '')}".strip()
                     away_full = f"{away_team['team'].get('location', '')} {away_team['team'].get('name', '')}".strip()
+                    home_logo = home_team["team"].get("logo", "")
+                    away_logo = away_team["team"].get("logo", "")
 
                     is_my_team = False
                     for kw in all_keywords:
-                        if (kw.lower() in home_full.lower() or kw.lower() in away_full.lower()):
+                        if kw.lower() in home_full.lower() or kw.lower() in away_full.lower():
                             is_my_team = True
                             break
                     if not is_my_team:
                         continue
 
+                    my_team_is_home = any(kw.lower() in home_full.lower() for team in MY_TEAMS for kw in team["keywords"])
+
+                    if my_team_is_home:
+                        my_name = home_name
+                        my_logo = home_logo
+                        opp_name = away_name
+                        opp_logo = away_logo
+                        versus = "vs"
+                    else:
+                        my_name = away_name
+                        my_logo = away_logo
+                        opp_name = home_name
+                        opp_logo = home_logo
+                        versus = "@"
+
                     date_str = game["date"]
                     dt_utc = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
                     dt_eastern = dt_utc.astimezone(eastern)
                     date_key = dt_eastern.date().isoformat()
-                    time_str = dt_eastern.strftime("%-I:%M %p") if hasattr(dt_eastern, 'strftime') else dt_eastern.strftime("%I:%M %p").lstrip("0")
+                    time_str = dt_eastern.strftime("%I:%M %p").lstrip("0")
 
                     if date_key not in by_date:
                         by_date[date_key] = []
-                   home_logo = home_team["team"].get("logo", "")
-away_logo = away_team["team"].get("logo", "")
-
-# Figure out which team is "my team" and format accordingly
-my_team_is_home = False
-for kw in all_keywords:
-    if kw.lower() in home_full.lower():
-        my_team_is_home = True
-        break
-
-if my_team_is_home:
-    my_name = home_name
-    my_logo = home_logo
-    opp_name = away_name
-    opp_logo = away_logo
-    versus = "vs"
-else:
-    my_name = away_name
-    my_logo = away_logo
-    opp_name = home_name
-    opp_logo = home_logo
-    versus = "@"
-
-by_date[date_key].append({
-    "my_name": my_name,
-    "my_logo": my_logo,
-    "opp_name": opp_name,
-    "opp_logo": opp_logo,
-    "versus": versus,
-    "time": time_str,
-})
+                    by_date[date_key].append({
+                        "my_name": my_name,
+                        "my_logo": my_logo,
+                        "opp_name": opp_name,
+                        "opp_logo": opp_logo,
+                        "versus": versus,
+                        "time": time_str,
+                    })
                 except:
                     continue
 
