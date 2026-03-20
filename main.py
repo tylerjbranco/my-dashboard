@@ -1340,10 +1340,10 @@ def fixtures():
             days_away = (dt - today).days
             if days_away == 1:
                 label = f"Tomorrow · {dt.strftime('%a %b %d')}"
-        else:
-            label = dt.strftime("%a %b %d")
-        sorted_games = sorted(by_date[d], key=lambda g: g["sort_time"])
-        output.append({"label": label, "games": sorted_games})
+            else:
+                label = dt.strftime("%a %b %d")
+            sorted_games = sorted(by_date[d], key=lambda g: g.get("sort_time", "99:99"))
+            output.append({"label": label, "games": sorted_games})
 
         return jsonify({"dates": output})
     except Exception as e:
