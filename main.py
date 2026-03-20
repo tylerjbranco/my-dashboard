@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import feedparser
 import requests
 from datetime import datetime, date, timedelta
@@ -140,9 +140,9 @@ def render_cycling_calendar(races):
     html += "</div>"
     return html
 
-def get_weather():
+def get_weather(lat=43.70, lon=-79.42):
     try:
-        url = "https://api.open-meteo.com/v1/forecast?latitude=43.70&longitude=-79.42&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=America%2FToronto&forecast_days=4"
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=4"
         response = requests.get(url, timeout=5)
         data = response.json()
         weather_codes = {
@@ -185,7 +185,20 @@ def get_weather():
     except:
         return None
 
-def render_weather(w):
+def get_city_name(lat, lon):
+    try:
+        url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json"
+        headers = {"User-Agent": "TylersBriefing/1.0"}
+        response = requests.get(url, timeout=5, headers=headers)
+        data = response.json()
+        address = data.get("address", {})
+        city = (address.get("city") or address.get("town") or
+                address.get("village") or address.get("municipality") or "Your Location")
+        return city
+    except:
+        return "Your Location"
+
+def render_weather(w, city="Toronto"):
     if not w:
         return "<p class='empty'>Weather unavailable</p>"
     forecast_html = ""
@@ -199,18 +212,20 @@ def render_weather(w):
             <div class='forecast-precip'>{day['precip']}% precip</div>
         </div>"""
     return f"""
-    <div class='weather-widget'>
+    <div class='weather-widget' id='weather-widget'>
         <div class='weather-current'>
             <div class='weather-main'>
                 <span class='weather-icon'>{w['current_icon']}</span>
                 <span class='weather-temp'>{w['current_temp']}°C</span>
             </div>
             <div class='weather-details'>
-                <div class='weather-desc'>{w['current_desc']}</div>
+                <div class='weather-desc'>{w['current_desc']} · <span id='weather-city'>{city}</span></div>
                 <div class='weather-meta'>Feels like {w['feels_like']}°C · High {w['today_high']}° Low {w['today_low']}° · {w['today_precip']}% precip</div>
             </div>
         </div>
-        <div class='weather-forecast'>{forecast_html}</div>
+        <div class='weather-forecast' id='weather-forecast'>
+            {forecast_html}
+        </div>
     </div>"""
 
 def get_scores(sport, league, for_date=None):
@@ -922,6 +937,61 @@ NAV_SPORTS = "<div class='nav'><a href='/' class='active'>Sports</a><a href='/ne
 NAV_NEWS = "<div class='nav'><a href='/'>Sports</a><a href='/news' class='active'>News</a><a href='/media'>Media</a></div>"
 NAV_MEDIA = "<div class='nav'><a href='/'>Sports</a><a href='/news'>News</a><a href='/media' class='active'>Media</a></div>"
 
+CLOCK_AND_WEATHER_JS = """
+<script>
+// Update clock with local time
+function updateClock() {
+    const now = new Date();
+    const options = { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
+    const timeStr = now.toLocaleString('en-CA', options).replace(',', ' ·');
+    document.querySelectorAll('.date').forEach(el => el.textContent = timeStr);
+}
+updateClock();
+
+// Update weather based on location
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        fetch('/weather?lat=' + lat + '&lon=' + lon)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) return;
+                document.getElementById('weather-city').textContent = data.city;
+                document.querySelector('.weather-temp').textContent = data.current_temp + '°C';
+                document.querySelector('.weather-icon').textContent = data.current_icon;
+                document.querySelector('.weather-desc').innerHTML = data.current_desc + ' · <span id="weather-city">' + data.city + '</span>';
+                document.querySelector('.weather-meta').textContent = 'Feels like ' + data.feels_like + '°C · High ' + data.today_high + '° Low ' + data.today_low + '° · ' + data.today_precip + '% precip';
+                const forecastEl = document.getElementById('weather-forecast');
+                if (forecastEl && data.days) {
+                    forecastEl.innerHTML = data.days.map(day => `
+                        <div class='forecast-day'>
+                            <div class='forecast-name'>${day.name}</div>
+                            <div class='forecast-icon'>${day.icon}</div>
+                            <div class='forecast-desc'>${day.desc}</div>
+                            <div class='forecast-temps'>${day.high}° / ${day.low}°</div>
+                            <div class='forecast-precip'>${day.precip}% precip</div>
+                        </div>`).join('');
+                }
+            });
+    }, function() {});
+}
+</script>
+"""
+
+@app.route("/weather")
+def weather_api():
+    try:
+        lat = float(request.args.get("lat", 43.70))
+        lon = float(request.args.get("lon", -79.42))
+        w = get_weather(lat, lon)
+        city = get_city_name(lat, lon)
+        if not w:
+            return jsonify({"error": "unavailable"})
+        return jsonify({**w, "city": city})
+    except:
+        return jsonify({"error": "unavailable"})
+
 @app.route("/")
 def sports():
     eastern = pytz.timezone("America/Toronto")
@@ -977,7 +1047,7 @@ def sports():
 <div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now_str}</div></div>
 {NAV_SPORTS}
 <div class='body'>
-<div class='section-label'>Toronto Weather</div>
+<div class='section-label'>Weather</div>
 {render_weather(weather)}
 <hr class='sport-divider'>
 <div class='section-label'>My Teams</div>
@@ -1020,7 +1090,9 @@ def sports():
 <div class='section-label'>Cycling · Headlines</div>
 {render_stories(cycling_stories, 'Cycling', 'tag-cycling')}
 {athletic_link('https://theathletic.com/cycling/', 'Cycling')}
-</div></body></html>"""
+</div>
+{CLOCK_AND_WEATHER_JS}
+</body></html>"""
 
 @app.route("/news")
 def news():
@@ -1054,7 +1126,9 @@ def news():
 <hr class='news-divider'>
 <div class='section-label'>Global</div>
 {global_html}
-</div></body></html>"""
+</div>
+{CLOCK_AND_WEATHER_JS}
+</body></html>"""
 
 @app.route("/media")
 def media():
@@ -1095,7 +1169,9 @@ def media():
 <hr class='news-divider'>
 <div class='section-label'>Podcasts</div>
 {render_podcasts(podcasts_data)}
-</div></body></html>"""
+</div>
+{CLOCK_AND_WEATHER_JS}
+</body></html>"""
 
 @app.route("/manifest.json")
 def manifest():
