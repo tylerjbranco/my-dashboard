@@ -1329,6 +1329,7 @@ def fixtures():
                         "opp_logo": opp_logo,
                         "versus": versus,
                         "time": time_str,
+                        "sort_time": dt_eastern.strftime("%H:%M"),
                     })
                 except:
                     continue
@@ -1339,9 +1340,10 @@ def fixtures():
             days_away = (dt - today).days
             if days_away == 1:
                 label = f"Tomorrow · {dt.strftime('%a %b %d')}"
-            else:
-                label = dt.strftime("%a %b %d")
-            output.append({"label": label, "games": by_date[d]})
+        else:
+            label = dt.strftime("%a %b %d")
+        sorted_games = sorted(by_date[d], key=lambda g: g["sort_time"])
+        output.append({"label": label, "games": sorted_games})
 
         return jsonify({"dates": output})
     except Exception as e:
