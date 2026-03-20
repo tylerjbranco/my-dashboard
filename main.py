@@ -7,6 +7,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 app = Flask(__name__)
 
+FPL_TEAM_ID = 27088
+
 NHL_DIVISIONS = {
     "Atlantic": ["Bruins", "Sabres", "Red Wings", "Panthers", "Canadiens", "Senators", "Lightning", "Maple Leafs"],
     "Metropolitan": ["Hurricanes", "Blue Jackets", "Devils", "Islanders", "Rangers", "Flyers", "Penguins", "Capitals"],
@@ -97,6 +99,168 @@ UCI_WORLD_TOUR_2026 = [
     ("Il Lombardia", "IT", "2026-10-03", "2026-10-03"),
     ("Gree-Tour of Guangxi", "CN", "2026-10-13", "2026-10-18"),
 ]
+
+def get_fpl_data():
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+
+        bootstrap = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/", headers=headers, timeout=10).json()
+        entry = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/", headers=headers, timeout=10).json()
+
+        current_event = entry.get("current_event", 1)
+        picks_data = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/event/{current_event}/picks/", headers=headers, timeout=10).json()
+
+        player_map = {p["id"]: p for p in bootstrap.get("elements", [])}
+        events = bootstrap.get("events", [])
+
+        current_gw = next((e for e in events if e.get("is_current")), None)
+        next_gw = next((e for e in events if e.get("is_next")), None)
+        active_gw = current_gw or next_gw
+
+        deadline_str = ""
+        next_gw_name = ""
+        if next_gw:
+            deadline_raw = next_gw.get("deadline_time", "")
+            next_gw_name = next_gw.get("name", "")
+            if deadline_raw:
+                eastern = pytz.timezone("America/Toronto")
+                dt = datetime.fromisoformat(deadline_raw.replace("Z", "+00:00"))
+                dt_eastern = dt.astimezone(eastern)
+                deadline_str = dt_eastern.strftime("%a %b %d · %I:%M %p")
+
+        gw_name = active_gw.get("name", f"Gameweek {current_event}") if active_gw else f"Gameweek {current_event}"
+        gw_points = entry.get("summary_event_points", 0)
+        gw_rank = entry.get("summary_event_rank", 0)
+        overall_points = entry.get("summary_overall_points", 0)
+        overall_rank = entry.get("summary_overall_rank", 0)
+
+        history = picks_data.get("entry_history", {})
+        team_value = history.get("value", 0) / 10
+        bank = history.get("bank", 0) / 10
+        points_on_bench = history.get("points_on_bench", 0)
+
+        picks = picks_data.get("picks", [])
+        starters = [p for p in picks if p["position"] <= 11]
+        bench = [p for p in picks if p["position"] > 11]
+
+        position_labels = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
+
+        def format_player(pick):
+            player = player_map.get(pick["element"], {})
+            name = player.get("web_name", "Unknown")
+            pos = position_labels.get(pick["element_type"], "?")
+            suffix = ""
+            if pick["is_captain"]:
+                suffix = " ©"
+            elif pick["is_vice_captain"]:
+                suffix = " (v)"
+            return f"{name}{suffix}", pos
+
+        starter_rows = []
+        by_position = {1: [], 2: [], 3: [], 4: []}
+        for pick in starters:
+            name, pos = format_player(pick)
+            by_position[pick["element_type"]].append((name, pos))
+
+        bench_names = []
+        for pick in bench:
+            name, pos = format_player(pick)
+            bench_names.append(f"{name} ({pos})")
+
+        auto_subs = picks_data.get("automatic_subs", [])
+        auto_sub_strs = []
+        for sub in auto_subs:
+            player_in = player_map.get(sub["element_in"], {}).get("web_name", "?")
+            player_out = player_map.get(sub["element_out"], {}).get("web_name", "?")
+            auto_sub_strs.append(f"{player_in} ↔ {player_out}")
+
+        return {
+            "gw_name": gw_name,
+            "next_gw_name": next_gw_name,
+            "deadline_str": deadline_str,
+            "gw_points": gw_points,
+            "gw_rank": f"{gw_rank:,}",
+            "overall_points": overall_points,
+            "overall_rank": f"{overall_rank:,}",
+            "team_value": f"£{team_value:.1f}m",
+            "bank": f"£{bank:.1f}m",
+            "points_on_bench": points_on_bench,
+            "by_position": by_position,
+            "bench_names": bench_names,
+            "auto_subs": auto_sub_strs,
+        }
+    except Exception as e:
+        return None
+
+def render_fpl(fpl):
+    if not fpl:
+        return "<p class='empty'>FPL data unavailable</p>"
+
+    position_order = [
+        (1, "GK"), (2, "DEF"), (3, "MID"), (4, "FWD")
+    ]
+
+    squad_html = ""
+    for pos_id, pos_label in position_order:
+        players = fpl["by_position"].get(pos_id, [])
+        if not players:
+            continue
+        squad_html += f"<div class='fpl-position-row'>"
+        for name, pos in players:
+            is_captain = "©" in name
+            is_vice = "(v)" in name
+            badge = ""
+            if is_captain:
+                badge = "<span class='fpl-captain'>C</span>"
+            elif is_vice:
+                badge = "<span class='fpl-vice'>V</span>"
+            clean_name = name.replace(" ©", "").replace(" (v)", "")
+            squad_html += f"<div class='fpl-player'>{badge}<span class='fpl-player-name'>{clean_name}</span><span class='fpl-pos-badge'>{pos_label}</span></div>"
+        squad_html += "</div>"
+
+    bench_html = " · ".join(fpl["bench_names"]) if fpl["bench_names"] else ""
+    auto_sub_html = ""
+    if fpl["auto_subs"]:
+        auto_sub_html = f"<div class='fpl-auto-subs'>Auto subs: {' · '.join(fpl['auto_subs'])}</div>"
+
+    deadline_html = ""
+    if fpl["deadline_str"] and fpl["next_gw_name"]:
+        deadline_html = f"<div class='fpl-deadline'>Next deadline · {fpl['next_gw_name']}: {fpl['deadline_str']}</div>"
+
+    return f"""
+    <div class='fpl-widget'>
+        <div class='fpl-header'>
+            <div class='fpl-gw'>{fpl['gw_name']}</div>
+            {deadline_html}
+        </div>
+        <div class='fpl-stats'>
+            <div class='fpl-stat'>
+                <div class='fpl-stat-label'>GW Points</div>
+                <div class='fpl-stat-value'>{fpl['gw_points']}</div>
+                <div class='fpl-stat-sub'>Rank {fpl['gw_rank']}</div>
+            </div>
+            <div class='fpl-stat'>
+                <div class='fpl-stat-label'>Overall</div>
+                <div class='fpl-stat-value'>{fpl['overall_points']}</div>
+                <div class='fpl-stat-sub'>Rank {fpl['overall_rank']}</div>
+            </div>
+            <div class='fpl-stat'>
+                <div class='fpl-stat-label'>Team Value</div>
+                <div class='fpl-stat-value'>{fpl['team_value']}</div>
+                <div class='fpl-stat-sub'>Bank {fpl['bank']}</div>
+            </div>
+            <div class='fpl-stat'>
+                <div class='fpl-stat-label'>Bench Pts</div>
+                <div class='fpl-stat-value'>{fpl['points_on_bench']}</div>
+                <div class='fpl-stat-sub'>&nbsp;</div>
+            </div>
+        </div>
+        <div class='fpl-squad'>
+            {squad_html}
+        </div>
+        {auto_sub_html}
+        <div class='fpl-bench'>Bench: {bench_html}</div>
+    </div>"""
 
 def get_cycling_calendar():
     today = date.today()
@@ -395,6 +559,7 @@ def fetch_all_sports(today, yesterday):
         "pl_standings": (get_standings, ("soccer", "eng.1")),
         "ucl_standings": (get_standings, ("soccer", "uefa.champions")),
         "weather": (get_weather, ()),
+        "fpl": (get_fpl_data, ()),
         "mlb_stories": (get_stories, ("https://www.sportsnet.ca/mlb/feed/",)),
         "pl_stories": (get_stories, ("https://www.theguardian.com/football/premierleague/rss",)),
         "ucl_stories": (get_stories, ("https://www.theguardian.com/football/championsleague/rss",)),
@@ -402,7 +567,7 @@ def fetch_all_sports(today, yesterday):
         "cycling_stories": (get_stories, ("https://www.cyclingnews.com/rss",)),
     }
     results = {}
-    with ThreadPoolExecutor(max_workers=12) as executor:
+    with ThreadPoolExecutor(max_workers=14) as executor:
         futures = {executor.submit(fn, *args): key for key, (fn, args) in tasks.items()}
         for future in as_completed(futures):
             key = futures[future]
@@ -894,6 +1059,24 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .story-item a:hover { text-decoration: underline; }
 .story-meta { font-size: 10px; color: #999; margin-top: 2px; }
 .empty { font-size: 13px; color: #999; padding: 8px 0; }
+.fpl-widget { background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 12px 14px; }
+.fpl-header { margin-bottom: 12px; }
+.fpl-gw { font-size: 14px; font-weight: 500; color: #111; }
+.fpl-deadline { font-size: 11px; color: #999; margin-top: 2px; }
+.fpl-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.fpl-stat { background: #f5f5f5; border-radius: 8px; padding: 8px; text-align: center; }
+.fpl-stat-label { font-size: 9px; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+.fpl-stat-value { font-size: 18px; font-weight: 500; color: #111; }
+.fpl-stat-sub { font-size: 9px; color: #999; margin-top: 2px; }
+.fpl-squad { margin-bottom: 10px; }
+.fpl-position-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.fpl-player { display: flex; align-items: center; gap: 4px; background: #f0f7ff; border-radius: 6px; padding: 4px 8px; font-size: 12px; }
+.fpl-player-name { color: #111; }
+.fpl-pos-badge { font-size: 9px; color: #999; }
+.fpl-captain { background: #111; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
+.fpl-vice { background: #666; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
+.fpl-bench { font-size: 11px; color: #999; margin-top: 6px; }
+.fpl-auto-subs { font-size: 11px; color: #854d0e; background: #fef9c3; border-radius: 6px; padding: 4px 8px; margin-top: 6px; }
 
 @media (prefers-color-scheme: dark) {
   body { background: #111; color: #eee; }
@@ -930,6 +1113,14 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .athletic-badge { background: #eee; color: #111; }
   .tag-globe { background: #2c2c2e; color: #aaa; }
   .empty { color: #888; }
+  .fpl-widget { background: #1c1c1e; border-color: #2c2c2e; }
+  .fpl-gw { color: #eee; }
+  .fpl-stat { background: #2c2c2e; }
+  .fpl-stat-value { color: #eee; }
+  .fpl-player { background: #1a2a3a; }
+  .fpl-player-name { color: #eee; }
+  .fpl-captain { background: #eee; color: #111; }
+  .fpl-bench { color: #888; }
 }
 """
 
@@ -1008,6 +1199,7 @@ def sports():
     data = fetch_all_sports(today, yesterday)
 
     weather = data.get("weather")
+    fpl = data.get("fpl")
     mlb_yesterday = data.get("mlb_yesterday", [])
     mlb_today = data.get("mlb_today", [])
     pl_yesterday = data.get("pl_yesterday", [])
@@ -1090,6 +1282,9 @@ def sports():
 <div class='section-label'>NHL · Headlines</div>
 {render_stories(nhl_stories, 'NHL', 'tag-nhl')}
 {athletic_link('https://theathletic.com/nhl/', 'NHL')}
+<hr class='sport-divider'>
+<div class='section-label'>FPL · {fpl['gw_name'] if fpl else 'Fantasy Premier League'}</div>
+{render_fpl(fpl)}
 <hr class='sport-divider'>
 <div class='section-label'>Cycling · Upcoming Races</div>
 {render_cycling_calendar(cycling_calendar)}
