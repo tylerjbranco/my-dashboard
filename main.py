@@ -1232,14 +1232,12 @@ function toggleFixtures() {
                 html += `<div class='fixture-date-group'>
                     <div class='fixture-date-label'>${group.label}</div>`;
                 group.games.forEach(game => {
-                    const awayLogo = game.away_logo ? `<img src="${game.away_logo}" class="fixture-logo" alt="">` : game.emoji;
-                    const homeLogo = game.home_logo ? `<img src="${game.home_logo}" class="fixture-logo" alt="">` : game.emoji;
+                    const awayLogo = game.away_logo ? `<img src="${game.away_logo}" class="fixture-logo" alt="">` : '';
+                    const homeLogo = game.home_logo ? `<img src="${game.home_logo}" class="fixture-logo" alt="">` : '';
                     html += `<div class='fixture-row'>
-                        ${awayLogo}
-                        <span class='fixture-teams'>${game.away} vs ${game.home}</span>
-                        ${homeLogo}
+                        <span class='fixture-teams'>${awayLogo} ${game.away} vs ${homeLogo} ${game.home}</span>
                         <span class='fixture-time'>${game.time}</span>
-                </div>`;
+                    </div>`;
                 });
                 html += '</div>';
             });
@@ -1288,8 +1286,8 @@ def fixtures():
                     competitors = competition["competitors"]
                     home_team = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
                     away_team = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
-                    home_name = f"{home_team['team'].get('location', '')} {home_team['team'].get('name', '')}".strip()
-                    away_name = f"{away_team['team'].get('location', '')} {away_team['team'].get('name', '')}".strip()
+                    home_name = home_team['team'].get('displayName', '') or f"{home_team['team'].get('location', '')} {home_team['team'].get('name', '')}".strip()
+                    away_name = away_team['team'].get('displayName', '') or f"{away_team['team'].get('location', '')} {away_team['team'].get('name', '')}".strip()
                     home_full = f"{home_team['team'].get('location', '')} {home_team['team'].get('name', '')}".strip()
                     away_full = f"{away_team['team'].get('location', '')} {away_team['team'].get('name', '')}".strip()
 
