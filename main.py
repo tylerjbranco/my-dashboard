@@ -870,6 +870,43 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .story-item a:hover { text-decoration: underline; }
 .story-meta { font-size: 10px; color: #999; margin-top: 2px; }
 .empty { font-size: 13px; color: #999; padding: 8px 0; }
+
+@media (prefers-color-scheme: dark) {
+  body { background: #111; color: #eee; }
+  .header { background: #1c1c1e; border-bottom-color: #2c2c2e; }
+  .header h1 { color: #fff; }
+  .header .date { color: #888; }
+  .nav { background: #1c1c1e; border-bottom-color: #2c2c2e; }
+  .nav a { color: #888; }
+  .nav a.active { color: #fff; border-bottom-color: #fff; }
+  .weather-widget { background: #1c1c1e; border-color: #2c2c2e; }
+  .weather-desc { color: #eee; }
+  .weather-temp { color: #eee; }
+  .weather-forecast { border-top-color: #2c2c2e; }
+  .forecast-name { color: #aaa; }
+  .forecast-temps { color: #eee; }
+  .score-card { background: #1c1c1e; border-color: #2c2c2e; }
+  .score-card-link { color: #eee; }
+  .standings { background: #1c1c1e; border-color: #2c2c2e; }
+  .standing-header { border-bottom-color: #2c2c2e; }
+  .standing-row { border-bottom-color: #2c2c2e; color: #eee; }
+  .live-row { background: #2a1f0e; }
+  .division-label { color: #aaa; }
+  .section-label { color: #888; }
+  .sport-divider { border-top-color: #2c2c2e; }
+  .news-divider { border-top-color: #2c2c2e; }
+  .story-item { border-bottom-color: #2c2c2e; }
+  .story-item a { color: #eee; }
+  .news-item { border-bottom-color: #2c2c2e; }
+  .news-content a { color: #eee; }
+  .scores-section-label { color: #888; }
+  .score-status { color: #888; }
+  .stat-col { color: #aaa; }
+  .athletic-link span { color: #888; }
+  .athletic-badge { background: #eee; color: #111; }
+  .tag-globe { background: #2c2c2e; color: #aaa; }
+  .empty { color: #888; }
+}
 """
 
 HEAD = """<meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
@@ -1066,8 +1103,8 @@ def manifest():
         "name": "Tyler's Briefing",
         "start_url": "/",
         "display": "standalone",
-        "background_color": "#f5f5f5",
-        "theme_color": "#ffffff"
+        "background_color": "#111",
+        "theme_color": "#1c1c1e"
     })
 
 if __name__ == "__main__":
