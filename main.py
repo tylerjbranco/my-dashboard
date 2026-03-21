@@ -169,6 +169,7 @@ def get_fpl_data():
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
         bootstrap = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/", headers=headers, timeout=10).json()
         entry = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/", headers=headers, timeout=10).json()
+        history = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/history/", headers=headers, timeout=10).json()
         current_event = entry.get("current_event", 1)
         picks_data = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/event/{current_event}/picks/", headers=headers, timeout=10).json()
         if "detail" in picks_data or not picks_data.get("picks"):
@@ -193,10 +194,22 @@ def get_fpl_data():
         gw_rank = entry.get("summary_event_rank", 0)
         overall_points = entry.get("summary_overall_points", 0)
         overall_rank = entry.get("summary_overall_rank", 0)
-        history = picks_data.get("entry_history", {})
-        team_value = history.get("value", 0) / 10
-        bank = history.get("bank", 0) / 10
-        points_on_bench = history.get("points_on_bench", 0)
+
+        # Calculate rank changes from history
+        past = history.get("current", [])
+        gw_rank_change = None
+        overall_rank_change = None
+        if len(past) >= 2:
+            prev = past[-2]
+            overall_rank_change = prev.get("overall_rank", 0) - overall_rank
+        if len(past) >= 1:
+            curr = past[-1]
+            gw_rank_change = None  # GW rank change doesn't apply week to week
+
+        picks_history = picks_data.get("entry_history", {})
+        team_value = picks_history.get("value", 0) / 10
+        bank = picks_history.get("bank", 0) / 10
+        points_on_bench = picks_history.get("points_on_bench", 0)
         picks = picks_data.get("picks", [])
         starters = [p for p in picks if p["position"] <= 11]
         bench = [p for p in picks if p["position"] > 11]
@@ -233,6 +246,7 @@ def get_fpl_data():
             "gw_rank": f"{gw_rank:,}",
             "overall_points": overall_points,
             "overall_rank": f"{overall_rank:,}",
+            "overall_rank_change": overall_rank_change,
             "team_value": f"£{team_value:.1f}m",
             "bank": f"£{bank:.1f}m",
             "points_on_bench": points_on_bench,
@@ -273,6 +287,19 @@ def render_fpl(fpl):
     if fpl["deadline_str"] and fpl["next_gw_name"]:
         deadline_html = f"<div class='fpl-deadline'>Next deadline · {fpl['next_gw_name']}: {fpl['deadline_str']}</div>"
     team_url = f"https://fantasy.premierleague.com/entry/{FPL_TEAM_ID}/event/{fpl['current_event']}"
+
+    # Rank change arrow for overall rank
+    overall_rank_change = fpl.get("overall_rank_change")
+    if overall_rank_change and overall_rank_change > 0:
+        rank_arrow = f"<span class='fpl-rank-up'>↑ {overall_rank_change:,}</span>"
+        overall_stat_class = "fpl-stat fpl-stat-up"
+    elif overall_rank_change and overall_rank_change < 0:
+        rank_arrow = f"<span class='fpl-rank-down'>↓ {abs(overall_rank_change):,}</span>"
+        overall_stat_class = "fpl-stat fpl-stat-down"
+    else:
+        rank_arrow = ""
+        overall_stat_class = "fpl-stat"
+
     return f"""
     <div class='fpl-widget'>
         <div class='fpl-header'>
@@ -285,10 +312,10 @@ def render_fpl(fpl):
                 <div class='fpl-stat-value'>{fpl['gw_points']}</div>
                 <div class='fpl-stat-sub'>Rank {fpl['gw_rank']}</div>
             </div>
-            <div class='fpl-stat'>
+            <div class='{overall_stat_class}'>
                 <div class='fpl-stat-label'>Overall</div>
                 <div class='fpl-stat-value'>{fpl['overall_points']}</div>
-                <div class='fpl-stat-sub'>Rank {fpl['overall_rank']}</div>
+                <div class='fpl-stat-sub'>Rank {fpl['overall_rank']} {rank_arrow}</div>
             </div>
             <div class='fpl-stat'>
                 <div class='fpl-stat-label'>Team Value</div>
@@ -1095,6 +1122,10 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .fpl-vice { background: #666; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
 .fpl-bench { font-size: 11px; color: #999; margin-top: 6px; }
 .fpl-auto-subs { font-size: 11px; color: #854d0e; background: #fef9c3; border-radius: 6px; padding: 4px 8px; margin-top: 6px; }
+.fpl-stat-up { background: #dcfce7; }
+.fpl-stat-down { background: #fee2e2; }
+.fpl-rank-up { color: #166534; font-size: 9px; font-weight: 500; }
+.fpl-rank-down { color: #991b1b; font-size: 9px; font-weight: 500; }
 .fixture-toggle { display: flex; align-items: center; gap: 6px; padding: 8px 0; cursor: pointer; border: none; background: none; font-family: inherit; font-size: 12px; color: #999; width: 100%; text-align: left; }
 .fixture-toggle:hover { color: #111; }
 .fixture-toggle .toggle-arrow { transition: transform 0.2s; display: inline-block; }
@@ -1154,6 +1185,8 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .fpl-player-name { color: #eee; }
   .fpl-captain { background: #eee; color: #111; }
   .fpl-bench { color: #888; }
+  .fpl-stat-up { background: #14532d; }
+  .fpl-stat-down { background: #450a0a; }
   .race-link { color: #eee; }
   .fixture-toggle { color: #888; }
   .fixture-toggle:hover { color: #eee; }
