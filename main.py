@@ -812,8 +812,22 @@ def render_my_teams(teams_data):
     has_any = any(t["yesterday_game"] or t["today_game"] for t in teams_data)
     if not has_any:
         return "<p class='empty'>No recent or upcoming games</p>"
-    yesterday_cards = [t["yesterday_game"] for t in teams_data if t["yesterday_game"]]
-    today_cards = [t["today_game"] for t in teams_data if t["today_game"]]
+    yesterday_cards = sorted(
+    [t["yesterday_game"] for t in teams_data if t["yesterday_game"]],
+    key=game_sort_time
+)
+    def game_sort_time(game):
+    try:
+        eastern = pytz.timezone("America/Toronto")
+        dt_utc = datetime.fromisoformat(game["date"].replace("Z", "+00:00"))
+        return dt_utc.astimezone(eastern).strftime("%H:%M")
+    except:
+        return "99:99"
+
+today_cards = sorted(
+    [t["today_game"] for t in teams_data if t["today_game"]],
+    key=game_sort_time
+)
     no_game = [t for t in teams_data if not t["yesterday_game"] and not t["today_game"]]
     html = ""
     if yesterday_cards:
