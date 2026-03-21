@@ -169,18 +169,22 @@ def get_fpl_data():
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
         bootstrap = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/", headers=headers, timeout=10).json()
         entry = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/", headers=headers, timeout=10).json()
+        current_event = entry.get("current_event", 1)
         history = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/history/", headers=headers, timeout=10).json()
         live_data = requests.get(f"https://fantasy.premierleague.com/api/event/{current_event}/live/", headers=headers, timeout=10).json()
-        live_points_map = {e["id"]: e["stats"]["total_points"] for e in live_data.get("elements", [])}
-        current_event = entry.get("current_event", 1)
         picks_data = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/event/{current_event}/picks/", headers=headers, timeout=10).json()
         if "detail" in picks_data or not picks_data.get("picks"):
             return None
+
         player_map = {p["id"]: p for p in bootstrap.get("elements", [])}
+        team_map = {t["id"]: t["code"] for t in bootstrap.get("teams", [])}
+        live_points_map = {e["id"]: e["stats"]["total_points"] for e in live_data.get("elements", [])}
+
         events = bootstrap.get("events", [])
         current_gw = next((e for e in events if e.get("is_current")), None)
         next_gw = next((e for e in events if e.get("is_next")), None)
         active_gw = current_gw or next_gw
+
         deadline_str = ""
         next_gw_name = ""
         if next_gw:
@@ -191,56 +195,76 @@ def get_fpl_data():
                 dt = datetime.fromisoformat(deadline_raw.replace("Z", "+00:00"))
                 dt_eastern = dt.astimezone(eastern)
                 deadline_str = dt_eastern.strftime("%a %b %d · %I:%M %p")
+
         gw_name = active_gw.get("name", f"Gameweek {current_event}") if active_gw else f"Gameweek {current_event}"
         gw_points = entry.get("summary_event_points", 0)
         gw_rank = entry.get("summary_event_rank", 0)
         overall_points = entry.get("summary_overall_points", 0)
         overall_rank = entry.get("summary_overall_rank", 0)
 
-        # Calculate rank changes from history
         past = history.get("current", [])
-        gw_rank_change = None
         overall_rank_change = None
         if len(past) >= 2:
-            prev = past[-2]
-            overall_rank_change = prev.get("overall_rank", 0) - overall_rank
-        if len(past) >= 1:
-            curr = past[-1]
-            gw_rank_change = None  # GW rank change doesn't apply week to week
+            overall_rank_change = past[-2].get("overall_rank", 0) - overall_rank
 
         picks_history = picks_data.get("entry_history", {})
         team_value = picks_history.get("value", 0) / 10
         bank = picks_history.get("bank", 0) / 10
         points_on_bench = picks_history.get("points_on_bench", 0)
+
         picks = picks_data.get("picks", [])
         starters = [p for p in picks if p["position"] <= 11]
         bench = [p for p in picks if p["position"] > 11]
         position_labels = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
+
         def format_player(pick):
             player = player_map.get(pick["element"], {})
             name = player.get("web_name", "Unknown")
             pos = position_labels.get(pick["element_type"], "?")
             pts = live_points_map.get(pick["element"], None)
+            team_code = team_map.get(player.get("team", 0), None)
+            badge_url = f"https://resources.premierleague.com/premierleague/badges/50/t{team_code}.png" if team_code else ""
             suffix = ""
             if pick["is_captain"]:
                 suffix = " ©"
             elif pick["is_vice_captain"]:
                 suffix = " (v)"
-            return f"{name}{suffix}", pos, pts
+            return f"{name}{suffix}", pos, pts, badge_url
+
         by_position = {1: [], 2: [], 3: [], 4: []}
         for pick in starters:
-            name, pos, pts = format_player(pick)
-            by_position[pick["element_type"]].append((name, pos, pts))
+            name, pos, pts, badge = format_player(pick)
+            by_position[pick["element_type"]].append((name, pos, pts, badge))
+
         bench_names = []
         for pick in bench:
-            name, pos, pts = format_player(pick)
+            name, pos, pts, badge = format_player(pick)
             bench_names.append((name, pos, pts))
+
         auto_subs = picks_data.get("automatic_subs", [])
         auto_sub_strs = []
         for sub in auto_subs:
             player_in = player_map.get(sub["element_in"], {}).get("web_name", "?")
             player_out = player_map.get(sub["element_out"], {}).get("web_name", "?")
             auto_sub_strs.append(f"{player_in} ↔ {player_out}")
+
+        # Chip tracker
+        chips_played = {c["name"]: c["event"] for c in history.get("chips", [])}
+        all_chips = [
+            ("wildcard", "WC1", 1, 19),
+            ("wildcard", "WC2", 20, 38),
+            ("freehit", "FH", 1, 38),
+            ("bboost", "BB", 1, 38),
+            ("3xc", "TC", 1, 38),
+        ]
+        chip_status = []
+        for chip_name, label, start_gw, end_gw in all_chips:
+            played_gw = chips_played.get(chip_name)
+            if played_gw:
+                chip_status.append({"label": label, "used": True, "gw": played_gw})
+            elif start_gw <= current_event <= end_gw:
+                chip_status.append({"label": label, "used": False, "gw": None})
+
         return {
             "gw_name": gw_name,
             "next_gw_name": next_gw_name,
@@ -257,6 +281,7 @@ def get_fpl_data():
             "bench_names": bench_names,
             "auto_subs": auto_sub_strs,
             "current_event": current_event,
+            "chip_status": chip_status,
         }
     except:
         return None
@@ -264,6 +289,7 @@ def get_fpl_data():
 def render_fpl(fpl):
     if not fpl:
         return "<p class='empty'>FPL data unavailable</p>"
+
     position_order = [(1, "GK"), (2, "DEF"), (3, "MID"), (4, "FWD")]
     squad_html = ""
     for pos_id, pos_label in position_order:
@@ -271,36 +297,49 @@ def render_fpl(fpl):
         if not players:
             continue
         squad_html += "<div class='fpl-position-row'>"
-        for name, pos, pts in players:
+        for name, pos, pts, badge in players:
             is_captain = "©" in name
             is_vice = "(v)" in name
-            badge = ""
+            badge_html = f'<img src="{badge}" class="fpl-club-badge" alt="">' if badge else ""
             if is_captain:
-                badge = "<span class='fpl-captain'>C</span>"
+                player_class = "fpl-player fpl-player-captain"
+                badge_el = "<span class='fpl-captain'>C</span>"
             elif is_vice:
-                badge = "<span class='fpl-vice'>V</span>"
+                player_class = "fpl-player fpl-player-vice"
+                badge_el = "<span class='fpl-vice'>V</span>"
+            else:
+                player_class = "fpl-player"
+                badge_el = ""
             clean_name = name.replace(" ©", "").replace(" (v)", "")
             multiplier = 2 if is_captain else 1
             display_pts = pts * multiplier if pts is not None else None
-            pts_class = "fpl-pts-high" if display_pts and display_pts >= 8 else "fpl-pts-low" if display_pts is not None and display_pts <= 2 else "fpl-pts-mid"
+            if display_pts is not None and display_pts >= 8:
+                pts_class = "fpl-pts-high"
+            elif display_pts is not None and display_pts <= 2:
+                pts_class = "fpl-pts-low"
+            else:
+                pts_class = "fpl-pts-mid"
             pts_html = f"<span class='{pts_class}'>{display_pts}</span>" if display_pts is not None else ""
-            squad_html += f"<div class='fpl-player'>{badge}<span class='fpl-player-name'>{clean_name}</span><span class='fpl-pos-badge'>{pos_label}</span>{pts_html}</div>"
+            squad_html += f"<div class='{player_class}'>{badge_el}{badge_html}<span class='fpl-player-name'>{clean_name}</span><span class='fpl-pos-badge'>{pos_label}</span>{pts_html}</div>"
         squad_html += "</div>"
+
     bench_parts = []
     for name, pos, pts in fpl["bench_names"]:
         clean = name.replace(" ©", "").replace(" (v)", "")
         pts_str = f" {pts}pts" if pts is not None else ""
         bench_parts.append(f"{clean} ({pos}){pts_str}")
     bench_html = " · ".join(bench_parts) if bench_parts else ""
+
     auto_sub_html = ""
     if fpl["auto_subs"]:
         auto_sub_html = f"<div class='fpl-auto-subs'>Auto subs: {' · '.join(fpl['auto_subs'])}</div>"
+
     deadline_html = ""
     if fpl["deadline_str"] and fpl["next_gw_name"]:
         deadline_html = f"<div class='fpl-deadline'>Next deadline · {fpl['next_gw_name']}: {fpl['deadline_str']}</div>"
+
     team_url = f"https://fantasy.premierleague.com/entry/{FPL_TEAM_ID}/event/{fpl['current_event']}"
 
-    # Rank change arrow for overall rank
     overall_rank_change = fpl.get("overall_rank_change")
     if overall_rank_change and overall_rank_change > 0:
         rank_arrow = f"<span class='fpl-rank-up'>↑ {overall_rank_change:,}</span>"
@@ -311,6 +350,16 @@ def render_fpl(fpl):
     else:
         rank_arrow = ""
         overall_stat_class = "fpl-stat"
+
+    chips_html = ""
+    if fpl.get("chip_status"):
+        chips_html = "<div class='fpl-chips'>"
+        for chip in fpl["chip_status"]:
+            if chip["used"]:
+                chips_html += f"<span class='fpl-chip fpl-chip-used'>{chip['label']} GW{chip['gw']}</span>"
+            else:
+                chips_html += f"<span class='fpl-chip fpl-chip-available'>{chip['label']}</span>"
+        chips_html += "</div>"
 
     return f"""
     <div class='fpl-widget'>
@@ -340,6 +389,7 @@ def render_fpl(fpl):
                 <div class='fpl-stat-sub'>&nbsp;</div>
             </div>
         </div>
+        {chips_html}
         <div class='fpl-squad'>{squad_html}</div>
         {auto_sub_html}
         <div class='fpl-bench'>Bench: {bench_html}</div>
@@ -1120,27 +1170,34 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .fpl-team-link { color: #111; text-decoration: none; }
 .fpl-team-link:hover { text-decoration: underline; }
 .fpl-deadline { font-size: 11px; color: #999; margin-top: 2px; }
-.fpl-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.fpl-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
 .fpl-stat { background: #f5f5f5; border-radius: 8px; padding: 8px; text-align: center; }
+.fpl-stat-up { background: #dcfce7; }
+.fpl-stat-down { background: #fee2e2; }
 .fpl-stat-label { font-size: 9px; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
 .fpl-stat-value { font-size: 18px; font-weight: 500; color: #111; }
 .fpl-stat-sub { font-size: 9px; color: #999; margin-top: 2px; }
+.fpl-rank-up { color: #166534; font-size: 9px; font-weight: 500; }
+.fpl-rank-down { color: #991b1b; font-size: 9px; font-weight: 500; }
+.fpl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.fpl-chip { font-size: 10px; font-weight: 500; padding: 3px 8px; border-radius: 20px; }
+.fpl-chip-available { background: #dbeafe; color: #1e40af; }
+.fpl-chip-used { background: #f3f4f6; color: #999; text-decoration: line-through; }
 .fpl-squad { margin-bottom: 10px; }
 .fpl-position-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
 .fpl-player { display: flex; align-items: center; gap: 4px; background: #f0f7ff; border-radius: 6px; padding: 4px 8px; font-size: 12px; }
+.fpl-player-captain { background: #fef9c3; border: 1px solid #d97706; }
+.fpl-player-vice { background: #f3f4f6; border: 1px solid #9ca3af; }
 .fpl-player-name { color: #111; }
 .fpl-pos-badge { font-size: 9px; color: #999; }
+.fpl-club-badge { width: 16px; height: 16px; object-fit: contain; flex-shrink: 0; }
 .fpl-pts-high { font-size: 10px; font-weight: 600; color: #166534; background: #dcfce7; border-radius: 4px; padding: 1px 5px; margin-left: 3px; }
 .fpl-pts-mid { font-size: 10px; font-weight: 500; color: #555; background: #f3f4f6; border-radius: 4px; padding: 1px 5px; margin-left: 3px; }
 .fpl-pts-low { font-size: 10px; font-weight: 500; color: #991b1b; background: #fee2e2; border-radius: 4px; padding: 1px 5px; margin-left: 3px; }
-.fpl-captain { background: #111; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
-.fpl-vice { background: #666; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
+.fpl-captain { background: #d97706; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
+.fpl-vice { background: #9ca3af; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
 .fpl-bench { font-size: 11px; color: #999; margin-top: 6px; }
 .fpl-auto-subs { font-size: 11px; color: #854d0e; background: #fef9c3; border-radius: 6px; padding: 4px 8px; margin-top: 6px; }
-.fpl-stat-up { background: #dcfce7; }
-.fpl-stat-down { background: #fee2e2; }
-.fpl-rank-up { color: #166534; font-size: 9px; font-weight: 500; }
-.fpl-rank-down { color: #991b1b; font-size: 9px; font-weight: 500; }
 .fixture-toggle { display: flex; align-items: center; gap: 6px; padding: 8px 0; cursor: pointer; border: none; background: none; font-family: inherit; font-size: 12px; color: #999; width: 100%; text-align: left; }
 .fixture-toggle:hover { color: #111; }
 .fixture-toggle .toggle-arrow { transition: transform 0.2s; display: inline-block; }
@@ -1195,13 +1252,18 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .fpl-gw { color: #eee; }
   .fpl-team-link { color: #eee; }
   .fpl-stat { background: #2c2c2e; }
-  .fpl-stat-value { color: #eee; }
-  .fpl-player { background: #1a2a3a; }
-  .fpl-player-name { color: #eee; }
-  .fpl-captain { background: #eee; color: #111; }
-  .fpl-bench { color: #888; }
   .fpl-stat-up { background: #14532d; }
   .fpl-stat-down { background: #450a0a; }
+  .fpl-stat-value { color: #eee; }
+  .fpl-player { background: #1a2a3a; }
+  .fpl-player-captain { background: #2d1f00; border-color: #d97706; }
+  .fpl-player-vice { background: #2c2c2e; border-color: #555; }
+  .fpl-player-name { color: #eee; }
+  .fpl-captain { background: #d97706; }
+  .fpl-vice { background: #6b7280; }
+  .fpl-bench { color: #888; }
+  .fpl-chip-available { background: #1e3a5f; color: #93c5fd; }
+  .fpl-chip-used { background: #2c2c2e; color: #666; }
   .race-link { color: #eee; }
   .fixture-toggle { color: #888; }
   .fixture-toggle:hover { color: #eee; }
