@@ -397,7 +397,7 @@ def render_fpl(fpl):
 
 def get_weather(lat=43.70, lon=-79.42):
     try:
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=4"
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=8"
         response = requests.get(url, timeout=5)
         data = response.json()
         weather_codes = {
@@ -417,8 +417,18 @@ def get_weather(lat=43.70, lon=-79.42):
         current_temp = round(current["temperature_2m"])
         feels_like = round(current["apparent_temperature"])
         days = []
-        day_names = ["Today", "Tomorrow"]
-        for i in range(1, 4):
+        eastern = pytz.timezone("America/Toronto")
+        base_date = datetime.now(eastern).date()
+        day_names = []
+        for n in range(8):
+            d = base_date + timedelta(days=n)
+            if n == 0:
+                day_names.append("Today")
+            elif n == 1:
+                day_names.append("Tomorrow")
+            else:
+                day_names.append(d.strftime("%A"))
+        for i in range(1, 8):
             d = date.fromisoformat(daily["time"][i])
             name = day_names[i] if i < len(day_names) else d.strftime("%A")
             code = daily["weather_code"][i]
@@ -466,6 +476,16 @@ def render_weather(w, city="Toronto"):
             <div class='forecast-temps'>{day['high']}° / {day['low']}°</div>
             <div class='forecast-precip'>{day['precip']}% precip</div>
         </div>"""
+    extended_html = ""
+    for day in w["days"][3:]:
+        extended_html += f"""
+        <div class='forecast-day'>
+            <div class='forecast-name'>{day['name']}</div>
+            <div class='forecast-icon'>{day['icon']}</div>
+            <div class='forecast-desc'>{day['desc']}</div>
+            <div class='forecast-temps'>{day['high']}° / {day['low']}°</div>
+            <div class='forecast-precip'>{day['precip']}% precip</div>
+        </div>"""
     return f"""
     <div class='weather-widget' id='weather-widget'>
         <div class='weather-current'>
@@ -480,6 +500,12 @@ def render_weather(w, city="Toronto"):
         </div>
         <div class='weather-forecast' id='weather-forecast'>
             {forecast_html}
+        </div>
+        <button class='extended-forecast-toggle' id='extended-forecast-btn' onclick='toggleExtendedForecast()'>
+            <span class='toggle-arrow'>▾</span> 7-Day Forecast
+        </button>
+        <div class='extended-forecast' id='extended-forecast'>
+            {extended_html}
         </div>
     </div>"""
 
@@ -1228,6 +1254,11 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .fixture-teams { flex: 1; color: #111; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .fixture-time { font-size: 11px; color: #999; white-space: nowrap; }
 .fixture-loading { font-size: 12px; color: #999; padding: 8px 0; }
+.extended-forecast-toggle { display: flex; align-items: center; gap: 6px; padding: 8px 0 0; cursor: pointer; border: none; background: none; font-family: inherit; font-size: 12px; color: #999; width: 100%; text-align: left; }
+.extended-forecast-toggle:hover { color: #111; }
+.extended-forecast-toggle.open .toggle-arrow { transform: rotate(180deg); }
+.extended-forecast { display: none; padding-top: 12px; border-top: 0.5px solid #eee; margin-top: 8px; }
+.extended-forecast.open { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
 @media (prefers-color-scheme: dark) {
   body { background: #111; color: #eee; }
@@ -1286,6 +1317,8 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .fixture-teams { color: #eee; }
   .fixture-row { border-bottom-color: #2c2c2e; }
   .fixture-date-label { color: #888; }
+  .extended-forecast-toggle { color: #888; }
+  .extended-forecast { border-top-color: #2c2c2e; }
 }
 """
 
@@ -1340,6 +1373,18 @@ if (navigator.geolocation) {
     }, function() {});
 }
 
+function toggleExtendedForecast() {
+    const btn = document.getElementById('extended-forecast-btn');
+    const forecast = document.getElementById('extended-forecast');
+    const isOpen = forecast.classList.contains('open');
+    if (isOpen) {
+        forecast.classList.remove('open');
+        btn.classList.remove('open');
+    } else {
+        forecast.classList.add('open');
+        btn.classList.add('open');
+    }
+}
 function toggleFixtures() {
     const btn = document.getElementById('fixture-toggle-btn');
     const cal = document.getElementById('fixture-calendar');
