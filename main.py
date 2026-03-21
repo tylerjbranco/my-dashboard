@@ -170,6 +170,8 @@ def get_fpl_data():
         bootstrap = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/", headers=headers, timeout=10).json()
         entry = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/", headers=headers, timeout=10).json()
         history = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/history/", headers=headers, timeout=10).json()
+        live_data = requests.get(f"https://fantasy.premierleague.com/api/event/{current_event}/live/", headers=headers, timeout=10).json()
+        live_points_map = {e["id"]: e["stats"]["total_points"] for e in live_data.get("elements", [])}
         current_event = entry.get("current_event", 1)
         picks_data = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/event/{current_event}/picks/", headers=headers, timeout=10).json()
         if "detail" in picks_data or not picks_data.get("picks"):
@@ -218,20 +220,21 @@ def get_fpl_data():
             player = player_map.get(pick["element"], {})
             name = player.get("web_name", "Unknown")
             pos = position_labels.get(pick["element_type"], "?")
+            pts = live_points_map.get(pick["element"], None)
             suffix = ""
             if pick["is_captain"]:
                 suffix = " ©"
             elif pick["is_vice_captain"]:
                 suffix = " (v)"
-            return f"{name}{suffix}", pos
+            return f"{name}{suffix}", pos, pts
         by_position = {1: [], 2: [], 3: [], 4: []}
         for pick in starters:
-            name, pos = format_player(pick)
-            by_position[pick["element_type"]].append((name, pos))
+            name, pos, pts = format_player(pick)
+            by_position[pick["element_type"]].append((name, pos, pts))
         bench_names = []
         for pick in bench:
-            name, pos = format_player(pick)
-            bench_names.append(f"{name} ({pos})")
+            name, pos, pts = format_player(pick)
+            bench_names.append((name, pos, pts))
         auto_subs = picks_data.get("automatic_subs", [])
         auto_sub_strs = []
         for sub in auto_subs:
@@ -268,7 +271,7 @@ def render_fpl(fpl):
         if not players:
             continue
         squad_html += "<div class='fpl-position-row'>"
-        for name, pos in players:
+        for name, pos, pts in players:
             is_captain = "©" in name
             is_vice = "(v)" in name
             badge = ""
@@ -277,9 +280,18 @@ def render_fpl(fpl):
             elif is_vice:
                 badge = "<span class='fpl-vice'>V</span>"
             clean_name = name.replace(" ©", "").replace(" (v)", "")
-            squad_html += f"<div class='fpl-player'>{badge}<span class='fpl-player-name'>{clean_name}</span><span class='fpl-pos-badge'>{pos_label}</span></div>"
+            multiplier = 2 if is_captain else 1
+            display_pts = pts * multiplier if pts is not None else None
+            pts_class = "fpl-pts-high" if display_pts and display_pts >= 8 else "fpl-pts-low" if display_pts is not None and display_pts <= 2 else "fpl-pts-mid"
+            pts_html = f"<span class='{pts_class}'>{display_pts}</span>" if display_pts is not None else ""
+            squad_html += f"<div class='fpl-player'>{badge}<span class='fpl-player-name'>{clean_name}</span><span class='fpl-pos-badge'>{pos_label}</span>{pts_html}</div>"
         squad_html += "</div>"
-    bench_html = " · ".join(fpl["bench_names"]) if fpl["bench_names"] else ""
+    bench_parts = []
+    for name, pos, pts in fpl["bench_names"]:
+        clean = name.replace(" ©", "").replace(" (v)", "")
+        pts_str = f" {pts}pts" if pts is not None else ""
+        bench_parts.append(f"{clean} ({pos}){pts_str}")
+    bench_html = " · ".join(bench_parts) if bench_parts else ""
     auto_sub_html = ""
     if fpl["auto_subs"]:
         auto_sub_html = f"<div class='fpl-auto-subs'>Auto subs: {' · '.join(fpl['auto_subs'])}</div>"
@@ -1118,6 +1130,9 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .fpl-player { display: flex; align-items: center; gap: 4px; background: #f0f7ff; border-radius: 6px; padding: 4px 8px; font-size: 12px; }
 .fpl-player-name { color: #111; }
 .fpl-pos-badge { font-size: 9px; color: #999; }
+.fpl-pts-high { font-size: 10px; font-weight: 600; color: #166534; background: #dcfce7; border-radius: 4px; padding: 1px 5px; margin-left: 3px; }
+.fpl-pts-mid { font-size: 10px; font-weight: 500; color: #555; background: #f3f4f6; border-radius: 4px; padding: 1px 5px; margin-left: 3px; }
+.fpl-pts-low { font-size: 10px; font-weight: 500; color: #991b1b; background: #fee2e2; border-radius: 4px; padding: 1px 5px; margin-left: 3px; }
 .fpl-captain { background: #111; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
 .fpl-vice { background: #666; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; flex-shrink: 0; }
 .fpl-bench { font-size: 11px; color: #999; margin-top: 6px; }
