@@ -647,6 +647,14 @@ def render_game_card(game):
     away_logo = away["team"].get("logo", "")
     status = game["status"]["type"]["shortDetail"]
     state = game["status"]["type"]["state"]
+    if state == "pre" and status.lower() in ("scheduled", "schedule"):
+        try:
+            eastern = pytz.timezone("America/Toronto")
+            dt_utc = datetime.fromisoformat(game["date"].replace("Z", "+00:00"))
+            dt_eastern = dt_utc.astimezone(eastern)
+            status = dt_eastern.strftime("%I:%M %p").lstrip("0")
+        except:
+            pass
     game_id = game["id"]
     uid = game.get("uid", "")
     if "s:1~" in uid:
