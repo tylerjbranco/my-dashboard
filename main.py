@@ -1367,6 +1367,7 @@ if (navigator.geolocation) {
                         forecastEl.innerHTML = data.days.slice(0, 3).map(day =>
                         '<div class="forecast-day">' +
                         '<div class="forecast-name">' + day.name + '</div>' +
+                        '<div class="forecast-date">' + day.date + '</div>' +
                         '<div class="forecast-icon">' + day.icon + '</div>' +
                         '<div class="forecast-desc">' + day.desc + '</div>' +
                         '<div class="forecast-temps">' + day.high + '\u00b0 / ' + day.low + '\u00b0</div>' +
