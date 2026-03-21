@@ -171,6 +171,8 @@ def get_fpl_data():
         entry = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/", headers=headers, timeout=10).json()
         current_event = entry.get("current_event", 1)
         picks_data = requests.get(f"https://fantasy.premierleague.com/api/entry/{FPL_TEAM_ID}/event/{current_event}/picks/", headers=headers, timeout=10).json()
+        if "detail" in picks_data or not picks_data.get("picks"):
+            return None
         player_map = {p["id"]: p for p in bootstrap.get("elements", [])}
         events = bootstrap.get("events", [])
         current_gw = next((e for e in events if e.get("is_current")), None)
@@ -1179,7 +1181,7 @@ CLOCK_AND_WEATHER_JS = """
 function updateClock() {
     const now = new Date();
     const options = { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-    const timeStr = now.toLocaleString('en-CA', options).replace(',', ' ·');
+    const timeStr = now.toLocaleString('en-CA', options).replace(',', ' \u00b7');
     document.querySelectorAll('.date').forEach(el => el.textContent = timeStr);
 }
 updateClock();
