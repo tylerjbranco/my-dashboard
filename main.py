@@ -434,7 +434,9 @@ def get_weather(lat=43.70, lon=-79.42):
             code = daily["weather_code"][i]
             desc, icon = weather_codes.get(code, ("Unknown", "🌡️"))
             days.append({
-                "name": name, "icon": icon, "desc": desc,
+                "name": name,
+                "date": d.strftime("%m/%d"),
+                "icon": icon, "desc": desc,
                 "high": round(daily["temperature_2m_max"][i]),
                 "low": round(daily["temperature_2m_min"][i]),
                 "precip": daily["precipitation_probability_max"][i]
@@ -471,6 +473,7 @@ def render_weather(w, city="Toronto"):
         forecast_html += f"""
         <div class='forecast-day'>
             <div class='forecast-name'>{day['name']}</div>
+            <div class='forecast-date'>{day['date']}</div>
             <div class='forecast-icon'>{day['icon']}</div>
             <div class='forecast-desc'>{day['desc']}</div>
             <div class='forecast-temps'>{day['high']}° / {day['low']}°</div>
@@ -481,6 +484,7 @@ def render_weather(w, city="Toronto"):
         extended_html += f"""
         <div class='forecast-day'>
             <div class='forecast-name'>{day['name']}</div>
+            <div class='forecast-date'>{day['date']}</div>
             <div class='forecast-icon'>{day['icon']}</div>
             <div class='forecast-desc'>{day['desc']}</div>
             <div class='forecast-temps'>{day['high']}° / {day['low']}°</div>
@@ -1153,6 +1157,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .weather-forecast { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-top: 0.5px solid #eee; padding-top: 12px; }
 .forecast-day { text-align: center; }
 .forecast-name { font-size: 11px; font-weight: 500; color: #666; margin-bottom: 4px; }
+.forecast-date { font-size: 10px; color: #999; margin-bottom: 4px; }
 .forecast-icon { font-size: 20px; margin-bottom: 2px; }
 .forecast-desc { font-size: 10px; color: #999; margin-bottom: 2px; }
 .forecast-temps { font-size: 12px; font-weight: 500; color: #111; }
