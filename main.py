@@ -467,7 +467,7 @@ def render_weather(w, city="Toronto"):
     if not w:
         return "<p class='empty'>Weather unavailable</p>"
     forecast_html = ""
-    for day in w["days"]:
+    for day in w["days"][:3]:
         forecast_html += f"""
         <div class='forecast-day'>
             <div class='forecast-name'>{day['name']}</div>
