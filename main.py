@@ -397,7 +397,7 @@ def render_fpl(fpl):
 
 def get_weather(lat=43.70, lon=-79.42):
     try:
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=8"
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=11"
         response = requests.get(url, timeout=5)
         data = response.json()
         weather_codes = {
@@ -428,7 +428,7 @@ def get_weather(lat=43.70, lon=-79.42):
                 day_names.append("Tomorrow")
             else:
                 day_names.append(d.strftime("%A"))
-        for i in range(1, 8):
+        for i in range(1, 11):
             d = date.fromisoformat(daily["time"][i])
             name = day_names[i] if i < len(day_names) else d.strftime("%A")
             code = daily["weather_code"][i]
@@ -477,7 +477,7 @@ def render_weather(w, city="Toronto"):
             <div class='forecast-precip'>{day['precip']}% precip</div>
         </div>"""
     extended_html = ""
-    for day in w["days"][3:]:
+    for day in w["days"]:
         extended_html += f"""
         <div class='forecast-day'>
             <div class='forecast-name'>{day['name']}</div>
@@ -502,7 +502,7 @@ def render_weather(w, city="Toronto"):
             {forecast_html}
         </div>
         <button class='extended-forecast-toggle' id='extended-forecast-btn' onclick='toggleExtendedForecast()'>
-            <span class='toggle-arrow'>▾</span> 7-Day Forecast
+            <span class='toggle-arrow'>▾</span> 10-Day Forecast
         </button>
         <div class='extended-forecast' id='extended-forecast'>
             {extended_html}
@@ -1258,7 +1258,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .extended-forecast-toggle:hover { color: #111; }
 .extended-forecast-toggle.open .toggle-arrow { transform: rotate(180deg); }
 .extended-forecast { display: none; padding-top: 12px; border-top: 0.5px solid #eee; margin-top: 8px; }
-.extended-forecast.open { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.extended-forecast.open { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 
 @media (prefers-color-scheme: dark) {
   body { background: #111; color: #eee; }
