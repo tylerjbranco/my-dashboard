@@ -1358,8 +1358,8 @@ if (navigator.geolocation) {
                 document.querySelector('.weather-desc').innerHTML = data.current_desc + ' \u00b7 <span id="weather-city">' + data.city + '</span>';
                 document.querySelector('.weather-meta').textContent = 'Feels like ' + data.feels_like + '\u00b0C \u00b7 High ' + data.today_high + '\u00b0 Low ' + data.today_low + '\u00b0 \u00b7 ' + data.today_precip + '% precip';
                 const forecastEl = document.getElementById('weather-forecast');
-                if (forecastEl && data.days) {
-                    forecastEl.innerHTML = data.days.map(day =>
+                    if (forecastEl && data.days) {
+                        forecastEl.innerHTML = data.days.slice(0, 3).map(day =>
                         '<div class="forecast-day">' +
                         '<div class="forecast-name">' + day.name + '</div>' +
                         '<div class="forecast-icon">' + day.icon + '</div>' +
