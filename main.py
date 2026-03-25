@@ -2500,3 +2500,20 @@ def debug_f1_results():
     import json
     results = get_f1_race_results()
     return f"<pre>{json.dumps([{**r, 'date': str(r['date'])} for r in results], indent=2)}</pre>"
+
+@app.route("/debug-f1-results2")
+def debug_f1_results2():
+    import json
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
+    response = requests.get(url, timeout=8)
+    data = response.json()
+    events = data.get("events", [])
+    out = []
+    for event in events:
+        comp = event["competitions"][0]
+        out.append({
+            "name": event.get("name", ""),
+            "state": comp.get("status", {}).get("type", {}).get("state", ""),
+            "competitors": len(comp.get("competitors", [])),
+        })
+    return f"<pre>{json.dumps(out, indent=2)}</pre>"
