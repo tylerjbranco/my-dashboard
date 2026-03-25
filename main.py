@@ -2563,7 +2563,13 @@ def debug_f1_results4():
 def debug_sports():
     import traceback
     try:
-        f1_results = get_f1_race_results()
-        return f"<pre>Results: {f1_results}</pre>"
+        eastern = pytz.timezone("America/Toronto")
+        today = datetime.now(eastern).date()
+        yesterday = today - timedelta(days=1)
+        data = fetch_all_sports(today, yesterday)
+        f1_data = data.get("f1_data", {"upcoming": None, "constructors": [], "drivers": []})
+        f1_results = data.get("f1_results", [])
+        f1_upcoming_widget, f1_schedule_toggle, f1_standings_html = render_f1_section(f1_data, f1_results)
+        return f"<pre>OK</pre>"
     except Exception as e:
         return f"<pre>{traceback.format_exc()}</pre>"
