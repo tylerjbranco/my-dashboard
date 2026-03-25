@@ -2411,7 +2411,7 @@ def sports():
 <body>
 <div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now_str}</div></div>
 {NAV_SPORTS}
-<<div class='sport-subnav'>
+<div class='sport-subnav'>
     <a href='#myteams-anchor'>⭐ My Teams</a>
     <a href='#mlb-anchor'>⚾ MLB</a>
     <a href='#soccer-anchor'>⚽ Soccer</a>
