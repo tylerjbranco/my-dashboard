@@ -292,7 +292,7 @@ def get_f1_race_results():
                 status = comp.get("status", {}).get("type", {}).get("state", "")
                 if status != "post":
                     continue
-                name = event.get("shortName", event.get("name", ""))
+                name = event.get("name", "")
                 date_str = comp.get("date", "")
                 dt = datetime.fromisoformat(date_str.replace("Z", "+00:00")).date() if date_str else None
                 competitors = comp.get("competitors", [])
@@ -300,11 +300,12 @@ def get_f1_race_results():
                 sorted_competitors = sorted(competitors, key=lambda c: int(c.get("order", 99) or 99))
                 for c in sorted_competitors[:3]:
                     athlete = c.get("athlete", {})
-                    team = c.get("team", {})
-                    logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
+                    flag_url = athlete.get("flag", {}).get("href", "")
+                    flag_alt = athlete.get("flag", {}).get("alt", "")
                     podium.append({
                         "name": athlete.get("displayName", "?"),
-                        "logo": logo,
+                        "flag_url": flag_url,
+                        "flag_alt": flag_alt,
                     })
                 completed.append({
                     "name": name,
@@ -515,7 +516,14 @@ def render_f1_section(f1_data, race_results):
 
     # Race schedule — split into past and upcoming
     today = date.today()
-    results_by_name = {r["name"]: r for r in race_results}
+    results_by_name = {}
+    for r in race_results:
+        results_by_name[r["name"]] = r
+        # Also index by last two words e.g. "Australian Grand Prix" to handle sponsor prefixes
+        words = r["name"].split()
+        if len(words) >= 3:
+            short = " ".join(words[-3:])
+            results_by_name[short] = r
 
     past_html = "<div class='standings'>"
     upcoming_sched_html = "<div class='standings'>"
@@ -526,14 +534,12 @@ def render_f1_section(f1_data, race_results):
         date_str = race_d.strftime("%b %d")
         is_completed = race_d < today
 
-        result = results_by_name.get(race_name)
-        podium_html = ""
         if is_completed and result and result.get("podium"):
             medals = ["🥇", "🥈", "🥉"]
             podium_html = "<div class='f1-podium'>"
             for i, rider in enumerate(result["podium"][:3]):
-                logo_html = f'<img src="{rider["logo"]}" class="f1-team-logo" alt="">' if rider.get("logo") else ""
-                podium_html += f"<span class='f1-podium-rider'>{medals[i]} {logo_html} {rider['name']}</span>"
+                flag_html = f'<img src="{rider["flag_url"]}" class="f1-flag-sm" alt="{rider["flag_alt"]}">' if rider.get("flag_url") else ""
+                podium_html += f"<span class='f1-podium-rider'>{medals[i]} {flag_html} {rider['name']}</span>"
             podium_html += "</div>"
 
         if is_completed:
@@ -1894,6 +1900,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .f1-race-name { font-size: 15px; font-weight: 500; color: #111; }
 .f1-race-location { font-size: 12px; color: #999; margin-top: 2px; }
 .f1-sessions { display: flex; flex-direction: column; gap: 4px; border-top: 0.5px solid #eee; padding-top: 10px; }
+.f1-flag-sm { width: 16px; height: 12px; object-fit: cover; border-radius: 2px; vertical-align: middle; }
 .f1-tbc { font-size: 10px; color: #999; }
 .f1-session { font-size: 12px; color: #555; display: flex; gap: 8px; }
 .f1-session-label { font-weight: 500; color: #111; min-width: 80px; }
