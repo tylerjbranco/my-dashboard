@@ -1941,6 +1941,10 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .cycling-result-meta { display: flex; align-items: center; gap: 8px; width: 100%; }
 .cycling-podium { display: flex; flex-direction: column; gap: 2px; padding-left: 2px; }
 .cycling-podium-rider { font-size: 11px; color: #555; }
+.sport-subnav { display: flex; gap: 0; background: white; border-bottom: 0.5px solid #eee; overflow-x: auto; padding: 0 4px; position: sticky; top: 96px; z-index: 9; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.sport-subnav::-webkit-scrollbar { display: none; }
+.sport-subnav a { padding: 8px 12px; font-size: 13px; color: #555; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+.sport-subnav a:hover { color: #111; }
 
 @media (prefers-color-scheme: dark) {
   body { background: #111; color: #eee; }
@@ -2403,6 +2407,13 @@ def sports():
 <body>
 <div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now_str}</div></div>
 {NAV_SPORTS}
+<div class='sport-subnav'>
+    <a href='#mlb-anchor'>⚾ MLB</a>
+    <a href='#soccer-anchor'>⚽ Soccer</a>
+    <a href='#nhl-anchor'>🏒 NHL</a>
+    <a href='#f1-anchor'>🏎️ F1</a>
+    <a href='#cycling-anchor'>🚴 Cycling</a>
+</div>
 <div class='body'>
 <div class='section-label'>My Teams</div>
 {render_my_teams(teams_data)}
@@ -2413,13 +2424,13 @@ def sports():
 <hr class='sport-divider'>
 <div class='section-label'>MLB · Scores</div>
 {render_scores_collapsible(mlb_yesterday, mlb_today, 'mlb')}
-<div class='section-label'>MLB · Standings</div>
+<div class='section-label' id='mlb-anchor'>MLB · Scores</div>
 {render_mlb_standings(mlb_standings)}
 <div class='section-label'>MLB · Headlines</div>
 {render_stories(mlb_stories, 'MLB', 'tag-mlb')}
 {athletic_link('https://theathletic.com/mlb/', 'MLB')}
 <hr class='sport-divider'>
-<div class='section-label'>Premier League · Scores</div>
+<div class='section-label' id='soccer-anchor'>Premier League · Scores</div>
 {render_scores(pl_yesterday, pl_today)}
 <div class='section-label'>Premier League · Standings</div>
 {render_pl_standings(pl_standings)}
@@ -2441,7 +2452,7 @@ def sports():
 {render_stories(ucl_stories, 'UCL', 'tag-ucl')}
 {athletic_link('https://www.nytimes.com/athletic/football/champions-league/', 'Champions League')}
 <hr class='sport-divider'>
-<div class='section-label'>NHL · Scores</div>
+<div class='section-label' id='nhl-anchor'>NHL · Scores</div>
 {render_scores_collapsible(nhl_yesterday, nhl_today, 'nhl')}
 <div class='section-label'>NHL · Standings</div>
 {render_nhl_standings(nhl_standings)}
@@ -2449,13 +2460,14 @@ def sports():
 {render_stories(nhl_stories, 'NHL', 'tag-nhl')}
 {athletic_link('https://theathletic.com/nhl/', 'NHL')}
 <hr class='sport-divider'>
-<div class='section-label'>Formula 1 · Upcoming Race</div>
+<div class='section-label' id='f1-anchor'>Formula 1 · Upcoming Race</div>
 {f1_upcoming_widget}
 {f1_schedule_toggle}
 <div class='section-label'>Formula 1 · Championship Standings</div>
 {f1_standings_html}
 {athletic_link('https://theathletic.com/formula-1/', 'Formula 1')}
 <hr class='sport-divider'>
+<div id='cycling-anchor'></div>
 {cycling_results_html}
 <div class='section-label'>Cycling · Upcoming Races</div>
 {render_cycling_calendar(cycling_calendar)}
@@ -2523,180 +2535,3 @@ def manifest():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
-
-@app.route("/debug-f1-results")
-def debug_f1_results():
-    import json
-    results = get_f1_race_results()
-    return f"<pre>{json.dumps([{**r, 'date': str(r['date'])} for r in results], indent=2)}</pre>"
-
-@app.route("/debug-f1-results2")
-def debug_f1_results2():
-    import json
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
-    response = requests.get(url, timeout=8)
-    data = response.json()
-    events = data.get("events", [])
-    out = []
-    for event in events:
-        comp = event["competitions"][0]
-        out.append({
-            "name": event.get("name", ""),
-            "state": comp.get("status", {}).get("type", {}).get("state", ""),
-            "competitors": len(comp.get("competitors", [])),
-        })
-    return f"<pre>{json.dumps(out, indent=2)}</pre>"
-
-@app.route("/debug-f1-results3")
-def debug_f1_results3():
-    import json
-    # Try fetching completed races with a date range
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260101-20260325"
-    response = requests.get(url, timeout=8)
-    data = response.json()
-    events = data.get("events", [])
-    out = []
-    for event in events:
-        comp = event["competitions"][0]
-        out.append({
-            "name": event.get("name", ""),
-            "state": comp.get("status", {}).get("type", {}).get("state", ""),
-            "competitors": len(comp.get("competitors", [])),
-        })
-    return f"<pre>{json.dumps(out, indent=2)}</pre>"
-
-@app.route("/debug-f1-results4")
-def debug_f1_results4():
-    import json
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260101-20261231"
-    response = requests.get(url, timeout=8)
-    data = response.json()
-    events = data.get("events", [])
-    if not events:
-        return "No events"
-    # Just look at the first completed event's competitors
-    for event in events:
-        comp = event["competitions"][0]
-        if comp.get("status", {}).get("type", {}).get("state", "") == "post":
-            return f"<pre>{json.dumps(comp.get('competitors', [])[:3], indent=2)}</pre>"
-    return "No completed events found"
-
-@app.route("/debug-sports")
-def debug_sports():
-    import traceback
-    try:
-        eastern = pytz.timezone("America/Toronto")
-        today = datetime.now(eastern).date()
-        yesterday = today - timedelta(days=1)
-        data = fetch_all_sports(today, yesterday)
-        f1_data = data.get("f1_data", {"upcoming": None, "constructors": [], "drivers": []})
-        f1_results = data.get("f1_results", [])
-        f1_upcoming_widget, f1_schedule_toggle, f1_standings_html = render_f1_section(f1_data, f1_results)
-        return f"<pre>OK</pre>"
-    except Exception as e:
-        return f"<pre>{traceback.format_exc()}</pre>"
-
-@app.route("/debug-f1-results5")
-def debug_f1_results5():
-    import json
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/results?dates=20260101-20261231"
-    response = requests.get(url, timeout=8)
-    return f"<pre>{json.dumps(response.json(), indent=2)[:3000]}</pre>"
-
-@app.route("/debug-f1-results6")
-def debug_f1_results6():
-    import json
-    # Try fetching a specific event
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/summary?event=600057427"
-    response = requests.get(url, timeout=8)
-    return f"<pre>{json.dumps(response.json(), indent=2)[:3000]}</pre>"
-
-@app.route("/debug-f1-results7")
-def debug_f1_results7():
-    import json
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260301-20260310"
-    response = requests.get(url, timeout=8)
-    data = response.json()
-    events = data.get("events", [])
-    if not events:
-        return "No events"
-    comp = events[0]["competitions"][0]
-    # Show all competitions for the event (each session)
-    return f"<pre>{json.dumps(events[0].get('competitions', []), indent=2)[:5000]}</pre>"
-
-@app.route("/debug-f1-results8")
-def debug_f1_results8():
-    import json
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260301-20260310"
-    response = requests.get(url, timeout=8)
-    data = response.json()
-    events = data.get("events", [])
-    if not events:
-        return "No events"
-    for comp in events[0].get("competitions", []):
-        if comp.get("type", {}).get("abbreviation", "") == "Race":
-            return f"<pre>{json.dumps(comp.get('competitors', [])[:5], indent=2)}</pre>"
-    return "No Race session found"
-
-@app.route("/debug-f1-results9")
-def debug_f1_results9():
-    import json
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260101-20261231"
-    response = requests.get(url, timeout=8)
-    data = response.json()
-    events = data.get("events", [])
-    out = []
-    for event in events:
-        comps = event.get("competitions", [])
-        race_comp = None
-        for c in comps:
-            if c.get("type", {}).get("abbreviation", "") == "Race":
-                race_comp = c
-                break
-        out.append({
-            "name": event.get("name", ""),
-            "num_competitions": len(comps),
-            "comp_types": [c.get("type", {}).get("abbreviation", "") for c in comps],
-            "race_found": race_comp is not None,
-            "race_state": race_comp.get("status", {}).get("type", {}).get("state", "") if race_comp else None,
-            "race_top3": [c["athlete"]["displayName"] for c in sorted(race_comp.get("competitors", []), key=lambda x: x.get("order", 99))[:3]] if race_comp else []
-        })
-    return f"<pre>{json.dumps(out, indent=2)}</pre>"
-
-@app.route("/debug-f1-results10")
-def debug_f1_results10():
-    import json
-    f1_results = get_f1_race_results()
-    results_by_name = {}
-    for r in f1_results:
-        for cal_name, _, _, _, _, _ in F1_CALENDAR_2026:
-            if cal_name.lower() in r["name"].lower():
-                results_by_name[cal_name] = r
-                break
-    return f"<pre>{json.dumps({k: [p['name'] for p in v['podium']] for k, v in results_by_name.items()}, indent=2)}</pre>"
-
-@app.route("/debug-f1-results11")
-def debug_f1_results11():
-    import json
-    results = get_f1_race_results()
-    return f"<pre>{json.dumps([{'name': r['name'], 'podium': r['podium']} for r in results], indent=2)}</pre>"
-
-@app.route("/debug-f1-results12")
-def debug_f1_results12():
-    import json
-    results = get_f1_race_results()
-    return f"<pre>{json.dumps([{'name': r['name'], 'podium': r['podium']} for r in results], indent=2)}</pre>"
-
-@app.route("/debug-f1-results13")
-def debug_f1_results13():
-    import json
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260101-20261231"
-    response = requests.get(url, timeout=8)
-    data = response.json()
-    events = data.get("events", [])
-    for event in events:
-        if "Australian" in event.get("name", ""):
-            for c in event.get("competitions", []):
-                if c.get("type", {}).get("abbreviation", "") == "Race":
-                    return f"<pre>Total competitors: {len(c.get('competitors', []))}\n\n{json.dumps(c.get('competitors', [])[:6], indent=2)}</pre>"
-    return "Not found"
