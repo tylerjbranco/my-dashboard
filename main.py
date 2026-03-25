@@ -2622,3 +2622,17 @@ def debug_f1_results7():
     comp = events[0]["competitions"][0]
     # Show all competitions for the event (each session)
     return f"<pre>{json.dumps(events[0].get('competitions', []), indent=2)[:5000]}</pre>"
+
+@app.route("/debug-f1-results8")
+def debug_f1_results8():
+    import json
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260301-20260310"
+    response = requests.get(url, timeout=8)
+    data = response.json()
+    events = data.get("events", [])
+    if not events:
+        return "No events"
+    for comp in events[0].get("competitions", []):
+        if comp.get("type", {}).get("abbreviation", "") == "Race":
+            return f"<pre>{json.dumps(comp.get('competitors', [])[:5], indent=2)}</pre>"
+    return "No Race session found"
