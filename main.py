@@ -281,7 +281,7 @@ def get_f1_data():
 def get_f1_race_results():
     """Get completed F1 race results from ESPN"""
     try:
-        url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
+        url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260101-20261231"
         response = requests.get(url, timeout=8)
         data = response.json()
         events = data.get("events", [])
