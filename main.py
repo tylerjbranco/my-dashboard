@@ -2422,9 +2422,9 @@ def sports():
 </button>
 <div class='fixture-calendar' id='fixture-calendar'></div>
 <hr class='sport-divider'>
-<div class='section-label'>MLB · Scores</div>
-{render_scores_collapsible(mlb_yesterday, mlb_today, 'mlb')}
 <div class='section-label' id='mlb-anchor'>MLB · Scores</div>
+{render_scores_collapsible(mlb_yesterday, mlb_today, 'mlb')}
+<div class='section-label'>MLB · Standings</div>
 {render_mlb_standings(mlb_standings)}
 <div class='section-label'>MLB · Headlines</div>
 {render_stories(mlb_stories, 'MLB', 'tag-mlb')}
