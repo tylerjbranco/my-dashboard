@@ -406,6 +406,7 @@ def render_cycling_results(races, podiums):
     if not completed:
         return ""
     html = f"""
+    <div id='cycling-anchor'></div>
     <button class='fixture-toggle' id='cycling-results-toggle-btn' onclick='toggleSection("cycling-results-toggle-btn","cycling-results-body")'>
         <span class='toggle-arrow'>▾</span> Completed Races
     </button>
@@ -2472,7 +2473,6 @@ def sports():
 {f1_standings_html}
 {athletic_link('https://theathletic.com/formula-1/', 'Formula 1')}
 <hr class='sport-divider'>
-<div id='cycling-anchor'></div>
 {cycling_results_html}
 <div class='section-label'>Cycling · Upcoming Races</div>
 {render_cycling_calendar(cycling_calendar)}
