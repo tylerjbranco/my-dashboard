@@ -528,7 +528,7 @@ def render_f1_section(f1_data, race_results):
     past_html = "<div class='standings'>"
     upcoming_sched_html = "<div class='standings'>"
 
-   for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
+    for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
         race_d = date.fromisoformat(race_date_str)
         flag = FLAG_HTML.get(country, "🏎️")
         date_str = race_d.strftime("%b %d")
