@@ -2494,3 +2494,9 @@ def manifest():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
+
+@app.route("/debug-f1-results")
+def debug_f1_results():
+    import json
+    results = get_f1_race_results()
+    return f"<pre>{json.dumps([{**r, 'date': str(r['date'])} for r in results], indent=2)}</pre>"
