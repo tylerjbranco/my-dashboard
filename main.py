@@ -2517,3 +2517,21 @@ def debug_f1_results2():
             "competitors": len(comp.get("competitors", [])),
         })
     return f"<pre>{json.dumps(out, indent=2)}</pre>"
+
+@app.route("/debug-f1-results3")
+def debug_f1_results3():
+    import json
+    # Try fetching completed races with a date range
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260101-20260325"
+    response = requests.get(url, timeout=8)
+    data = response.json()
+    events = data.get("events", [])
+    out = []
+    for event in events:
+        comp = event["competitions"][0]
+        out.append({
+            "name": event.get("name", ""),
+            "state": comp.get("status", {}).get("type", {}).get("state", ""),
+            "competitors": len(comp.get("competitors", [])),
+        })
+    return f"<pre>{json.dumps(out, indent=2)}</pre>"
