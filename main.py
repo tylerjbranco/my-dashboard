@@ -1947,6 +1947,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .sport-subnav a { padding: 8px 12px; font-size: 13px; color: #555; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
 .sport-subnav a:hover { color: #111; }
 .section-label[id] { scroll-margin-top: 140px; }
+#cycling-anchor { scroll-margin-top: 140px; }
 
 @media (prefers-color-scheme: dark) {
   body { background: #111; color: #eee; }
