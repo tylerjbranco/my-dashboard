@@ -2535,3 +2535,19 @@ def debug_f1_results3():
             "competitors": len(comp.get("competitors", [])),
         })
     return f"<pre>{json.dumps(out, indent=2)}</pre>"
+
+@app.route("/debug-f1-results4")
+def debug_f1_results4():
+    import json
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260101-20261231"
+    response = requests.get(url, timeout=8)
+    data = response.json()
+    events = data.get("events", [])
+    if not events:
+        return "No events"
+    # Just look at the first completed event's competitors
+    for event in events:
+        comp = event["competitions"][0]
+        if comp.get("status", {}).get("type", {}).get("state", "") == "post":
+            return f"<pre>{json.dumps(comp.get('competitors', [])[:3], indent=2)}</pre>"
+    return "No completed events found"
