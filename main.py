@@ -2558,3 +2558,12 @@ def debug_f1_results4():
         if comp.get("status", {}).get("type", {}).get("state", "") == "post":
             return f"<pre>{json.dumps(comp.get('competitors', [])[:3], indent=2)}</pre>"
     return "No completed events found"
+
+@app.route("/debug-sports")
+def debug_sports():
+    import traceback
+    try:
+        f1_results = get_f1_race_results()
+        return f"<pre>Results: {f1_results}</pre>"
+    except Exception as e:
+        return f"<pre>{traceback.format_exc()}</pre>"
