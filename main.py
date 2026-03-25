@@ -2672,3 +2672,9 @@ def debug_f1_results10():
                 results_by_name[cal_name] = r
                 break
     return f"<pre>{json.dumps({k: [p['name'] for p in v['podium']] for k, v in results_by_name.items()}, indent=2)}</pre>"
+
+@app.route("/debug-f1-results11")
+def debug_f1_results11():
+    import json
+    results = get_f1_race_results()
+    return f"<pre>{json.dumps([{'name': r['name'], 'podium': r['podium']} for r in results], indent=2)}</pre>"
