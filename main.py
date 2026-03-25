@@ -4,10 +4,12 @@ import requests
 from datetime import datetime, date, timedelta
 import pytz
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
 FPL_TEAM_ID = 27088
+PL_CL_SPOTS = 4  # Update each season as needed
 
 NHL_DIVISIONS = {
     "Atlantic": ["Bruins", "Sabres", "Red Wings", "Panthers", "Canadiens", "Senators", "Lightning", "Maple Leafs"],
@@ -38,6 +40,27 @@ FLAG_HTML = {
     "PL": "&#x1F1F5;&#x1F1F1;",
     "CA": "&#x1F1E8;&#x1F1E6;",
     "CN": "&#x1F1E8;&#x1F1F3;",
+    "GB": "&#x1F1EC;&#x1F1E7;",
+    "MC": "&#x1F1F2;&#x1F1E8;",
+    "BH": "&#x1F1E7;&#x1F1ED;",
+    "SA": "&#x1F1F8;&#x1F1E6;",
+    "JP": "&#x1F1EF;&#x1F1F5;",
+    "US": "&#x1F1FA;&#x1F1F8;",
+    "AZ": "&#x1F1E6;&#x1F1FF;",
+    "SG": "&#x1F1F8;&#x1F1EC;",
+    "MX": "&#x1F1F2;&#x1F1FD;",
+    "BR": "&#x1F1E7;&#x1F1F7;",
+    "AT": "&#x1F1E6;&#x1F1F9;",
+    "HU": "&#x1F1ED;&#x1F1FA;",
+    "QA": "&#x1F1F6;&#x1F1E6;",
+}
+
+NATIONALITY_FLAGS = {
+    "NED": "🇳🇱", "BEL": "🇧🇪", "GBR": "🇬🇧", "ITA": "🇮🇹", "FRA": "🇫🇷",
+    "SLO": "🇸🇮", "DEN": "🇩🇰", "COL": "🇨🇴", "AUS": "🇦🇺", "GER": "🇩🇪",
+    "ESP": "🇪🇸", "POR": "🇵🇹", "NOR": "🇳🇴", "SWI": "🇨🇭", "POL": "🇵🇱",
+    "USA": "🇺🇸", "KAZ": "🇰🇿", "ECU": "🇪🇨", "RUS": "🇷🇺", "AUT": "🇦🇹",
+    "CZE": "🇨🇿", "TUR": "🇹🇷", "ERY": "🇪🇷", "RSA": "🇿🇦", "CAN": "🇨🇦",
 }
 
 MY_TEAMS = [
@@ -117,6 +140,227 @@ UCI_WORLD_TOUR_2026 = [
     ("Gree-Tour of Guangxi", "CN", "2026-10-13", "2026-10-18", "tour-of-guangxi"),
 ]
 
+F1_CALENDAR_2026 = [
+    ("Australian Grand Prix", "AU", "Melbourne", "2026-03-15", "2026-03-15", "aus"),
+    ("Chinese Grand Prix", "CN", "Shanghai", "2026-03-22", "2026-03-22", "chn"),
+    ("Japanese Grand Prix", "JP", "Suzuka", "2026-04-05", "2026-04-05", "jpn"),
+    ("Bahrain Grand Prix", "BH", "Sakhir", "2026-04-19", "2026-04-19", "bhr"),
+    ("Saudi Arabian Grand Prix", "SA", "Jeddah", "2026-04-26", "2026-04-26", "sau"),
+    ("Miami Grand Prix", "US", "Miami", "2026-05-03", "2026-05-03", "mia"),
+    ("Emilia Romagna Grand Prix", "IT", "Imola", "2026-05-17", "2026-05-17", "emr"),
+    ("Monaco Grand Prix", "MC", "Monaco", "2026-05-24", "2026-05-24", "mon"),
+    ("Spanish Grand Prix", "ES", "Barcelona", "2026-05-31", "2026-05-31", "esp"),
+    ("Canadian Grand Prix", "CA", "Montréal", "2026-06-14", "2026-06-14", "can"),
+    ("Austrian Grand Prix", "AT", "Spielberg", "2026-06-28", "2026-06-28", "aut"),
+    ("British Grand Prix", "GB", "Silverstone", "2026-07-05", "2026-07-05", "gbr"),
+    ("Belgian Grand Prix", "BE", "Spa", "2026-07-26", "2026-07-26", "bel"),
+    ("Hungarian Grand Prix", "HU", "Budapest", "2026-08-02", "2026-08-02", "hun"),
+    ("Dutch Grand Prix", "NL", "Zandvoort", "2026-08-30", "2026-08-30", "ned"),
+    ("Italian Grand Prix", "IT", "Monza", "2026-09-06", "2026-09-06", "ita"),
+    ("Azerbaijan Grand Prix", "AZ", "Baku", "2026-09-20", "2026-09-20", "aze"),
+    ("Singapore Grand Prix", "SG", "Singapore", "2026-10-04", "2026-10-04", "sgp"),
+    ("United States Grand Prix", "US", "Austin", "2026-10-18", "2026-10-18", "usa"),
+    ("Mexico City Grand Prix", "MX", "Mexico City", "2026-10-25", "2026-10-25", "mex"),
+    ("São Paulo Grand Prix", "BR", "São Paulo", "2026-11-08", "2026-11-08", "bra"),
+    ("Las Vegas Grand Prix", "US", "Las Vegas", "2026-11-21", "2026-11-21", "lvg"),
+    ("Qatar Grand Prix", "QA", "Lusail", "2026-11-29", "2026-11-29", "qat"),
+    ("Abu Dhabi Grand Prix", "AE", "Yas Marina", "2026-12-06", "2026-12-06", "auh"),
+]
+
+
+def get_f1_data():
+    try:
+        # Upcoming race
+        url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
+        response = requests.get(url, timeout=8)
+        data = response.json()
+        events = data.get("events", [])
+
+        eastern = pytz.timezone("America/Toronto")
+        today = datetime.now(eastern).date()
+
+        upcoming = None
+        for event in events:
+            try:
+                competitions = event.get("competitions", [])
+                if not competitions:
+                    continue
+                comp = competitions[0]
+                date_str = comp.get("date", event.get("date", ""))
+                if not date_str:
+                    continue
+                dt_utc = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                dt_eastern = dt_utc.astimezone(eastern)
+                if dt_eastern.date() >= today:
+                    upcoming = event
+                    break
+            except:
+                continue
+
+        upcoming_info = None
+        if upcoming:
+            try:
+                comp = upcoming["competitions"][0]
+                name = upcoming.get("name", "")
+                venue = comp.get("venue", {})
+                location = venue.get("fullName", "") or venue.get("address", {}).get("city", "")
+                country_code = venue.get("address", {}).get("country", "")
+
+                # Find qualifying and race sessions
+                sessions = []
+                for c in upcoming.get("competitions", []):
+                    c_type = c.get("type", {}).get("text", "")
+                    c_date = c.get("date", "")
+                    if c_date and c_type:
+                        try:
+                            dt_utc = datetime.fromisoformat(c_date.replace("Z", "+00:00"))
+                            dt_est = dt_utc.astimezone(eastern)
+                            sessions.append((c_type, dt_est))
+                        except:
+                            pass
+
+                qual_time = None
+                race_time = None
+                for s_type, s_dt in sessions:
+                    if "qualify" in s_type.lower() or "quali" in s_type.lower():
+                        qual_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
+                    elif "race" in s_type.lower() and "grand prix" in s_type.lower():
+                        race_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
+
+                # Fallback: find from F1_CALENDAR_2026
+                flag = FLAG_HTML.get(country_code, "🏎️")
+                upcoming_info = {
+                    "name": name,
+                    "location": location,
+                    "flag": flag,
+                    "qual_time": qual_time,
+                    "race_time": race_time,
+                }
+            except:
+                pass
+
+        # Standings
+        standings_url = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings"
+        standings_resp = requests.get(standings_url, timeout=8)
+        standings_data = standings_resp.json()
+
+        constructors = []
+        drivers = []
+
+        for child in standings_data.get("children", []):
+            stype = child.get("type", "").lower()
+            entries = child.get("standings", {}).get("entries", [])
+            for entry in entries:
+                team = entry.get("team", {})
+                athlete = entry.get("athlete", {})
+                stats = {s["name"]: s["displayValue"] for s in entry.get("stats", [])}
+                pts = stats.get("points", "0")
+                logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
+                if "constructor" in stype or "team" in stype:
+                    constructors.append({
+                        "name": team.get("displayName", team.get("name", "?")),
+                        "logo": logo,
+                        "points": pts,
+                    })
+                elif "driver" in stype:
+                    drivers.append({
+                        "name": athlete.get("displayName", "?"),
+                        "team_logo": logo,
+                        "points": pts,
+                    })
+
+        return {
+            "upcoming": upcoming_info,
+            "constructors": constructors,
+            "drivers": drivers,
+        }
+    except:
+        return {"upcoming": None, "constructors": [], "drivers": []}
+
+
+def get_f1_race_results():
+    """Get completed F1 race results from ESPN"""
+    try:
+        url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
+        response = requests.get(url, timeout=8)
+        data = response.json()
+        events = data.get("events", [])
+        completed = []
+        for event in events:
+            try:
+                comp = event["competitions"][0]
+                status = comp.get("status", {}).get("type", {}).get("state", "")
+                if status != "post":
+                    continue
+                name = event.get("shortName", event.get("name", ""))
+                date_str = comp.get("date", "")
+                dt = datetime.fromisoformat(date_str.replace("Z", "+00:00")).date() if date_str else None
+                competitors = comp.get("competitors", [])
+                podium = []
+                sorted_competitors = sorted(competitors, key=lambda c: int(c.get("order", 99) or 99))
+                for c in sorted_competitors[:3]:
+                    athlete = c.get("athlete", {})
+                    team = c.get("team", {})
+                    logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
+                    podium.append({
+                        "name": athlete.get("displayName", "?"),
+                        "logo": logo,
+                    })
+                completed.append({
+                    "name": name,
+                    "date": dt,
+                    "podium": podium,
+                })
+            except:
+                continue
+        return completed
+    except:
+        return []
+
+
+def get_cycling_podiums():
+    """Scrape top 3 finishers for completed UCI WT races from PCS"""
+    today = date.today()
+    results = {}
+    completed = [(name, country, start_str, end_str, slug)
+                 for name, country, start_str, end_str, slug in UCI_WORLD_TOUR_2026
+                 if date.fromisoformat(end_str) < today]
+
+    def fetch_podium(name, slug):
+        try:
+            url = f"https://www.procyclingstats.com/race/{slug}/2026"
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+            resp = requests.get(url, timeout=8, headers=headers)
+            soup = BeautifulSoup(resp.text, "html.parser")
+            podium = []
+            # PCS result table — first table with class 'results'
+            table = soup.find("table", class_="basic")
+            if not table:
+                table = soup.find("table")
+            if table:
+                rows = table.find_all("tr")[1:4]
+                for row in rows:
+                    cells = row.find_all("td")
+                    if len(cells) >= 4:
+                        rider_name = cells[3].get_text(strip=True) if len(cells) > 3 else "?"
+                        nat_code = cells[2].get_text(strip=True) if len(cells) > 2 else ""
+                        flag = NATIONALITY_FLAGS.get(nat_code, "")
+                        podium.append({"name": rider_name, "flag": flag})
+            if not podium:
+                return name, []
+            return name, podium
+        except:
+            return name, []
+
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = {executor.submit(fetch_podium, name, slug): name
+                   for name, country, start_str, end_str, slug in completed}
+        for future in as_completed(futures):
+            name, podium = future.result()
+            results[name] = podium
+    return results
+
+
 def get_cycling_calendar():
     today = date.today()
     races = []
@@ -138,6 +382,45 @@ def get_cycling_calendar():
             "pcs_url": f"https://www.procyclingstats.com/race/{pcs_slug}/2026",
         })
     return races
+
+
+def render_cycling_results(races, podiums):
+    completed = [r for r in races if r["status"] == "completed"]
+    if not completed:
+        return ""
+    html = f"""
+    <button class='fixture-toggle' id='cycling-results-toggle-btn' onclick='toggleSection("cycling-results-toggle-btn","cycling-results-body")'>
+        <span class='toggle-arrow'>▾</span> Completed Races
+    </button>
+    <div class='fixture-calendar' id='cycling-results-body'>
+    <div class='standings'>"""
+    for race in completed:
+        flag = FLAG_HTML.get(race["country"], race["country"])
+        if race["start"] == race["end"]:
+            date_str = race["start"].strftime("%b %d")
+        else:
+            date_str = f"{race['start'].strftime('%b %d')} – {race['end'].strftime('%b %d')}"
+        podium = podiums.get(race["name"], [])
+        podium_html = ""
+        if podium:
+            medals = ["🥇", "🥈", "🥉"]
+            podium_html = "<div class='cycling-podium'>"
+            for i, rider in enumerate(podium[:3]):
+                medal = medals[i] if i < len(medals) else ""
+                podium_html += f"<span class='cycling-podium-rider'>{medal} {rider['flag']} {rider['name']}</span>"
+            podium_html += "</div>"
+        html += f"""
+        <div class='standing-row cycling-result-row'>
+            <div class='cycling-result-meta'>
+                <span class='race-date'>{date_str}</span>
+                <span><a href='{race['pcs_url']}' target='_blank' class='race-link'>{race['name']}</a></span>
+                <span class='race-country'>{flag}</span>
+            </div>
+            {podium_html}
+        </div>"""
+    html += "</div></div>"
+    return html
+
 
 def render_cycling_calendar(races):
     html = "<div class='standings'>"
@@ -163,6 +446,148 @@ def render_cycling_calendar(races):
         </div>"""
     html += "</div>"
     return html
+
+
+def render_f1_section(f1_data, race_results):
+    upcoming = f1_data.get("upcoming")
+    constructors = f1_data.get("constructors", [])
+    drivers = f1_data.get("drivers", [])
+
+    # Upcoming race widget
+    if upcoming:
+        qual_html = f"<div class='f1-session'><span class='f1-session-label'>Qualifying</span> {upcoming['qual_time']}</div>" if upcoming.get("qual_time") else ""
+        race_html = f"<div class='f1-session'><span class='f1-session-label'>Race</span> {upcoming['race_time']}</div>" if upcoming.get("race_time") else ""
+
+        # Fallback to calendar if API didn't return session times
+        if not qual_html and not race_html:
+            today = date.today()
+            eastern = pytz.timezone("America/Toronto")
+            for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
+                race_d = date.fromisoformat(race_date_str)
+                if race_d >= today:
+                    qual_d = race_d - timedelta(days=1)
+                    race_html = f"<div class='f1-session'><span class='f1-session-label'>Race</span> {race_d.strftime('%a %b %d')}</div>"
+                    qual_html = f"<div class='f1-session'><span class='f1-session-label'>Qualifying</span> {qual_d.strftime('%a %b %d')}</div>"
+                    if not upcoming.get("name"):
+                        upcoming["name"] = race_name
+                        upcoming["flag"] = FLAG_HTML.get(country, "🏎️")
+                        upcoming["location"] = loc
+                    break
+
+        upcoming_widget = f"""
+        <div class='f1-upcoming'>
+            <div class='f1-upcoming-header'>
+                <span class='f1-flag'>{upcoming.get('flag','')}</span>
+                <div>
+                    <div class='f1-race-name'>{upcoming.get('name','Upcoming Race')}</div>
+                    <div class='f1-race-location'>{upcoming.get('location','')}</div>
+                </div>
+            </div>
+            <div class='f1-sessions'>
+                {qual_html}
+                {race_html}
+            </div>
+        </div>"""
+    else:
+        # Fallback from hardcoded calendar
+        today = date.today()
+        upcoming_widget = "<p class='empty'>No upcoming race data</p>"
+        for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
+            race_d = date.fromisoformat(race_date_str)
+            if race_d >= today:
+                flag = FLAG_HTML.get(country, "🏎️")
+                qual_d = race_d - timedelta(days=1)
+                upcoming_widget = f"""
+                <div class='f1-upcoming'>
+                    <div class='f1-upcoming-header'>
+                        <span class='f1-flag'>{flag}</span>
+                        <div>
+                            <div class='f1-race-name'>{race_name}</div>
+                            <div class='f1-race-location'>{loc}</div>
+                        </div>
+                    </div>
+                    <div class='f1-sessions'>
+                        <div class='f1-session'><span class='f1-session-label'>Qualifying</span> {qual_d.strftime('%a %b %d')}</div>
+                        <div class='f1-session'><span class='f1-session-label'>Race</span> {race_d.strftime('%a %b %d')}</div>
+                    </div>
+                </div>"""
+                break
+
+    # Race schedule — from hardcoded calendar + ESPN results
+    today = date.today()
+    results_by_name = {r["name"]: r for r in race_results}
+
+    schedule_html = "<div class='standings' id='f1-schedule-body-inner'>"
+    for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
+        race_d = date.fromisoformat(race_date_str)
+        flag = FLAG_HTML.get(country, "🏎️")
+        date_str = race_d.strftime("%b %d")
+        is_completed = race_d < today
+
+        result = results_by_name.get(race_name)
+        podium_html = ""
+        if is_completed and result and result.get("podium"):
+            medals = ["🥇", "🥈", "🥉"]
+            podium_html = "<div class='f1-podium'>"
+            for i, rider in enumerate(result["podium"][:3]):
+                logo_html = f'<img src="{rider["logo"]}" class="f1-team-logo" alt="">' if rider.get("logo") else ""
+                podium_html += f"<span class='f1-podium-rider'>{medals[i]} {logo_html} {rider['name']}</span>"
+            podium_html += "</div>"
+
+        row_class = "standing-row f1-schedule-row" + (" f1-completed-row" if is_completed else "")
+        schedule_html += f"""
+        <div class='{row_class}'>
+            <div class='f1-schedule-meta'>
+                <span class='race-date'>{date_str}</span>
+                <span class='team'>{race_name}</span>
+                <span class='f1-loc'>{loc}</span>
+                <span class='race-country'>{flag}</span>
+            </div>
+            {podium_html}
+        </div>"""
+    schedule_html += "</div>"
+
+    schedule_toggle = f"""
+    <button class='fixture-toggle' id='f1-schedule-toggle-btn' onclick='toggleSection("f1-schedule-toggle-btn","f1-schedule-body")'>
+        <span class='toggle-arrow'>▾</span> Full Race Schedule
+    </button>
+    <div class='fixture-calendar open' id='f1-schedule-body'>
+        {schedule_html}
+    </div>"""
+
+    # Standings
+    constructors_html = "<div class='standings'>"
+    for i, c in enumerate(constructors):
+        logo_html = f'<img src="{c["logo"]}" class="team-logo-sm" alt="">' if c.get("logo") else ""
+        constructors_html += f"""
+        <div class='standing-row'>
+            <span class='pos'>{i+1}</span>
+            <span class='team'>{logo_html}{c['name']}</span>
+            <span class='pts'>{c['points']}</span>
+        </div>"""
+    constructors_html += "</div>"
+
+    drivers_html = "<div class='standings' style='display:none' id='f1-drivers-table'>"
+    for i, d in enumerate(drivers):
+        logo_html = f'<img src="{d["team_logo"]}" class="team-logo-sm" alt="">' if d.get("team_logo") else ""
+        drivers_html += f"""
+        <div class='standing-row'>
+            <span class='pos'>{i+1}</span>
+            <span class='team'>{logo_html}{d['name']}</span>
+            <span class='pts'>{d['points']}</span>
+        </div>"""
+    drivers_html += "</div>"
+
+    standings_html = f"""
+    <div class='f1-standings-toggle'>
+        <button class='f1-toggle-btn f1-toggle-active' id='f1-btn-constructors' onclick='switchF1Standings("constructors")'>Constructors</button>
+        <button class='f1-toggle-btn' id='f1-btn-drivers' onclick='switchF1Standings("drivers")'>Drivers</button>
+    </div>
+    <div id='f1-constructors-table'>{constructors_html}</div>
+    <div id='f1-drivers-table-wrap' style='display:none'>{drivers_html}</div>"""
+
+    return upcoming_widget, schedule_toggle, standings_html
+
 
 def get_fpl_data():
     try:
@@ -248,7 +673,6 @@ def get_fpl_data():
             player_out = player_map.get(sub["element_out"], {}).get("web_name", "?")
             auto_sub_strs.append(f"{player_in} ↔ {player_out}")
 
-        # Chip tracker
         chips_played = {c["name"]: c["event"] for c in history.get("chips", [])}
         all_chips = [
             ("wildcard", "WC1", 1, 19),
@@ -285,6 +709,7 @@ def get_fpl_data():
         }
     except:
         return None
+
 
 def render_fpl(fpl):
     if not fpl:
@@ -395,6 +820,7 @@ def render_fpl(fpl):
         <div class='fpl-bench'>Bench: {bench_html}</div>
     </div>"""
 
+
 def get_weather(lat=43.70, lon=-79.42):
     try:
         url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=11"
@@ -452,6 +878,7 @@ def get_weather(lat=43.70, lon=-79.42):
     except:
         return None
 
+
 def get_city_name(lat, lon):
     try:
         url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json"
@@ -464,6 +891,7 @@ def get_city_name(lat, lon):
         return city
     except:
         return "Your Location"
+
 
 def render_weather(w, city="Toronto"):
     if not w:
@@ -513,6 +941,7 @@ def render_weather(w, city="Toronto"):
         </div>
     </div>"""
 
+
 def get_scores(sport, league, for_date=None):
     try:
         if for_date:
@@ -526,6 +955,7 @@ def get_scores(sport, league, for_date=None):
     except:
         return []
 
+
 def get_scores_range(sport, league, start_date, end_date):
     try:
         start_str = start_date.strftime("%Y%m%d")
@@ -537,6 +967,7 @@ def get_scores_range(sport, league, start_date, end_date):
     except:
         return [], league
 
+
 def get_standings(sport, league):
     url = f"https://site.api.espn.com/apis/v2/sports/{sport}/{league}/standings"
     try:
@@ -545,6 +976,7 @@ def get_standings(sport, league):
         return data
     except:
         return {}
+
 
 def find_team_games(games, keywords):
     matches = []
@@ -563,6 +995,7 @@ def find_team_games(games, keywords):
         except:
             continue
     return matches
+
 
 def get_stories(url, limit=5):
     try:
@@ -608,6 +1041,7 @@ def get_stories(url, limit=5):
     except:
         return []
 
+
 def get_youtube_videos(channel_id=None, limit=2, playlist_id=None):
     if playlist_id:
         url = f"https://www.youtube.com/feeds/videos.xml?playlist_id={playlist_id}"
@@ -636,6 +1070,7 @@ def get_youtube_videos(channel_id=None, limit=2, playlist_id=None):
         return videos
     except:
         return []
+
 
 def get_podcast_episodes(url, limit=2):
     try:
@@ -668,6 +1103,7 @@ def get_podcast_episodes(url, limit=2):
     except:
         return [], ""
 
+
 def fetch_all_sports(today, yesterday):
     tasks = {
         "mlb_today": (get_scores, ("baseball", "mlb", today)),
@@ -692,9 +1128,12 @@ def fetch_all_sports(today, yesterday):
         "ucl_stories": (get_stories, ("https://www.theguardian.com/football/championsleague/rss",)),
         "nhl_stories": (get_stories, ("https://www.sportsnet.ca/hockey/nhl/feed/",)),
         "cycling_stories": (get_stories, ("https://www.cyclingnews.com/rss",)),
+        "f1_data": (get_f1_data, ()),
+        "f1_results": (get_f1_race_results, ()),
+        "cycling_podiums": (get_cycling_podiums, ()),
     }
     results = {}
-    with ThreadPoolExecutor(max_workers=14) as executor:
+    with ThreadPoolExecutor(max_workers=16) as executor:
         futures = {executor.submit(fn, *args): key for key, (fn, args) in tasks.items()}
         for future in as_completed(futures):
             key = futures[future]
@@ -703,6 +1142,7 @@ def fetch_all_sports(today, yesterday):
             except:
                 results[key] = [] if "standings" not in key else {}
     return results
+
 
 def fetch_all_news():
     tasks = {
@@ -724,6 +1164,7 @@ def fetch_all_news():
             except:
                 results[key] = [] if key != "weather" else None
     return results
+
 
 def fetch_all_media():
     results = {"videos": {}, "podcasts": {}}
@@ -749,12 +1190,14 @@ def fetch_all_media():
                     results["podcasts"][key[2:]] = ([], "")
     return results
 
+
 def athletic_link(url, label):
     return f"""
     <a href='{url}' target='_blank' class='athletic-link'>
         <span class='athletic-badge'>A</span>
         <span>More {label} coverage on The Athletic</span>
     </a>"""
+
 
 def render_game_card(game):
     competition = game["competitions"][0]
@@ -820,6 +1263,37 @@ def render_game_card(game):
         </div>
     </a>"""
 
+
+def render_scores_collapsible(yesterday_games, today_games, id_prefix):
+    """Render scores with collapsible yesterday/today toggles using label as button."""
+    html = ""
+    if yesterday_games:
+        html += f"""
+        <div class='scores-section-toggle open' id='{id_prefix}-yday-btn' onclick='toggleScores("{id_prefix}-yday-btn", "{id_prefix}-yday-body")'>
+            <span class='toggle-arrow'>▾</span> Yesterday's results
+        </div>
+        <div class='scores-toggle-body open' id='{id_prefix}-yday-body'>
+            <div class='scores-grid'>"""
+        for game in yesterday_games:
+            html += render_game_card(game)
+        html += "</div></div>"
+
+    if today_games:
+        html += f"""
+        <div class='scores-section-toggle open' id='{id_prefix}-today-btn' onclick='toggleScores("{id_prefix}-today-btn", "{id_prefix}-today-body")'>
+            <span class='toggle-arrow'>▾</span> Today's fixtures
+        </div>
+        <div class='scores-toggle-body open' id='{id_prefix}-today-body'>
+            <div class='scores-grid'>"""
+        for game in today_games:
+            html += render_game_card(game)
+        html += "</div></div>"
+
+    if not yesterday_games and not today_games:
+        html += "<p class='empty'>No games yesterday or today</p>"
+    return html
+
+
 def render_scores(yesterday_games, today_games):
     html = ""
     if yesterday_games:
@@ -837,6 +1311,7 @@ def render_scores(yesterday_games, today_games):
     if not yesterday_games and not today_games:
         html += "<p class='empty'>No games yesterday or today</p>"
     return html
+
 
 def render_my_teams(teams_data):
     has_any = any(t["yesterday_game"] or t["today_game"] for t in teams_data)
@@ -889,20 +1364,52 @@ def render_my_teams(teams_data):
         html += "</div>"
     return html
 
+
 def render_nhl_standings(data):
     try:
         all_entries = []
         for conference in data.get("children", []):
             for entry in conference["standings"]["entries"]:
-                all_entries.append(entry)
+                all_entries.append((entry, conference.get("name", "")))
     except:
         return "<p class='empty'>Standings unavailable</p>"
+
     team_lookup = {}
-    for entry in all_entries:
+    for entry, conf_name in all_entries:
         name = entry["team"]["shortDisplayName"]
         stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
         logo = entry["team"].get("logos", [{}])[0].get("href", "") if entry["team"].get("logos") else ""
         team_lookup[name] = {"stats": stats, "logo": logo}
+
+    # Determine wildcard spots per conference
+    # NHL: top 3 per division make playoffs, then 2 wild cards per conference
+    NHL_WILD_CARDS_PER_CONF = 2
+    DIVISIONS_PER_CONF = {"Eastern": ["Atlantic", "Metropolitan"], "Western": ["Central", "Pacific"]}
+
+    playoff_teams = set()
+    wildcard_teams = set()
+
+    for conf_name, divisions in DIVISIONS_PER_CONF.items():
+        conf_teams_by_pts = []
+        div_leaders = set()
+        for div in divisions:
+            teams_in_div = [(t, team_lookup[t]) for t in NHL_DIVISIONS.get(div, []) if t in team_lookup]
+            teams_in_div.sort(key=lambda x: int(x[1]["stats"].get("points", "0") or "0"), reverse=True)
+            # Top 3 per division make playoffs
+            for i, (t, _) in enumerate(teams_in_div):
+                if i < 3:
+                    playoff_teams.add(t)
+                    if i == 0:
+                        div_leaders.add(t)
+                conf_teams_by_pts.append((t, team_lookup[t]))
+        # Wild cards: next best from conference not already in playoffs
+        conf_teams_by_pts.sort(key=lambda x: int(x[1]["stats"].get("points", "0") or "0"), reverse=True)
+        wc_count = 0
+        for t, _ in conf_teams_by_pts:
+            if t not in playoff_teams and wc_count < NHL_WILD_CARDS_PER_CONF:
+                wildcard_teams.add(t)
+                wc_count += 1
+
     html = ""
     for division, teams in NHL_DIVISIONS.items():
         html += f"<div class='division-label'>{division}</div>"
@@ -910,17 +1417,24 @@ def render_nhl_standings(data):
         html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat-col'>GP</span><span class='stat-col'>W</span><span class='stat-col'>L</span><span class='stat-col'>OTL</span><span class='pts'>PTS</span></div>"
         division_teams = [(team, team_lookup[team]) for team in teams if team in team_lookup]
         division_teams.sort(key=lambda x: int(x[1]["stats"].get("points", "0") or "0"), reverse=True)
-        for i, (team, data) in enumerate(division_teams):
-            s = data["stats"]
-            logo = data["logo"]
+        for i, (team, tdata) in enumerate(division_teams):
+            s = tdata["stats"]
+            logo = tdata["logo"]
             gp = s.get("gamesPlayed", "-")
             w = s.get("wins", "-")
             l = s.get("losses", "-")
             otl = s.get("otLosses", "-")
             pts = s.get("points", "-")
             logo_html = f'<img class="team-logo-sm" src="{logo}" alt="">' if logo else ""
+            row_style = ""
+            if team in playoff_teams and i == 0:
+                row_style = "background: #dbeafe;"  # Division leader — blue
+            elif team in playoff_teams:
+                row_style = "background: #eff6ff;"  # Playoff spot — light blue
+            elif team in wildcard_teams:
+                row_style = "background: #f0fdf4;"  # Wild card — light green
             html += f"""
-            <div class='standing-row'>
+            <div class='standing-row' style='{row_style}'>
                 <span class='pos'>{i+1}</span>
                 <span class='team'>{logo_html}{team}</span>
                 <span class='stat-col'>{gp}</span>
@@ -930,22 +1444,60 @@ def render_nhl_standings(data):
                 <span class='pts'>{pts}</span>
             </div>"""
         html += "</div>"
+
+    # Legend
+    html += """
+    <div class='standings-legend'>
+        <span class='legend-item'><span class='legend-swatch' style='background:#dbeafe'></span> Division leader</span>
+        <span class='legend-item'><span class='legend-swatch' style='background:#eff6ff'></span> Playoff spot</span>
+        <span class='legend-item'><span class='legend-swatch' style='background:#f0fdf4'></span> Wild card</span>
+    </div>"""
     return html
+
 
 def render_mlb_standings(data):
     try:
         all_entries = []
         for conference in data.get("children", []):
             for entry in conference["standings"]["entries"]:
-                all_entries.append(entry)
+                all_entries.append((entry, conference.get("name", "")))
     except:
         return "<p class='empty'>Standings unavailable</p>"
+
     team_lookup = {}
-    for entry in all_entries:
+    for entry, conf_name in all_entries:
         name = entry["team"]["shortDisplayName"]
         stats = {s["name"]: s["displayValue"] for s in entry["stats"]}
         logo = entry["team"].get("logos", [{}])[0].get("href", "") if entry["team"].get("logos") else ""
-        team_lookup[name] = {"stats": stats, "logo": logo}
+        team_lookup[name] = {"stats": stats, "logo": logo, "conf": conf_name}
+
+    # MLB: 3 division winners + 3 wild cards per league (AL, NL)
+    MLB_WILD_CARDS = 3
+    AL_DIVISIONS = ["AL East", "AL Central", "AL West"]
+    NL_DIVISIONS = ["NL East", "NL Central", "NL West"]
+
+    playoff_teams = set()
+    div_leader_teams = set()
+    wildcard_teams = set()
+
+    for league_divs in [AL_DIVISIONS, NL_DIVISIONS]:
+        league_all = []
+        for div in league_divs:
+            teams_in_div = [(t, team_lookup[t]) for t in MLB_DIVISIONS.get(div, []) if t in team_lookup]
+            teams_in_div.sort(key=lambda x: int(x[1]["stats"].get("wins", "0") or "0"), reverse=True)
+            for i, (t, _) in enumerate(teams_in_div):
+                if i == 0:
+                    playoff_teams.add(t)
+                    div_leader_teams.add(t)
+            league_all.extend(teams_in_div)
+        # Wild cards from remaining
+        league_all.sort(key=lambda x: int(x[1]["stats"].get("wins", "0") or "0"), reverse=True)
+        wc_count = 0
+        for t, _ in league_all:
+            if t not in playoff_teams and wc_count < MLB_WILD_CARDS:
+                wildcard_teams.add(t)
+                wc_count += 1
+
     html = ""
     for division, teams in MLB_DIVISIONS.items():
         html += f"<div class='division-label'>{division}</div>"
@@ -953,16 +1505,21 @@ def render_mlb_standings(data):
         html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat-col'>W</span><span class='stat-col'>L</span><span class='stat-col'>PCT</span><span class='pts'>GB</span></div>"
         division_teams = [(team, team_lookup[team]) for team in teams if team in team_lookup]
         division_teams.sort(key=lambda x: int(x[1]["stats"].get("wins", "0") or "0"), reverse=True)
-        for i, (team, data) in enumerate(division_teams):
-            s = data["stats"]
-            logo = data["logo"]
+        for i, (team, tdata) in enumerate(division_teams):
+            s = tdata["stats"]
+            logo = tdata["logo"]
             w = s.get("wins", "-")
             l = s.get("losses", "-")
             pct = s.get("winPercent", "-")
             gb = s.get("gamesBehind", "-")
             logo_html = f'<img class="team-logo-sm" src="{logo}" alt="">' if logo else ""
+            row_style = ""
+            if team in div_leader_teams:
+                row_style = "background: #dbeafe;"
+            elif team in wildcard_teams:
+                row_style = "background: #f0fdf4;"
             html += f"""
-            <div class='standing-row'>
+            <div class='standing-row' style='{row_style}'>
                 <span class='pos'>{i+1}</span>
                 <span class='team'>{logo_html}{team}</span>
                 <span class='stat-col'>{w}</span>
@@ -971,7 +1528,14 @@ def render_mlb_standings(data):
                 <span class='pts'>{gb}</span>
             </div>"""
         html += "</div>"
+
+    html += """
+    <div class='standings-legend'>
+        <span class='legend-item'><span class='legend-swatch' style='background:#dbeafe'></span> Division leader</span>
+        <span class='legend-item'><span class='legend-swatch' style='background:#f0fdf4'></span> Wild card</span>
+    </div>"""
     return html
+
 
 def render_pl_standings(data):
     try:
@@ -986,6 +1550,10 @@ def render_pl_standings(data):
         )
     except:
         return "<p class='empty'>Standings unavailable</p>"
+
+    total = len(all_entries)
+    relegation_start = total - 3  # Bottom 3
+
     html = "<div class='standings'>"
     html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat-col'>GP</span><span class='stat-col'>W</span><span class='stat-col'>D</span><span class='stat-col'>L</span><span class='pts'>PTS</span></div>"
     for i, entry in enumerate(all_entries):
@@ -998,8 +1566,13 @@ def render_pl_standings(data):
         l = stats.get("losses", "-")
         pts = stats.get("points", "-")
         logo_html = f'<img class="team-logo-sm" src="{logo}" alt="">' if logo else ""
+        row_style = ""
+        if i < PL_CL_SPOTS:
+            row_style = "background: #dbeafe;"  # CL — blue
+        elif i >= relegation_start:
+            row_style = "background: #fee2e2;"  # Relegation — red
         html += f"""
-        <div class='standing-row'>
+        <div class='standing-row' style='{row_style}'>
             <span class='pos'>{i+1}</span>
             <span class='team'>{logo_html}{team}</span>
             <span class='stat-col'>{gp}</span>
@@ -1009,7 +1582,13 @@ def render_pl_standings(data):
             <span class='pts'>{pts}</span>
         </div>"""
     html += "</div>"
+    html += f"""
+    <div class='standings-legend'>
+        <span class='legend-item'><span class='legend-swatch' style='background:#dbeafe'></span> Champions League (Top {PL_CL_SPOTS})</span>
+        <span class='legend-item'><span class='legend-swatch' style='background:#fee2e2'></span> Relegation</span>
+    </div>"""
     return html
+
 
 def render_ucl_standings(data):
     try:
@@ -1049,6 +1628,7 @@ def render_ucl_standings(data):
     html += "</div>"
     return html
 
+
 def render_stories(stories, tag, tag_class):
     if not stories:
         return "<p class='empty'>No stories available</p>"
@@ -1066,6 +1646,7 @@ def render_stories(stories, tag, tag_class):
             </div>
         </div>"""
     return html
+
 
 def render_news_section(sources):
     html = ""
@@ -1090,6 +1671,7 @@ def render_news_section(sources):
         html = "<p class='empty'>No stories available</p>"
     return html
 
+
 def render_videos(channels_data):
     html = ""
     for channel_name, videos in channels_data:
@@ -1110,6 +1692,7 @@ def render_videos(channels_data):
     if not html:
         html = "<p class='empty'>No videos available</p>"
     return html
+
 
 def render_podcasts(podcasts_data):
     html = ""
@@ -1132,6 +1715,7 @@ def render_podcasts(podcasts_data):
         html = "<p class='empty'>No episodes available</p>"
     return html
 
+
 CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; max-width: 600px; margin: 0 auto; }
@@ -1144,6 +1728,13 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .body { padding: 12px 16px; }
 .section-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin: 14px 0 8px; }
 .scores-section-label { font-size: 11px; color: #999; margin: 8px 0 6px; font-style: italic; }
+.scores-section-toggle { font-size: 11px; color: #999; margin: 8px 0 6px; font-style: italic; cursor: pointer; display: flex; align-items: center; gap: 4px; user-select: none; }
+.scores-section-toggle:hover { color: #555; }
+.scores-section-toggle .toggle-arrow { transition: transform 0.2s; display: inline-block; font-style: normal; }
+.scores-section-toggle.open .toggle-arrow { transform: rotate(0deg); }
+.scores-section-toggle:not(.open) .toggle-arrow { transform: rotate(-90deg); }
+.scores-toggle-body { overflow: hidden; }
+.scores-toggle-body:not(.open) { display: none; }
 .division-label { font-size: 11px; font-weight: 500; color: #555; margin: 10px 0 4px; padding-left: 2px; }
 .sport-divider { border: none; border-top: 2px solid #eee; margin: 20px 0; }
 .news-divider { border: none; border-top: 1px solid #eee; margin: 16px 0; }
@@ -1203,6 +1794,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .tag-pl { background: #dcfce7; color: #166534; }
 .tag-ucl { background: #ede9fe; color: #5b21b6; }
 .tag-cycling { background: #fef9c3; color: #854d0e; }
+.tag-f1 { background: #ffe4e6; color: #9f1239; }
 .tag-cbc { background: #ede9fe; color: #5b21b6; }
 .tag-globe { background: #f3f4f6; color: #374151; }
 .tag-bbc { background: #fee2e2; color: #991b1b; }
@@ -1248,7 +1840,8 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .fixture-toggle { display: flex; align-items: center; gap: 6px; padding: 8px 0; cursor: pointer; border: none; background: none; font-family: inherit; font-size: 12px; color: #999; width: 100%; text-align: left; }
 .fixture-toggle:hover { color: #111; }
 .fixture-toggle .toggle-arrow { transition: transform 0.2s; display: inline-block; }
-.fixture-toggle.open .toggle-arrow { transform: rotate(180deg); }
+.fixture-toggle.open .toggle-arrow { transform: rotate(0deg); }
+.fixture-toggle:not(.open) .toggle-arrow { transform: rotate(-90deg); }
 .fixture-calendar { display: none; margin-top: 4px; }
 .fixture-calendar.open { display: block; }
 .fixture-date-group { margin-bottom: 10px; }
@@ -1264,6 +1857,41 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .extended-forecast-toggle.open .toggle-arrow { transform: rotate(180deg); }
 .extended-forecast { display: none; padding-top: 12px; border-top: 0.5px solid #eee; margin-top: 8px; }
 .extended-forecast.open { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.standings-legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 6px 2px; margin-bottom: 4px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #666; }
+.legend-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+/* UCL standings toggle */
+.section-label-toggle { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin: 14px 0 8px; cursor: pointer; display: flex; align-items: center; gap: 5px; user-select: none; }
+.section-label-toggle:hover { color: #555; }
+.section-label-toggle .toggle-arrow { transition: transform 0.2s; display: inline-block; font-size: 10px; }
+.section-label-toggle.open .toggle-arrow { transform: rotate(0deg); }
+.section-label-toggle:not(.open) .toggle-arrow { transform: rotate(-90deg); }
+.section-toggle-body { }
+.section-toggle-body.hidden { display: none; }
+/* F1 styles */
+.f1-upcoming { background: white; border: 0.5px solid #eee; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.f1-upcoming-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.f1-flag { font-size: 28px; }
+.f1-race-name { font-size: 15px; font-weight: 500; color: #111; }
+.f1-race-location { font-size: 12px; color: #999; margin-top: 2px; }
+.f1-sessions { display: flex; flex-direction: column; gap: 4px; border-top: 0.5px solid #eee; padding-top: 10px; }
+.f1-session { font-size: 12px; color: #555; display: flex; gap: 8px; }
+.f1-session-label { font-weight: 500; color: #111; min-width: 80px; }
+.f1-standings-toggle { display: flex; gap: 8px; margin-bottom: 8px; }
+.f1-toggle-btn { font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 20px; border: 1px solid #ddd; background: white; color: #999; cursor: pointer; font-family: inherit; }
+.f1-toggle-btn.f1-toggle-active { background: #111; color: white; border-color: #111; }
+.f1-schedule-row { flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px 10px; }
+.f1-schedule-meta { display: flex; align-items: center; gap: 8px; width: 100%; font-size: 12px; }
+.f1-loc { font-size: 11px; color: #999; flex: 1; }
+.f1-completed-row { opacity: 0.7; }
+.f1-podium { display: flex; flex-direction: column; gap: 2px; padding-left: 2px; }
+.f1-podium-rider { font-size: 11px; color: #555; display: flex; align-items: center; gap: 4px; }
+.f1-team-logo { width: 14px; height: 14px; object-fit: contain; }
+/* Cycling results */
+.cycling-result-row { flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px 10px; }
+.cycling-result-meta { display: flex; align-items: center; gap: 8px; width: 100%; }
+.cycling-podium { display: flex; flex-direction: column; gap: 2px; padding-left: 2px; }
+.cycling-podium-rider { font-size: 11px; color: #555; }
 
 @media (prefers-color-scheme: dark) {
   body { background: #111; color: #eee; }
@@ -1287,6 +1915,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .live-row { background: #2a1f0e; }
   .division-label { color: #aaa; }
   .section-label { color: #888; }
+  .section-label-toggle { color: #888; }
   .sport-divider { border-top-color: #2c2c2e; }
   .news-divider { border-top-color: #2c2c2e; }
   .story-item { border-bottom-color: #2c2c2e; }
@@ -1294,6 +1923,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .news-item { border-bottom-color: #2c2c2e; }
   .news-content a { color: #eee; }
   .scores-section-label { color: #888; }
+  .scores-section-toggle { color: #888; }
   .score-status { color: #888; }
   .stat-col { color: #aaa; }
   .athletic-link span { color: #888; }
@@ -1324,6 +1954,26 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .fixture-date-label { color: #888; }
   .extended-forecast-toggle { color: #888; }
   .extended-forecast { border-top-color: #2c2c2e; }
+  .standings-legend { }
+  .legend-item { color: #aaa; }
+  .standing-row[style*='background: #dbeafe'] { background: #1e3a5f !important; }
+  .standing-row[style*='background: #eff6ff'] { background: #162a40 !important; }
+  .standing-row[style*='background: #f0fdf4'] { background: #14301e !important; }
+  .standing-row[style*='background: #fee2e2'] { background: #3b0f0f !important; }
+  .legend-swatch[style*='background:#dbeafe'] { background: #1e3a5f !important; }
+  .legend-swatch[style*='background:#eff6ff'] { background: #162a40 !important; }
+  .legend-swatch[style*='background:#f0fdf4'] { background: #14301e !important; }
+  .legend-swatch[style*='background:#fee2e2'] { background: #3b0f0f !important; }
+  .f1-upcoming { background: #1c1c1e; border-color: #2c2c2e; }
+  .f1-race-name { color: #eee; }
+  .f1-session { color: #aaa; }
+  .f1-session-label { color: #eee; }
+  .f1-sessions { border-top-color: #2c2c2e; }
+  .f1-toggle-btn { background: #2c2c2e; border-color: #444; color: #aaa; }
+  .f1-toggle-btn.f1-toggle-active { background: #eee; color: #111; border-color: #eee; }
+  .f1-podium-rider { color: #aaa; }
+  .f1-loc { color: #666; }
+  .cycling-podium-rider { color: #aaa; }
 }
 """
 
@@ -1363,8 +2013,8 @@ if (navigator.geolocation) {
                 document.querySelector('.weather-desc').innerHTML = data.current_desc + ' \u00b7 <span id="weather-city">' + data.city + '</span>';
                 document.querySelector('.weather-meta').textContent = 'Feels like ' + data.feels_like + '\u00b0C \u00b7 High ' + data.today_high + '\u00b0 Low ' + data.today_low + '\u00b0 \u00b7 ' + data.today_precip + '% precip';
                 const forecastEl = document.getElementById('weather-forecast');
-                    if (forecastEl && data.days) {
-                        forecastEl.innerHTML = data.days.slice(0, 3).map(day =>
+                if (forecastEl && data.days) {
+                    forecastEl.innerHTML = data.days.slice(0, 3).map(day =>
                         '<div class="forecast-day">' +
                         '<div class="forecast-name">' + day.name + '</div>' +
                         '<div class="forecast-date">' + day.date + '</div>' +
@@ -1391,6 +2041,7 @@ function toggleExtendedForecast() {
         btn.classList.add('open');
     }
 }
+
 function toggleFixtures() {
     const btn = document.getElementById('fixture-toggle-btn');
     const cal = document.getElementById('fixture-calendar');
@@ -1431,8 +2082,69 @@ function toggleFixtures() {
             cal.innerHTML = '<p class="empty">Fixtures unavailable</p>';
         });
 }
+
+function toggleScores(btnId, bodyId) {
+    const btn = document.getElementById(btnId);
+    const body = document.getElementById(bodyId);
+    if (!btn || !body) return;
+    const isOpen = body.classList.contains('open');
+    if (isOpen) {
+        body.classList.remove('open');
+        btn.classList.remove('open');
+    } else {
+        body.classList.add('open');
+        btn.classList.add('open');
+    }
+}
+
+function toggleSection(btnId, bodyId) {
+    const btn = document.getElementById(btnId);
+    const body = document.getElementById(bodyId);
+    if (!btn || !body) return;
+    const isOpen = body.classList.contains('open');
+    if (isOpen) {
+        body.classList.remove('open');
+        btn.classList.remove('open');
+    } else {
+        body.classList.add('open');
+        btn.classList.add('open');
+    }
+}
+
+function toggleSectionLabel(btnId, bodyId) {
+    const btn = document.getElementById(btnId);
+    const body = document.getElementById(bodyId);
+    if (!btn || !body) return;
+    const isOpen = btn.classList.contains('open');
+    if (isOpen) {
+        body.classList.add('hidden');
+        btn.classList.remove('open');
+    } else {
+        body.classList.remove('hidden');
+        btn.classList.add('open');
+    }
+}
+
+function switchF1Standings(type) {
+    const conBtn = document.getElementById('f1-btn-constructors');
+    const drvBtn = document.getElementById('f1-btn-drivers');
+    const conTable = document.getElementById('f1-constructors-table');
+    const drvTable = document.getElementById('f1-drivers-table-wrap');
+    if (type === 'constructors') {
+        conBtn.classList.add('f1-toggle-active');
+        drvBtn.classList.remove('f1-toggle-active');
+        conTable.style.display = '';
+        drvTable.style.display = 'none';
+    } else {
+        drvBtn.classList.add('f1-toggle-active');
+        conBtn.classList.remove('f1-toggle-active');
+        drvTable.style.display = '';
+        conTable.style.display = 'none';
+    }
+}
 </script>
 """
+
 
 @app.route("/fixtures")
 def fixtures():
@@ -1463,7 +2175,6 @@ def fixtures():
 
         by_date = {}
         for league, games in results.items():
-            emoji = LEAGUE_EMOJI.get(league, "🏆")
             for game in games:
                 try:
                     competition = game["competitions"][0]
@@ -1536,6 +2247,7 @@ def fixtures():
     except Exception as e:
         return jsonify({"dates": [], "error": str(e)})
 
+
 @app.route("/weather")
 def weather_api():
     try:
@@ -1548,6 +2260,7 @@ def weather_api():
         return jsonify({**w, "city": city})
     except:
         return jsonify({"error": "unavailable"})
+
 
 @app.route("/")
 def news():
@@ -1585,6 +2298,7 @@ def news():
 </div>
 {CLOCK_AND_WEATHER_JS}
 </body></html>"""
+
 
 @app.route("/sports")
 def sports():
@@ -1627,6 +2341,13 @@ def sports():
     nhl_stories = data.get("nhl_stories", [])
     cycling_stories = data.get("cycling_stories", [])
     cycling_calendar = get_cycling_calendar()
+    cycling_podiums = data.get("cycling_podiums", {})
+    f1_data = data.get("f1_data", {"upcoming": None, "constructors": [], "drivers": []})
+    f1_results = data.get("f1_results", [])
+
+    f1_upcoming_widget, f1_schedule_toggle, f1_standings_html = render_f1_section(f1_data, f1_results)
+    cycling_results_html = render_cycling_results(cycling_calendar, cycling_podiums)
+
     now_str = now.strftime("%A, %B %d · %I:%M %p")
     return f"""<!DOCTYPE html>
 <html><head>{HEAD}<style>{CSS}</style></head>
@@ -1642,7 +2363,7 @@ def sports():
 <div class='fixture-calendar' id='fixture-calendar'></div>
 <hr class='sport-divider'>
 <div class='section-label'>MLB · Scores</div>
-{render_scores(mlb_yesterday, mlb_today)}
+{render_scores_collapsible(mlb_yesterday, mlb_today, 'mlb')}
 <div class='section-label'>MLB · Standings</div>
 {render_mlb_standings(mlb_standings)}
 <div class='section-label'>MLB · Headlines</div>
@@ -1661,20 +2382,32 @@ def sports():
 <hr class='sport-divider'>
 <div class='section-label'>Champions League · Scores</div>
 {render_scores(ucl_yesterday, ucl_today)}
-<div class='section-label'>Champions League · League Phase Standings</div>
+<div id='ucl-standings-label' class='section-label-toggle open' onclick='toggleSectionLabel("ucl-standings-label","ucl-standings-body")'>
+    <span class='toggle-arrow'>▾</span> Champions League · League Phase Standings
+</div>
+<div id='ucl-standings-body' class='section-toggle-body'>
 {render_ucl_standings(ucl_standings)}
+</div>
 <div class='section-label'>Champions League · Headlines</div>
 {render_stories(ucl_stories, 'UCL', 'tag-ucl')}
 {athletic_link('https://www.nytimes.com/athletic/football/champions-league/', 'Champions League')}
 <hr class='sport-divider'>
 <div class='section-label'>NHL · Scores</div>
-{render_scores(nhl_yesterday, nhl_today)}
+{render_scores_collapsible(nhl_yesterday, nhl_today, 'nhl')}
 <div class='section-label'>NHL · Standings</div>
 {render_nhl_standings(nhl_standings)}
 <div class='section-label'>NHL · Headlines</div>
 {render_stories(nhl_stories, 'NHL', 'tag-nhl')}
 {athletic_link('https://theathletic.com/nhl/', 'NHL')}
 <hr class='sport-divider'>
+<div class='section-label'>Formula 1 · Upcoming Race</div>
+{f1_upcoming_widget}
+{f1_schedule_toggle}
+<div class='section-label'>Formula 1 · Championship Standings</div>
+{f1_standings_html}
+{athletic_link('https://theathletic.com/formula-1/', 'Formula 1')}
+<hr class='sport-divider'>
+{cycling_results_html}
 <div class='section-label'>Cycling · Upcoming Races</div>
 {render_cycling_calendar(cycling_calendar)}
 <div class='section-label'>Cycling · Headlines</div>
@@ -1683,6 +2416,7 @@ def sports():
 </div>
 {CLOCK_AND_WEATHER_JS}
 </body></html>"""
+
 
 @app.route("/media")
 def media():
@@ -1726,6 +2460,7 @@ def media():
 {CLOCK_AND_WEATHER_JS}
 </body></html>"""
 
+
 @app.route("/manifest.json")
 def manifest():
     return jsonify({
@@ -1735,6 +2470,7 @@ def manifest():
         "background_color": "#111",
         "theme_color": "#1c1c1e"
     })
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
