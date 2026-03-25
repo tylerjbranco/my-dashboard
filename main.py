@@ -2475,3 +2475,16 @@ def manifest():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
+
+@app.route("/debug-f1")
+def debug_f1():
+    import json
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
+    response = requests.get(url, timeout=8)
+    data = response.json()
+    events = data.get("events", [])
+    if not events:
+        return "No events"
+    event = events[0]
+    competitions = event.get("competitions", [])
+    return f"<pre>{json.dumps(competitions, indent=2)}</pre>"
