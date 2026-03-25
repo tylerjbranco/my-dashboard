@@ -170,112 +170,33 @@ F1_CALENDAR_2026 = [
 
 def get_f1_data():
     try:
-        # Upcoming race
         url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
-        response = requests.get(url, timeout=8)
-        data = response.json()
-        events = data.get("events", [])
-
+        data = requests.get(url, timeout=8).json()
         eastern = pytz.timezone("America/Toronto")
-        today = datetime.now(eastern).date()
-
-        upcoming = None
-        for event in events:
-            try:
-                competitions = event.get("competitions", [])
-                if not competitions:
-                    continue
-                comp = competitions[0]
-                date_str = comp.get("date", event.get("date", ""))
-                if not date_str:
-                    continue
-                dt_utc = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                dt_eastern = dt_utc.astimezone(eastern)
-                if dt_eastern.date() >= today:
-                    upcoming = event
-                    break
-            except:
-                continue
-
+        
         upcoming_info = None
-        if upcoming:
-            try:
-                comp = upcoming["competitions"][0]
-                name = upcoming.get("name", "")
-                venue = comp.get("venue", {})
-                location = venue.get("fullName", "") or venue.get("address", {}).get("city", "")
-                country_code = venue.get("address", {}).get("country", "")
+        for event in data.get("events", []):
+            dt_est = datetime.fromisoformat(event['date'].replace("Z", "+00:00")).astimezone(eastern)
+            if dt_est.date() >= date.today():
+                sessions = event.get("competitions", [])
+                q_time = next((datetime.fromisoformat(s['date'].replace("Z", "+00:00")).astimezone(eastern).strftime("%a %b %d · %I:%M %p ET") for s in sessions if "qualify" in s['type']['text'].lower()), "TBD")
+                r_time = next((datetime.fromisoformat(s['date'].replace("Z", "+00:00")).astimezone(eastern).strftime("%a %I:%M %p ET") for s in sessions if "race" in s['type']['text'].lower()), "TBD")
+                upcoming_info = {"name": event.get("name"), "qual_time": q_time, "race_time": r_time, "flag": FLAG_HTML.get(event['competitions'][0]['venue']['address']['country'], "🏎️"), "location": event['competitions'][0]['venue'].get('fullName', "")}
+                break
 
-                # Find qualifying and race sessions
-                sessions = []
-                for c in upcoming.get("competitions", []):
-                    c_type = c.get("type", {}).get("text", "")
-                    c_date = c.get("date", "")
-                    if c_date and c_type:
-                        try:
-                            dt_utc = datetime.fromisoformat(c_date.replace("Z", "+00:00"))
-                            dt_est = dt_utc.astimezone(eastern)
-                            sessions.append((c_type, dt_est))
-                        except:
-                            pass
-
-                qual_time = None
-                race_time = None
-                for s_type, s_dt in sessions:
-                    if "qualify" in s_type.lower() or "quali" in s_type.lower():
-                        qual_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
-                    elif "race" in s_type.lower() and "grand prix" in s_type.lower():
-                        race_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
-
-                # Fallback: find from F1_CALENDAR_2026
-                flag = FLAG_HTML.get(country_code, "🏎️")
-                upcoming_info = {
-                    "name": name,
-                    "location": location,
-                    "flag": flag,
-                    "qual_time": qual_time,
-                    "race_time": race_time,
-                }
-            except:
-                pass
-
-        # Standings
-        standings_url = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings"
-        standings_resp = requests.get(standings_url, timeout=8)
-        standings_data = standings_resp.json()
-
-        constructors = []
-        drivers = []
-
-        for child in standings_data.get("children", []):
-            stype = child.get("type", "").lower()
-            entries = child.get("standings", {}).get("entries", [])
-            for entry in entries:
-                team = entry.get("team", {})
-                athlete = entry.get("athlete", {})
-                stats = {s["name"]: s["displayValue"] for s in entry.get("stats", [])}
-                pts = stats.get("points", "0")
-                logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
-                if "constructor" in stype or "team" in stype:
-                    constructors.append({
-                        "name": team.get("displayName", team.get("name", "?")),
-                        "logo": logo,
-                        "points": pts,
-                    })
-                elif "driver" in stype:
-                    drivers.append({
-                        "name": athlete.get("displayName", "?"),
-                        "team_logo": logo,
-                        "points": pts,
-                    })
-
-        return {
-            "upcoming": upcoming_info,
-            "constructors": constructors,
-            "drivers": drivers,
-        }
-    except:
-        return {"upcoming": None, "constructors": [], "drivers": []}
+        s_url = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings"
+        s_data = requests.get(s_url, timeout=8).json()
+        constructors, drivers = [], []
+        for child in s_data.get("children", []):
+            is_team = "team" in child.get("type", "").lower() or "constructor" in child.get("type", "").lower()
+            for entry in child.get("standings", {}).get("entries", []):
+                pts = next((s['displayValue'] for s in entry['stats'] if s['name'] == 'points'), "0")
+                if is_team:
+                    constructors.append({"name": entry['team']['displayName'], "logo": entry['team']['logos'][0]['href'], "points": pts})
+                else:
+                    drivers.append({"name": entry['athlete']['displayName'], "team_logo": entry['athlete'].get('team', {}).get('logos', [{}])[0].get('href', ""), "points": pts})
+        return {"upcoming": upcoming_info, "constructors": constructors, "drivers": drivers}
+    except: return {"upcoming": None, "constructors": [], "drivers": []}
 
 
 def get_f1_race_results():
@@ -316,7 +237,6 @@ def get_f1_race_results():
         return completed
     except:
         return []
-
 
 def get_cycling_podiums():
     """Scrape top 3 finishers for completed UCI WT races from PCS"""
