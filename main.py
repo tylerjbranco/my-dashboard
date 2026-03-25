@@ -2382,10 +2382,10 @@ def sports():
 <hr class='sport-divider'>
 <div class='section-label'>Champions League · Scores</div>
 {render_scores(ucl_yesterday, ucl_today)}
-<div id='ucl-standings-label' class='section-label-toggle open' onclick='toggleSectionLabel("ucl-standings-label","ucl-standings-body")'>
+<div id='ucl-standings-label' class='section-label-toggle' onclick='toggleSectionLabel("ucl-standings-label","ucl-standings-body")'>
     <span class='toggle-arrow'>▾</span> Champions League · League Phase Standings
 </div>
-<div id='ucl-standings-body' class='section-toggle-body'>
+<div id='ucl-standings-body' class='section-toggle-body hidden'>
 {render_ucl_standings(ucl_standings)}
 </div>
 <div class='section-label'>Champions League · Headlines</div>
