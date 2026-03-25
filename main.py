@@ -289,13 +289,7 @@ def get_f1_race_results():
         for event in events:
             try:
                 comp = event["competitions"][0]
-                status = comp.get("status", {}).get("type", {}).get("state", "")
-                if status != "post":
-                    continue
-                name = event.get("name", "")
-                date_str = comp.get("date", "")
-                dt = datetime.fromisoformat(date_str.replace("Z", "+00:00")).date() if date_str else None
-                # Find the Race session specifically, not FP1/FP2/etc
+                # Check if the Race session specifically is completed
                 race_comp = None
                 for c in event.get("competitions", []):
                     if c.get("type", {}).get("abbreviation", "") == "Race":
@@ -303,6 +297,12 @@ def get_f1_race_results():
                         break
                 if not race_comp:
                     continue
+                status = race_comp.get("status", {}).get("type", {}).get("state", "")
+                if status != "post":
+                    continue
+                name = event.get("name", "")
+                date_str = comp.get("date", "")
+                dt = datetime.fromisoformat(date_str.replace("Z", "+00:00")).date() if date_str else None
                 
                 competitors = race_comp.get("competitors", [])
                 podium = []
