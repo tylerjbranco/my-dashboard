@@ -528,12 +528,20 @@ def render_f1_section(f1_data, race_results):
     past_html = "<div class='standings'>"
     upcoming_sched_html = "<div class='standings'>"
 
-    for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
+   for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
         race_d = date.fromisoformat(race_date_str)
         flag = FLAG_HTML.get(country, "🏎️")
         date_str = race_d.strftime("%b %d")
         is_completed = race_d < today
 
+        result = results_by_name.get(race_name)
+        # Also try matching last 3 words
+        if not result:
+            words = race_name.split()
+            if len(words) >= 3:
+                result = results_by_name.get(" ".join(words[-3:]))
+
+        podium_html = ""
         if is_completed and result and result.get("podium"):
             medals = ["🥇", "🥈", "🥉"]
             podium_html = "<div class='f1-podium'>"
@@ -562,7 +570,6 @@ def render_f1_section(f1_data, race_results):
                 <span class='race-country'>{flag}</span>
             </div>
         </div>"""
-
     past_html += "</div>"
     upcoming_sched_html += "</div>"
 
