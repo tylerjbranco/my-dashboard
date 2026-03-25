@@ -306,16 +306,23 @@ def get_f1_race_results():
                 
                 competitors = race_comp.get("competitors", [])
                 podium = []
+                seen = set()
                 sorted_competitors = sorted(competitors, key=lambda c: int(c.get("order", 99) or 99))
-                for c in sorted_competitors[:3]:
+                for c in sorted_competitors:
                     athlete = c.get("athlete", {})
+                    name = athlete.get("displayName", "?")
+                    if name in seen:
+                        continue
+                    seen.add(name)
                     flag_url = athlete.get("flag", {}).get("href", "")
                     flag_alt = athlete.get("flag", {}).get("alt", "")
                     podium.append({
-                        "name": athlete.get("displayName", "?"),
+                        "name": name,
                         "flag_url": flag_url,
                         "flag_alt": flag_alt,
                     })
+                    if len(podium) >= 3:
+                        break
                     podium.append({
                         "name": athlete.get("displayName", "?"),
                         "flag_url": flag_url,
