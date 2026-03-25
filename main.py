@@ -2691,3 +2691,17 @@ def debug_f1_results12():
     import json
     results = get_f1_race_results()
     return f"<pre>{json.dumps([{'name': r['name'], 'podium': r['podium']} for r in results], indent=2)}</pre>"
+
+@app.route("/debug-f1-results13")
+def debug_f1_results13():
+    import json
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260101-20261231"
+    response = requests.get(url, timeout=8)
+    data = response.json()
+    events = data.get("events", [])
+    for event in events:
+        if "Australian" in event.get("name", ""):
+            for c in event.get("competitions", []):
+                if c.get("type", {}).get("abbreviation", "") == "Race":
+                    return f"<pre>Total competitors: {len(c.get('competitors', []))}\n\n{json.dumps(c.get('competitors', [])[:6], indent=2)}</pre>"
+    return "Not found"
