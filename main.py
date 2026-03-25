@@ -2595,3 +2595,16 @@ def debug_f1_results6():
     url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/summary?event=600057427"
     response = requests.get(url, timeout=8)
     return f"<pre>{json.dumps(response.json(), indent=2)[:3000]}</pre>"
+
+@app.route("/debug-f1-results7")
+def debug_f1_results7():
+    import json
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260301-20260310"
+    response = requests.get(url, timeout=8)
+    data = response.json()
+    events = data.get("events", [])
+    if not events:
+        return "No events"
+    comp = events[0]["competitions"][0]
+    # Show all competitions for the event (each session)
+    return f"<pre>{json.dumps(events[0].get('competitions', []), indent=2)[:5000]}</pre>"
