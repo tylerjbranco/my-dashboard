@@ -310,14 +310,14 @@ def get_f1_race_results():
                 sorted_competitors = sorted(competitors, key=lambda c: int(c.get("order", 99) or 99))
                 for c in sorted_competitors:
                     athlete = c.get("athlete", {})
-                    name = athlete.get("displayName", "?")
-                    if name in seen:
+                    driver_name = athlete.get("displayName", "?")
+                    if driver_name in seen:
                         continue
-                    seen.add(name)
+                    seen.add(driver_name)
                     flag_url = athlete.get("flag", {}).get("href", "")
                     flag_alt = athlete.get("flag", {}).get("alt", "")
                     podium.append({
-                        "name": name,
+                        "name": driver_name,
                         "flag_url": flag_url,
                         "flag_alt": flag_alt,
                     })
