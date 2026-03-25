@@ -209,24 +209,24 @@ def get_f1_data():
                 # Find qualifying and race sessions
                 sessions = []
                 for c in upcoming.get("competitions", []):
-                    c_type = c.get("type", {}).get("text", "")
+                    c_abbrev = c.get("type", {}).get("abbreviation", "")
                     c_date = c.get("date", "")
-                    if c_date and c_type:
+                    if c_date and c_abbrev:
                         try:
                             dt_utc = datetime.fromisoformat(c_date.replace("Z", "+00:00"))
                             dt_est = dt_utc.astimezone(eastern)
-                            sessions.append((c_type, dt_est))
+                            sessions.append((c_abbrev, dt_est))
                         except:
                             pass
 
                 qual_time = None
                 race_time = None
-                for s_type, s_dt in sessions:
-                    if "qualify" in s_type.lower() or "quali" in s_type.lower():
+                for s_abbrev, s_dt in sessions:
+                    if s_abbrev == "Qual":
                         qual_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
-                    elif "race" in s_type.lower() and "grand prix" in s_type.lower():
+                    elif s_abbrev == "Race":
                         race_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
-
+                        
                 # Fallback: find from F1_CALENDAR_2026
                 flag = FLAG_HTML.get(country_code, "🏎️")
                 upcoming_info = {
@@ -2475,16 +2475,3 @@ def manifest():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
-
-@app.route("/debug-f1")
-def debug_f1():
-    import json
-    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
-    response = requests.get(url, timeout=8)
-    data = response.json()
-    events = data.get("events", [])
-    if not events:
-        return "No events"
-    event = events[0]
-    competitions = event.get("competitions", [])
-    return f"<pre>{json.dumps(competitions, indent=2)}</pre>"
