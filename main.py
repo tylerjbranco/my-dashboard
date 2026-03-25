@@ -513,11 +513,13 @@ def render_f1_section(f1_data, race_results):
                 </div>"""
                 break
 
-    # Race schedule — from hardcoded calendar + ESPN results
+    # Race schedule — split into past and upcoming
     today = date.today()
     results_by_name = {r["name"]: r for r in race_results}
 
-    schedule_html = "<div class='standings' id='f1-schedule-body-inner'>"
+    past_html = "<div class='standings'>"
+    upcoming_sched_html = "<div class='standings'>"
+
     for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
         race_d = date.fromisoformat(race_date_str)
         flag = FLAG_HTML.get(country, "🏎️")
@@ -534,25 +536,42 @@ def render_f1_section(f1_data, race_results):
                 podium_html += f"<span class='f1-podium-rider'>{medals[i]} {logo_html} {rider['name']}</span>"
             podium_html += "</div>"
 
-        row_class = "standing-row f1-schedule-row" + (" f1-completed-row" if is_completed else "")
-        schedule_html += f"""
-        <div class='{row_class}'>
+        if is_completed:
+            past_html += f"""
+        <div class='standing-row f1-schedule-row f1-completed-row'>
+            <div class='f1-schedule-meta'>
+                <span class='race-date'>{date_str}</span>
+                <span class='team'>{race_name}</span>
+                <span class='race-country'>{flag}</span>
+            </div>
+            {podium_html}
+        </div>"""
+        else:
+            upcoming_sched_html += f"""
+        <div class='standing-row f1-schedule-row'>
             <div class='f1-schedule-meta'>
                 <span class='race-date'>{date_str}</span>
                 <span class='team'>{race_name}</span>
                 <span class='f1-loc'>{loc}</span>
                 <span class='race-country'>{flag}</span>
             </div>
-            {podium_html}
         </div>"""
-    schedule_html += "</div>"
+
+    past_html += "</div>"
+    upcoming_sched_html += "</div>"
 
     schedule_toggle = f"""
-    <button class='fixture-toggle' id='f1-schedule-toggle-btn' onclick='toggleSection("f1-schedule-toggle-btn","f1-schedule-body")'>
-        <span class='toggle-arrow'>▾</span> Full Race Schedule
+    <button class='fixture-toggle' id='f1-past-toggle-btn' onclick='toggleSection("f1-past-toggle-btn","f1-past-body")'>
+        <span class='toggle-arrow'>▾</span> Past Races
     </button>
-    <div class='fixture-calendar open' id='f1-schedule-body'>
-        {schedule_html}
+    <div class='fixture-calendar' id='f1-past-body'>
+        {past_html}
+    </div>
+    <button class='fixture-toggle' id='f1-upcoming-toggle-btn' onclick='toggleSection("f1-upcoming-toggle-btn","f1-upcoming-body")'>
+        <span class='toggle-arrow'>▾</span> Upcoming Races
+    </button>
+    <div class='fixture-calendar' id='f1-upcoming-body'>
+        {upcoming_sched_html}
     </div>"""
 
     # Standings
