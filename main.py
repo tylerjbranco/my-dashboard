@@ -2636,3 +2636,28 @@ def debug_f1_results8():
         if comp.get("type", {}).get("abbreviation", "") == "Race":
             return f"<pre>{json.dumps(comp.get('competitors', [])[:5], indent=2)}</pre>"
     return "No Race session found"
+
+@app.route("/debug-f1-results9")
+def debug_f1_results9():
+    import json
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=20260101-20261231"
+    response = requests.get(url, timeout=8)
+    data = response.json()
+    events = data.get("events", [])
+    out = []
+    for event in events:
+        comps = event.get("competitions", [])
+        race_comp = None
+        for c in comps:
+            if c.get("type", {}).get("abbreviation", "") == "Race":
+                race_comp = c
+                break
+        out.append({
+            "name": event.get("name", ""),
+            "num_competitions": len(comps),
+            "comp_types": [c.get("type", {}).get("abbreviation", "") for c in comps],
+            "race_found": race_comp is not None,
+            "race_state": race_comp.get("status", {}).get("type", {}).get("state", "") if race_comp else None,
+            "race_top3": [c["athlete"]["displayName"] for c in sorted(race_comp.get("competitors", []), key=lambda x: x.get("order", 99))[:3]] if race_comp else []
+        })
+    return f"<pre>{json.dumps(out, indent=2)}</pre>"
