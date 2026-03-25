@@ -295,13 +295,27 @@ def get_f1_race_results():
                 name = event.get("name", "")
                 date_str = comp.get("date", "")
                 dt = datetime.fromisoformat(date_str.replace("Z", "+00:00")).date() if date_str else None
-                competitors = comp.get("competitors", [])
+                # Find the Race session specifically, not FP1/FP2/etc
+                race_comp = None
+                for c in event.get("competitions", []):
+                    if c.get("type", {}).get("abbreviation", "") == "Race":
+                        race_comp = c
+                        break
+                if not race_comp:
+                    continue
+                
+                competitors = race_comp.get("competitors", [])
                 podium = []
                 sorted_competitors = sorted(competitors, key=lambda c: int(c.get("order", 99) or 99))
                 for c in sorted_competitors[:3]:
                     athlete = c.get("athlete", {})
                     flag_url = athlete.get("flag", {}).get("href", "")
                     flag_alt = athlete.get("flag", {}).get("alt", "")
+                    podium.append({
+                        "name": athlete.get("displayName", "?"),
+                        "flag_url": flag_url,
+                        "flag_alt": flag_alt,
+                    })
                     podium.append({
                         "name": athlete.get("displayName", "?"),
                         "flag_url": flag_url,
