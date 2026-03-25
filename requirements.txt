@@ -3,3 +3,4 @@ feedparser
 requests
 gunicorn
 pytz
+beautifulsoup4
