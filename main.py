@@ -2580,3 +2580,18 @@ def debug_sports():
         return f"<pre>OK</pre>"
     except Exception as e:
         return f"<pre>{traceback.format_exc()}</pre>"
+
+@app.route("/debug-f1-results5")
+def debug_f1_results5():
+    import json
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/results?dates=20260101-20261231"
+    response = requests.get(url, timeout=8)
+    return f"<pre>{json.dumps(response.json(), indent=2)[:3000]}</pre>"
+
+@app.route("/debug-f1-results6")
+def debug_f1_results6():
+    import json
+    # Try fetching a specific event
+    url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/summary?event=600057427"
+    response = requests.get(url, timeout=8)
+    return f"<pre>{json.dumps(response.json(), indent=2)[:3000]}</pre>"
