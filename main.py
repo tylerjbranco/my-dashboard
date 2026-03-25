@@ -323,11 +323,6 @@ def get_f1_race_results():
                     })
                     if len(podium) >= 3:
                         break
-                    podium.append({
-                        "name": athlete.get("displayName", "?"),
-                        "flag_url": flag_url,
-                        "flag_alt": flag_alt,
-                    })
                 completed.append({
                     "name": name,
                     "date": dt,
