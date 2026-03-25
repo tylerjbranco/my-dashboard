@@ -1945,6 +1945,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .sport-subnav::-webkit-scrollbar { display: none; }
 .sport-subnav a { padding: 8px 12px; font-size: 13px; color: #555; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
 .sport-subnav a:hover { color: #111; }
+.section-label[id] { scroll-margin-top: 140px; }
 
 @media (prefers-color-scheme: dark) {
   body { background: #111; color: #eee; }
@@ -2026,6 +2027,9 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .f1-toggle-btn.f1-toggle-active { background: #eee; color: #111; border-color: #eee; }
   .f1-podium-rider { color: #aaa; }
   .f1-loc { color: #666; }
+  .sport-subnav { background: #1c1c1e; border-bottom-color: #2c2c2e; }
+  .sport-subnav a { color: #aaa; }
+  .sport-subnav a:hover { color: #fff; }
   .cycling-podium-rider { color: #aaa; }
 }
 """
@@ -2407,7 +2411,8 @@ def sports():
 <body>
 <div class='header'><h1>Tyler's Briefing</h1><div class='date'>{now_str}</div></div>
 {NAV_SPORTS}
-<div class='sport-subnav'>
+<<div class='sport-subnav'>
+    <a href='#myteams-anchor'>⭐ My Teams</a>
     <a href='#mlb-anchor'>⚾ MLB</a>
     <a href='#soccer-anchor'>⚽ Soccer</a>
     <a href='#nhl-anchor'>🏒 NHL</a>
@@ -2415,7 +2420,7 @@ def sports():
     <a href='#cycling-anchor'>🚴 Cycling</a>
 </div>
 <div class='body'>
-<div class='section-label'>My Teams</div>
+<div class='section-label' id='myteams-anchor'>My Teams</div>
 {render_my_teams(teams_data)}
 <button class='fixture-toggle' id='fixture-toggle-btn' onclick='toggleFixtures()'>
     <span class='toggle-arrow'>▾</span> Upcoming Fixtures
