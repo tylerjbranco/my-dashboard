@@ -2660,3 +2660,15 @@ def debug_f1_results9():
             "race_top3": [c["athlete"]["displayName"] for c in sorted(race_comp.get("competitors", []), key=lambda x: x.get("order", 99))[:3]] if race_comp else []
         })
     return f"<pre>{json.dumps(out, indent=2)}</pre>"
+
+@app.route("/debug-f1-results10")
+def debug_f1_results10():
+    import json
+    f1_results = get_f1_race_results()
+    results_by_name = {}
+    for r in f1_results:
+        for cal_name, _, _, _, _, _ in F1_CALENDAR_2026:
+            if cal_name.lower() in r["name"].lower():
+                results_by_name[cal_name] = r
+                break
+    return f"<pre>{json.dumps({k: [p['name'] for p in v['podium']] for k, v in results_by_name.items()}, indent=2)}</pre>"
