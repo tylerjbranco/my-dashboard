@@ -455,8 +455,8 @@ def render_f1_section(f1_data, race_results):
 
     # Upcoming race widget
     if upcoming:
-        qual_html = f"<div class='f1-session'><span class='f1-session-label'>Qualifying</span> {upcoming['qual_time']}</div>" if upcoming.get("qual_time") else ""
-        race_html = f"<div class='f1-session'><span class='f1-session-label'>Race</span> {upcoming['race_time']}</div>" if upcoming.get("race_time") else ""
+        race_html = f"<div class='f1-session'><span class='f1-session-label'>Race</span> {race_d.strftime('%a %b %d')}</div>"
+        qual_html = f"<div class='f1-session'><span class='f1-session-label'>Qualifying</span> {qual_d.strftime('%a %b %d')}</div>"
 
         # Fallback to calendar if API didn't return session times
         if not qual_html and not race_html:
@@ -466,8 +466,8 @@ def render_f1_section(f1_data, race_results):
                 race_d = date.fromisoformat(race_date_str)
                 if race_d >= today:
                     qual_d = race_d - timedelta(days=1)
-                    race_html = f"<div class='f1-session'><span class='f1-session-label'>Race</span> {race_d.strftime('%a %b %d')}</div>"
-                    qual_html = f"<div class='f1-session'><span class='f1-session-label'>Qualifying</span> {qual_d.strftime('%a %b %d')}</div>"
+                    race_html = f"<div class='f1-session'><span class='f1-session-label'>Race</span> {race_d.strftime('%a %b %d')} <span class='f1-tbc'>(times TBC)</span></div>"
+                    qual_html = f"<div class='f1-session'><span class='f1-session-label'>Qualifying</span> {qual_d.strftime('%a %b %d')} <span class='f1-tbc'>(times TBC)</span></div>"
                     if not upcoming.get("name"):
                         upcoming["name"] = race_name
                         upcoming["flag"] = FLAG_HTML.get(country, "🏎️")
@@ -1875,6 +1875,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .f1-race-name { font-size: 15px; font-weight: 500; color: #111; }
 .f1-race-location { font-size: 12px; color: #999; margin-top: 2px; }
 .f1-sessions { display: flex; flex-direction: column; gap: 4px; border-top: 0.5px solid #eee; padding-top: 10px; }
+.f1-tbc { font-size: 10px; color: #999; }
 .f1-session { font-size: 12px; color: #555; display: flex; gap: 8px; }
 .f1-session-label { font-weight: 500; color: #111; min-width: 80px; }
 .f1-standings-toggle { display: flex; gap: 8px; margin-bottom: 8px; }
