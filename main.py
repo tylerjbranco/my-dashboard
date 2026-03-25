@@ -532,12 +532,11 @@ def render_f1_section(f1_data, race_results):
     today = date.today()
     results_by_name = {}
     for r in race_results:
-        results_by_name[r["name"]] = r
-        # Also index by last two words e.g. "Australian Grand Prix" to handle sponsor prefixes
-        words = r["name"].split()
-        if len(words) >= 3:
-            short = " ".join(words[-3:])
-            results_by_name[short] = r
+        # Strip sponsor prefixes by matching calendar names against ESPN names
+        for cal_name, _, _, _, _, _ in F1_CALENDAR_2026:
+            if cal_name.lower() in r["name"].lower():
+                results_by_name[cal_name] = r
+                break
 
     past_html = "<div class='standings'>"
     upcoming_sched_html = "<div class='standings'>"
