@@ -346,6 +346,7 @@ def get_cycling_podiums():
     completed = [(name, country, start_str, end_str, slug, fc_id)
                  for name, country, start_str, end_str, slug, fc_id in UCI_WORLD_TOUR_2026
                  if date.fromisoformat(end_str) < today]
+    print(f"Cycling: today={today}, completed races={[name for name, *_ in completed]}")
 
     FC_FLAG_MAP = {
         "si": "🇸🇮", "nl": "🇳🇱", "be": "🇧🇪", "gb": "🇬🇧", "it": "🇮🇹",
