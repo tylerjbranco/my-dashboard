@@ -268,7 +268,6 @@ def get_f1_data():
                         "logo": logo,
                         "points": pts,
                     })
-
         return {
             "upcoming": upcoming_info,
             "constructors": constructors,
