@@ -445,7 +445,7 @@ def render_cycling_results(races, podiums):
 
 
 def render_cycling_calendar(races):
-    html = "<div class='standings'>"
+    inner_html = "<div class='standings'>"
     for race in races:
         if race["status"] == "completed":
             continue
@@ -460,14 +460,20 @@ def render_cycling_calendar(races):
             status_badge = ""
             row_class = "standing-row"
         flag = FLAG_HTML.get(race["country"], race["country"])
-        html += f"""
+        inner_html += f"""
         <div class='{row_class}'>
             <span class='race-date'>{date_str}</span>
             <span class='team'><a href='{race['pcs_url']}' target='_blank' class='race-link'>{race['name']}</a> {status_badge}</span>
             <span class='race-country'>{flag}</span>
         </div>"""
-    html += "</div>"
-    return html
+    inner_html += "</div>"
+    return f"""
+    <button class='fixture-toggle open' id='cycling-upcoming-toggle-btn' onclick='toggleSection("cycling-upcoming-toggle-btn","cycling-upcoming-body")'>
+        <span class='toggle-arrow'>▾</span> Upcoming Races
+    </button>
+    <div class='fixture-calendar open' id='cycling-upcoming-body'>
+        {inner_html}
+    </div>"""
 
 
 def render_f1_section(f1_data, race_results):
@@ -2483,7 +2489,6 @@ def sports():
 {athletic_link('https://theathletic.com/formula-1/', 'Formula 1')}
 <hr class='sport-divider'>
 {cycling_results_html}
-<div class='section-label'>Cycling · Upcoming Races</div>
 {render_cycling_calendar(cycling_calendar)}
 <div class='section-label'>Cycling · Headlines</div>
 {render_stories(cycling_stories, 'Cycling', 'tag-cycling')}
