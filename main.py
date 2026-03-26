@@ -87,7 +87,7 @@ CYCLING_PODIUMS_2026 = {
     "Paris-Nice": [
         {"name": "Jonas Vingegaard", "flag": "🇩🇰"},
         {"name": "Daniel Martínez", "flag": "🇨🇴"},
-        {"name": "Georg Steinhauser", "flag": "🇩🇪|},
+        {"name": "Georg Steinhauser", "flag": "🇩🇪"},
     ],
     "Tirreno-Adriatico": [
         {"name": "Isaac del Toro", "flag": "🇲🇽"},
