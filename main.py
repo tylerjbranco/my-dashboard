@@ -225,6 +225,16 @@ def get_f1_data():
                     if name and logos:
                         constructor_logo_map[name] = logos[0].get("href", "")
 
+        # DEBUG - remove after inspection
+        if events:
+            import json
+            first_event = events[0]
+            for comp in first_event.get("competitions", []):
+                for competitor in comp.get("competitors", []):
+                    print("DEBUG COMPETITOR:", json.dumps(competitor, indent=2))
+                    break
+                break
+
         eastern = pytz.timezone("America/Toronto")
         today = datetime.now(eastern).date()
 
