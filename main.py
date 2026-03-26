@@ -108,36 +108,36 @@ PODCAST_FEEDS = [
 ]
 
 UCI_WORLD_TOUR_2026 = [
-    ("Tour Down Under", "AU", "2026-01-20", "2026-01-25", "tour-down-under"),
-    ("UAE Tour", "AE", "2026-02-22", "2026-02-28", "uae-tour"),
-    ("Omloop Het Nieuwsblad", "BE", "2026-02-28", "2026-02-28", "omloop-het-nieuwsblad"),
-    ("Strade Bianche", "IT", "2026-03-07", "2026-03-07", "strade-bianche"),
-    ("Paris-Nice", "FR", "2026-03-08", "2026-03-15", "paris-nice"),
-    ("Tirreno-Adriatico", "IT", "2026-03-11", "2026-03-17", "tirreno-adriatico"),
-    ("Milan-San Remo", "IT", "2026-03-21", "2026-03-21", "milano-sanremo"),
-    ("Volta a Catalunya", "ES", "2026-03-23", "2026-03-29", "volta-a-catalunya"),
-    ("E3 Saxo Bank Classic", "BE", "2026-03-27", "2026-03-27", "e3-saxo-bank-classic"),
-    ("Gent-Wevelgem", "BE", "2026-03-29", "2026-03-29", "gent-wevelgem"),
-    ("Dwars door Vlaanderen", "BE", "2026-04-01", "2026-04-01", "dwars-door-vlaanderen"),
-    ("Tour of Flanders", "BE", "2026-04-05", "2026-04-05", "ronde-van-vlaanderen"),
-    ("Paris-Roubaix", "FR", "2026-04-12", "2026-04-12", "paris-roubaix"),
-    ("Amstel Gold Race", "NL", "2026-04-19", "2026-04-19", "amstel-gold-race"),
-    ("La Flèche Wallonne", "BE", "2026-04-22", "2026-04-22", "la-fleche-wallonne"),
-    ("Liège-Bastogne-Liège", "BE", "2026-04-26", "2026-04-26", "liege-bastogne-liege"),
-    ("Tour de Romandie", "CH", "2026-04-28", "2026-05-03", "tour-de-romandie"),
-    ("Eschborn-Frankfurt", "DE", "2026-05-01", "2026-05-01", "eschborn-frankfurt"),
-    ("Giro d'Italia", "IT", "2026-05-09", "2026-05-31", "giro-d-italia"),
-    ("Critérium du Dauphiné", "FR", "2026-06-07", "2026-06-14", "criterium-du-dauphine"),
-    ("Swiss Tour", "CH", "2026-06-14", "2026-06-21", "tour-de-suisse"),
-    ("Tour de France", "FR", "2026-07-04", "2026-07-26", "tour-de-france"),
-    ("Classica San Sebastián", "ES", "2026-08-01", "2026-08-01", "clasica-de-san-sebastian"),
-    ("Tour de Pologne", "PL", "2026-08-04", "2026-08-09", "tour-de-pologne"),
-    ("La Vuelta España", "ES", "2026-08-15", "2026-09-06", "vuelta-a-espana"),
-    ("Bretagne Classic", "FR", "2026-08-30", "2026-08-30", "bretagne-classic-ouest-france"),
-    ("Grand Prix Cycliste de Québec", "CA", "2026-09-11", "2026-09-11", "gp-quebec"),
-    ("Grand Prix Cycliste de Montréal", "CA", "2026-09-13", "2026-09-13", "gp-montreal"),
-    ("Il Lombardia", "IT", "2026-10-03", "2026-10-03", "il-lombardia"),
-    ("Gree-Tour of Guangxi", "CN", "2026-10-13", "2026-10-18", "tour-of-guangxi"),
+    ("Tour Down Under", "AU", "2026-01-20", "2026-01-25", "tour-down-under", 1),
+    ("UAE Tour", "AE", "2026-02-22", "2026-02-28", "uae-tour", 9800),
+    ("Omloop Het Nieuwsblad", "BE", "2026-02-28", "2026-02-28", "omloop-het-nieuwsblad", 53),
+    ("Strade Bianche", "IT", "2026-03-07", "2026-03-07", "strade-bianche", 54),
+    ("Paris-Nice", "FR", "2026-03-08", "2026-03-15", "paris-nice", 2),
+    ("Tirreno-Adriatico", "IT", "2026-03-11", "2026-03-17", "tirreno-adriatico", 3),
+    ("Milan-San Remo", "IT", "2026-03-21", "2026-03-21", "milano-sanremo", 4),
+    ("Volta a Catalunya", "ES", "2026-03-23", "2026-03-29", "volta-a-catalunya", 14),
+    ("E3 Saxo Bank Classic", "BE", "2026-03-27", "2026-03-27", "e3-saxo-bank-classic", 47),
+    ("Gent-Wevelgem", "BE", "2026-03-29", "2026-03-29", "gent-wevelgem", 7),
+    ("Dwars door Vlaanderen", "BE", "2026-04-01", "2026-04-01", "dwars-door-vlaanderen", 75),
+    ("Tour of Flanders", "BE", "2026-04-05", "2026-04-05", "ronde-van-vlaanderen", 5),
+    ("Paris-Roubaix", "FR", "2026-04-12", "2026-04-12", "paris-roubaix", 8),
+    ("Amstel Gold Race", "NL", "2026-04-19", "2026-04-19", "amstel-gold-race", 9),
+    ("La Flèche Wallonne", "BE", "2026-04-22", "2026-04-22", "la-fleche-wallonne", 10),
+    ("Liège-Bastogne-Liège", "BE", "2026-04-26", "2026-04-26", "liege-bastogne-liege", 11),
+    ("Tour de Romandie", "CH", "2026-04-28", "2026-05-03", "tour-de-romandie", 12),
+    ("Eschborn-Frankfurt", "DE", "2026-05-01", "2026-05-01", "eschborn-frankfurt", 35),
+    ("Giro d'Italia", "IT", "2026-05-09", "2026-05-31", "giro-d-italia", 13),
+    ("Critérium du Dauphiné", "FR", "2026-06-07", "2026-06-14", "criterium-du-dauphine", 15),
+    ("Swiss Tour", "CH", "2026-06-14", "2026-06-21", "tour-de-suisse", 16),
+    ("Tour de France", "FR", "2026-07-04", "2026-07-26", "tour-de-france", 17),
+    ("Classica San Sebastián", "ES", "2026-08-01", "2026-08-01", "clasica-de-san-sebastian", 18),
+    ("Tour de Pologne", "PL", "2026-08-04", "2026-08-09", "tour-de-pologne", 19),
+    ("La Vuelta España", "ES", "2026-08-15", "2026-09-06", "vuelta-a-espana", 23),
+    ("Bretagne Classic", "FR", "2026-08-30", "2026-08-30", "bretagne-classic-ouest-france", 22),
+    ("Grand Prix Cycliste de Québec", "CA", "2026-09-11", "2026-09-11", "gp-quebec", 59),
+    ("Grand Prix Cycliste de Montréal", "CA", "2026-09-13", "2026-09-13", "gp-montreal", 58),
+    ("Il Lombardia", "IT", "2026-10-03", "2026-10-03", "il-lombardia", 24),
+    ("Gree-Tour of Guangxi", "CN", "2026-10-13", "2026-10-18", "tour-of-guangxi", 7591),
 ]
 
 F1_CALENDAR_2026 = [
@@ -340,14 +340,14 @@ def get_f1_race_results():
 
 
 def get_cycling_podiums():
-    """Scrape top 3 finishers for completed UCI WT races from PCS"""
+    """Scrape top 3 finishers for completed UCI WT races from FirstCycling"""
     today = date.today()
     results = {}
-    completed = [(name, country, start_str, end_str, slug)
-                 for name, country, start_str, end_str, slug in UCI_WORLD_TOUR_2026
+    completed = [(name, country, start_str, end_str, slug, fc_id)
+                 for name, country, start_str, end_str, slug, fc_id in UCI_WORLD_TOUR_2026
                  if date.fromisoformat(end_str) < today]
 
-    PCS_FLAG_MAP = {
+    FC_FLAG_MAP = {
         "si": "🇸🇮", "nl": "🇳🇱", "be": "🇧🇪", "gb": "🇬🇧", "it": "🇮🇹",
         "fr": "🇫🇷", "dk": "🇩🇰", "co": "🇨🇴", "au": "🇦🇺", "de": "🇩🇪",
         "es": "🇪🇸", "pt": "🇵🇹", "no": "🇳🇴", "ch": "🇨🇭", "pl": "🇵🇱",
@@ -355,17 +355,17 @@ def get_cycling_podiums():
         "cz": "🇨🇿", "tr": "🇹🇷", "er": "🇪🇷", "za": "🇿🇦", "ca": "🇨🇦",
         "sk": "🇸🇰", "ua": "🇺🇦", "lt": "🇱🇹", "lv": "🇱🇻", "ee": "🇪🇪",
         "hr": "🇭🇷", "ro": "🇷🇴", "hu": "🇭🇺", "se": "🇸🇪", "nz": "🇳🇿",
+        "mx": "🇲🇽", "br": "🇧🇷", "ar": "🇦🇷", "jp": "🇯🇵", "cn": "🇨🇳",
     }
 
-    def fetch_podium(name, slug):
+    def fetch_podium(name, fc_id):
         try:
-            url = f"https://www.procyclingstats.com/race/{slug}/2026"
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+            url = f"https://firstcycling.com/race.php?r={fc_id}&y=2026&standing=1"
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
             resp = requests.get(url, timeout=8, headers=headers)
             soup = BeautifulSoup(resp.text, "html.parser")
-            print(f"{name}: status={resp.status_code}, table={soup.find('table', class_='basic')}, len={len(resp.text)}")
             podium = []
-            table = soup.find("table", class_="basic")
+            table = soup.find("table", class_="tablesorter")
             if not table:
                 table = soup.find("table")
             if table:
@@ -374,18 +374,22 @@ def get_cycling_podiums():
                     cells = row.find_all("td")
                     if not cells:
                         continue
-                    # Find the cell containing a flag span and rider link
                     rider_name = ""
                     flag = ""
                     for cell in cells:
-                        anchor = cell.find("a", href=lambda h: h and "rider/" in h)
+                        anchor = cell.find("a", href=lambda h: h and "rider.php" in h)
                         if anchor:
                             rider_name = anchor.get_text(strip=True)
                             flag_span = cell.find("span", class_="flag")
+                            if not flag_span:
+                                # flag may be in previous cell
+                                idx = cells.index(cell)
+                                if idx > 0:
+                                    flag_span = cells[idx-1].find("span", class_="flag")
                             if flag_span:
                                 classes = flag_span.get("class", [])
-                                nat = next((c for c in classes if c != "flag"), "")
-                                flag = PCS_FLAG_MAP.get(nat, "")
+                                nat = next((c.replace("flag-", "") for c in classes if c.startswith("flag-")), "")
+                                flag = FC_FLAG_MAP.get(nat, "")
                             break
                     if rider_name:
                         podium.append({"name": rider_name, "flag": flag})
@@ -397,18 +401,17 @@ def get_cycling_podiums():
             return name, []
 
     with ThreadPoolExecutor(max_workers=6) as executor:
-        futures = {executor.submit(fetch_podium, name, slug): name
-                   for name, country, start_str, end_str, slug in completed}
+        futures = {executor.submit(fetch_podium, name, fc_id): name
+                   for name, country, start_str, end_str, slug, fc_id in completed}
         for future in as_completed(futures):
             name, podium = future.result()
             results[name] = podium
     return results
 
-
 def get_cycling_calendar():
     today = date.today()
     races = []
-    for name, country, start_str, end_str, pcs_slug in UCI_WORLD_TOUR_2026:
+    for name, country, start_str, end_str, pcs_slug, fc_id in UCI_WORLD_TOUR_2026:
         start = date.fromisoformat(start_str)
         end = date.fromisoformat(end_str)
         if end < today:
