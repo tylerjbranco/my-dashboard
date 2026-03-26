@@ -206,28 +206,26 @@ def get_f1_data():
                 location = venue.get("fullName", "") or venue.get("address", {}).get("city", "")
                 country_code = venue.get("address", {}).get("country", "")
 
-                # Find qualifying and race sessions
                 sessions = []
                 for c in upcoming.get("competitions", []):
-                    c_abbrev = c.get("type", {}).get("abbreviation", "")
+                    c_type = c.get("type", {}).get("text", "")
                     c_date = c.get("date", "")
-                    if c_date and c_abbrev:
+                    if c_date and c_type:
                         try:
                             dt_utc = datetime.fromisoformat(c_date.replace("Z", "+00:00"))
                             dt_est = dt_utc.astimezone(eastern)
-                            sessions.append((c_abbrev, dt_est))
+                            sessions.append((c_type, dt_est))
                         except:
                             pass
 
                 qual_time = None
                 race_time = None
-                for s_abbrev, s_dt in sessions:
-                    if s_abbrev == "Qual":
+                for s_type, s_dt in sessions:
+                    if "qualify" in s_type.lower() or "quali" in s_type.lower():
                         qual_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
-                    elif s_abbrev == "Race":
+                    elif "race" in s_type.lower() and "grand prix" in s_type.lower():
                         race_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
-                        
-                # Fallback: find from F1_CALENDAR_2026
+
                 flag = FLAG_HTML.get(country_code, "🏎️")
                 upcoming_info = {
                     "name": name,
@@ -248,24 +246,24 @@ def get_f1_data():
         drivers = []
 
         for child in standings_data.get("children", []):
-            stype = child.get("type", "").lower()
             entries = child.get("standings", {}).get("entries", [])
             for entry in entries:
                 team = entry.get("team", {})
                 athlete = entry.get("athlete", {})
                 stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
-                pts = stats.get("points", "0")
                 logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
-                if "constructor" in stype or "team" in stype:
-                    constructors.append({
-                        "name": team.get("displayName", team.get("name", "?")),
-                        "logo": logo,
-                        "points": pts,
-                    })
-                elif "driver" in stype:
+                if athlete.get("displayName"):
+                    pts = stats.get("championshipPts", "0")
                     drivers.append({
                         "name": athlete.get("displayName", "?"),
                         "team_logo": logo,
+                        "points": pts,
+                    })
+                elif team.get("displayName"):
+                    pts = stats.get("points", "0")
+                    constructors.append({
+                        "name": team.get("displayName", team.get("name", "?")),
+                        "logo": logo,
                         "points": pts,
                     })
 
@@ -276,7 +274,6 @@ def get_f1_data():
         }
     except:
         return {"upcoming": None, "constructors": [], "drivers": []}
-
 
 def get_f1_race_results():
     """Get completed F1 race results from ESPN"""
