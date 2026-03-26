@@ -1190,7 +1190,7 @@ def get_podcast_episodes(url, limit=2):
         return [], ""
 
 
-    def fetch_all_sports(today, yesterday):
+def fetch_all_sports(today, yesterday):
     tasks = {
         "mlb_today": (get_scores, ("baseball", "mlb", today)),
         "mlb_yesterday": (get_scores, ("baseball", "mlb", yesterday)),
