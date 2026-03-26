@@ -254,7 +254,7 @@ def get_f1_data():
                 team = entry.get("team", {})
                 athlete = entry.get("athlete", {})
                 stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
-                pts = stats.get("championshipPts", stats.get("points", "0"))
+                pts = stats.get("points", "0")
                 logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
                 if "constructor" in stype or "team" in stype:
                     constructors.append({
