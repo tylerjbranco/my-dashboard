@@ -2559,7 +2559,7 @@ def debug_f1():
         for i, child in enumerate(data.get("children", [])):
             entries = child.get("standings", {}).get("entries", [])
             first = entries[0] if entries else {}
-            stats = {s["name"]: s["displayValue"] for s in first.get("stats", [])}
+            stats = {s["name"]: s.get("displayValue", "") for s in first.get("stats", [])}
             out.append({
                 "child_index": i,
                 "child_name": child.get("name"),
