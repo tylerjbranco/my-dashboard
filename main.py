@@ -173,6 +173,8 @@ def get_f1_data():
         # Upcoming race
         url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
         response = requests.get(url, timeout=8)
+        import json
+        print("F1 STANDINGS RAW:", json.dumps(standings_data, indent=2)[:3000])
         data = response.json()
         events = data.get("events", [])
 
