@@ -366,6 +366,7 @@ def get_cycling_podiums():
             soup = BeautifulSoup(resp.text, "html.parser")
             podium = []
             table = soup.find("table", class_="tablesorter")
+            print(f"{name}: status={resp.status_code}, tablesorter={table is not None}, all_tables={len(soup.find_all('table'))}")
             if not table:
                 table = soup.find("table")
             if table:
