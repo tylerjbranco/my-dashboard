@@ -270,10 +270,8 @@ def get_f1_data():
                         athlete = entry.get("athlete", {})
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         pts = stats.get("championshipPts", "0")
-                        print("DRIVER:", athlete.get("displayName"), "PTS:", pts)
                         drivers.append({"name": athlete.get("displayName", "?"), "team_logo": "", "points": pts})
-                    except Exception as e:
-                        print("DRIVER ERROR:", e)
+                    except:
                         continue
 
         return {
@@ -621,7 +619,7 @@ def render_f1_section(f1_data, race_results):
         </div>"""
     constructors_html += "</div>"
 
-    drivers_html = "<div class='standings' style='display:none' id='f1-drivers-table'>"
+    drivers_html = "<div class='standings' id='f1-drivers-inner'>"
     for i, d in enumerate(drivers):
         logo_html = f'<img src="{d["team_logo"]}" class="team-logo-sm" alt="">' if d.get("team_logo") else ""
         drivers_html += f"""
