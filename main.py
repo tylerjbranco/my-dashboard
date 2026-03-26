@@ -200,11 +200,17 @@ def get_f1_data():
         upcoming_info = None
         if upcoming:
             try:
-                comp = upcoming["competitions"][0]
                 name = upcoming.get("name", "")
                 venue = comp.get("venue", {})
                 location = venue.get("fullName", "") or venue.get("address", {}).get("city", "")
                 country_code = venue.get("address", {}).get("country", "")
+                for cal_name, cal_country, cal_loc, _, _, _ in F1_CALENDAR_2026:
+                    if cal_name.lower() in name.lower():
+                        name = cal_name
+                        country_code = cal_country
+                        if not location:
+                            location = cal_loc
+                        break
 
                 sessions = []
                 for c in upcoming.get("competitions", []):
@@ -244,6 +250,7 @@ def get_f1_data():
 
         constructors = []
         drivers = []
+        constructor_logo_map = {}
 
         for child in standings_data.get("children", []):
             entries = child.get("standings", {}).get("entries", [])
@@ -251,21 +258,24 @@ def get_f1_data():
                 team = entry.get("team", {})
                 athlete = entry.get("athlete", {})
                 stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
-                logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
-                if athlete.get("displayName"):
-                    pts = stats.get("points", "0")
-                    drivers.append({
-                        "name": athlete.get("displayName", "?"),
-                        "team_logo": logo,
-                        "points": pts,
-                    })
+                team_name = team.get("displayName", team.get("name", ""))
+                    logo = constructor_logo_map.get(team_name, team.get("logos", [{}])[0].get("href", "") if team.get("logos") else "")
+                    if athlete.get("displayName"):
+                        pts = stats.get("points", "0")
+                        drivers.append({
+                            "name": athlete.get("displayName", "?"),
+                            "team_logo": logo,
+                            "points": pts,
+                        })
                 elif team.get("displayName"):
                     pts = stats.get("points", "0")
+                    con_name = team.get("displayName", team.get("name", "?"))
                     constructors.append({
-                        "name": team.get("displayName", team.get("name", "?")),
+                        "name": con_name,
                         "logo": logo,
                         "points": pts,
                     })
+                    constructor_logo_map[con_name] = logo
 
         return {
             "upcoming": upcoming_info,
