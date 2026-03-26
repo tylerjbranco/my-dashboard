@@ -341,7 +341,8 @@ def get_f1_data():
             "constructors": constructors,
             "drivers": drivers,
         }
-    except:
+    except Exception as e:
+        print("F1 DATA ERROR:", e, flush=True)
         return {"upcoming": None, "constructors": [], "drivers": []}
 
 def get_f1_race_results():
