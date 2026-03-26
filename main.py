@@ -63,6 +63,44 @@ NATIONALITY_FLAGS = {
     "CZE": "🇨🇿", "TUR": "🇹🇷", "ERY": "🇪🇷", "RSA": "🇿🇦", "CAN": "🇨🇦",
 }
 
+CYCLING_PODIUMS_2026 = {
+    "Tour Down Under": [
+        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
+        {"name": "Søren Wærenskjold", "flag": "🇳🇴"},
+        {"name": "Kaden Groves", "flag": "🇦🇺"},
+    ],
+    "UAE Tour": [
+        {"name": "Tadej Pogačar", "flag": "🇸🇮"},
+        {"name": "Juan Ayuso", "flag": "🇪🇸"},
+        {"name": "Adam Yates", "flag": "🇬🇧"},
+    ],
+    "Omloop Het Nieuwsblad": [
+        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
+        {"name": "Wout van Aert", "flag": "🇧🇪"},
+        {"name": "Tom Pidcock", "flag": "🇬🇧"},
+    ],
+    "Strade Bianche": [
+        {"name": "Tadej Pogačar", "flag": "🇸🇮"},
+        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
+        {"name": "Tom Pidcock", "flag": "🇬🇧"},
+    ],
+    "Paris-Nice": [
+        {"name": "Remco Evenepoel", "flag": "🇧🇪"},
+        {"name": "Matteo Jorgenson", "flag": "🇺🇸"},
+        {"name": "Inigo Martinez", "flag": "🇪🇸"},
+    ],
+    "Tirreno-Adriatico": [
+        {"name": "Tadej Pogačar", "flag": "🇸🇮"},
+        {"name": "Remco Evenepoel", "flag": "🇧🇪"},
+        {"name": "Primož Roglič", "flag": "🇸🇮"},
+    ],
+    "Milan-San Remo": [
+        {"name": "Tadej Pogačar", "flag": "🇸🇮"},
+        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
+        {"name": "Wout van Aert", "flag": "🇧🇪"},
+    ],
+}
+
 MY_TEAMS = [
     {"name": "Toronto Maple Leafs", "keywords": ["Toronto Maple Leafs"]},
     {"name": "Toronto Blue Jays", "keywords": ["Toronto Blue Jays"]},
@@ -340,7 +378,8 @@ def get_f1_race_results():
 
 
 def get_cycling_podiums():
-    """Scrape top 3 finishers for completed UCI WT races from FirstCycling"""
+    """Return hardcoded podiums for completed UCI WT races"""
+    return CYCLING_PODIUMS_2026
     today = date.today()
     results = {}
     completed = [(name, country, start_str, end_str, slug, fc_id)
