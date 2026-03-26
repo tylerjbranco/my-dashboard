@@ -65,38 +65,38 @@ NATIONALITY_FLAGS = {
 
 CYCLING_PODIUMS_2026 = {
     "Tour Down Under": [
-        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
-        {"name": "Søren Wærenskjold", "flag": "🇳🇴"},
-        {"name": "Kaden Groves", "flag": "🇦🇺"},
+        {"name": "Jay Vine", "flag": "🇦🇺"},
+        {"name": "Mauro Schmid", "flag": "🇨🇭"},
+        {"name": "Harry Sweeny", "flag": "🇦🇺"},
     ],
     "UAE Tour": [
-        {"name": "Tadej Pogačar", "flag": "🇸🇮"},
-        {"name": "Juan Ayuso", "flag": "🇪🇸"},
-        {"name": "Adam Yates", "flag": "🇬🇧"},
+        {"name": "Isaac del Toro", "flag": "🇲🇽"},
+        {"name": "JAntonio Tiberi", "flag": "🇮🇹",
+        {"name": "Luke Plapp", "flag": "🇦🇺"},
     ],
     "Omloop Het Nieuwsblad": [
         {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
-        {"name": "Wout van Aert", "flag": "🇧🇪"},
-        {"name": "Tom Pidcock", "flag": "🇬🇧"},
+        {"name": "Tim van Dijke", "flag": "🇳🇱"},
+        {"name": "Florian Vermeersch", "flag": "🇧🇪"},
     ],
     "Strade Bianche": [
         {"name": "Tadej Pogačar", "flag": "🇸🇮"},
-        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
-        {"name": "Tom Pidcock", "flag": "🇬🇧"},
+        {"name": "Paul Seixas ", "flag": "🇫🇷"},
+        {"name": "Isaac del Toro", "flag": "🇲🇽"},
     ],
     "Paris-Nice": [
-        {"name": "Remco Evenepoel", "flag": "🇧🇪"},
-        {"name": "Matteo Jorgenson", "flag": "🇺🇸"},
-        {"name": "Inigo Martinez", "flag": "🇪🇸"},
+        {"name": "Jonas Vingegaard", "flag": "🇩🇰"},
+        {"name": "Daniel Martínez", "flag": "🇨🇴"},
+        {"name": "Georg Steinhauser", "flag": "🇩🇪|},
     ],
     "Tirreno-Adriatico": [
-        {"name": "Tadej Pogačar", "flag": "🇸🇮"},
-        {"name": "Remco Evenepoel", "flag": "🇧🇪"},
-        {"name": "Primož Roglič", "flag": "🇸🇮"},
+        {"name": "Isaac del Toro", "flag": "🇲🇽"},
+        {"name": "Matteo Jorgenson", "flag": "🇺🇸"},
+        {"name": "Giulio Pellizzari", "flag": "🇮🇹"},
     ],
     "Milan-San Remo": [
         {"name": "Tadej Pogačar", "flag": "🇸🇮"},
-        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
+        {"name": "Tom Pidcock", "flag": "🇬🇧"},
         {"name": "Wout van Aert", "flag": "🇧🇪"},
     ],
 }
