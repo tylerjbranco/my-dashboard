@@ -248,24 +248,21 @@ def get_f1_data():
         drivers = []
 
         for child in standings_data.get("children", []):
-            stype = child.get("type", "").lower()
-            sname = child.get("name", "").lower()
-            classifier = stype + " " + sname
             entries = child.get("standings", {}).get("entries", [])
             for entry in entries:
                 team = entry.get("team", {})
                 athlete = entry.get("athlete", {})
-                stats = {s["name"]: s["displayValue"] for s in entry.get("stats", [])}
-                pts = stats.get("championshipPts", stats.get("points", "0"))
+                stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                 logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
-                has_athlete = bool(athlete.get("displayName"))
-                if has_athlete or "driver" in classifier:
+                if athlete.get("displayName"):
+                    pts = stats.get("championshipPts", "0")
                     drivers.append({
                         "name": athlete.get("displayName", "?"),
                         "team_logo": logo,
                         "points": pts,
                     })
-                elif team.get("displayName") or "constructor" in classifier or "team" in classifier:
+                elif team.get("displayName"):
+                    pts = stats.get("points", "0")
                     constructors.append({
                         "name": team.get("displayName", team.get("name", "?")),
                         "logo": logo,
