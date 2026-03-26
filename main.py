@@ -254,33 +254,27 @@ def get_f1_data():
         drivers = []
         constructor_logo_map = {}
 
-        all_entries = []
         for child in standings_data.get("children", []):
+            child_name = child.get("name", "")
             entries = child.get("standings", {}).get("entries", [])
-            all_entries.extend(entries)
-
-        for entry in all_entries:
-            team = entry.get("team", {})
-            athlete = entry.get("athlete", {})
-            if athlete.get("displayName"):
-                continue
-            stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
-            logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
-            con_name = team.get("displayName", team.get("name", "?"))
-            pts = stats.get("points", "0")
-            constructors.append({"name": con_name, "logo": logo, "points": pts})
-            constructor_logo_map[con_name] = logo
-
-        for entry in all_entries:
-            team = entry.get("team", {})
-            athlete = entry.get("athlete", {})
-            if not athlete.get("displayName"):
-                continue
-            stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
-            team_name = team.get("displayName", team.get("name", ""))
-            logo = constructor_logo_map.get(team_name, team.get("logos", [{}])[0].get("href", "") if team.get("logos") else "")
-            pts = stats.get("points", "0")
-            drivers.append({"name": athlete.get("displayName", "?"), "team_logo": logo, "points": pts})
+            if "Constructor" in child_name:
+                for entry in entries:
+                    team = entry.get("team", {})
+                    stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
+                    logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
+                    con_name = team.get("displayName", team.get("name", "?"))
+                    pts = stats.get("points", "0")
+                    constructors.append({"name": con_name, "logo": logo, "points": pts})
+                    constructor_logo_map[con_name] = logo
+            elif "Driver" in child_name:
+                for entry in entries:
+                    athlete = entry.get("athlete", {})
+                    team = entry.get("team", {})
+                    stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
+                    team_name = team.get("displayName", team.get("name", ""))
+                    logo = constructor_logo_map.get(team_name, "")
+                    pts = stats.get("championshipPts", "0")
+                    drivers.append({"name": athlete.get("displayName", "?"), "team_logo": logo, "points": pts})
 
         return {
             "upcoming": upcoming_info,
