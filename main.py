@@ -240,7 +240,7 @@ def get_f1_data():
         # Standings
         standings_url = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings"
         standings_resp = requests.get(standings_url, timeout=8)
-        standings_data = standings_resp.json()
+        standings_data = standings_resp.json() if standings_resp.ok else {}
 
         constructors = []
         drivers = []
