@@ -253,7 +253,7 @@ def get_f1_data():
                 stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                 logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
                 if athlete.get("displayName"):
-                    pts = stats.get("championshipPts", "0")
+                    pts = stats.get("points", "0")
                     drivers.append({
                         "name": athlete.get("displayName", "?"),
                         "team_logo": logo,
