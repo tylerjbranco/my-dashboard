@@ -2554,6 +2554,22 @@ def debug_f1():
     try:
         url = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings"
         resp = requests.get(url, timeout=8)
-        return resp.json()
+        data = resp.json()
+        out = []
+        for i, child in enumerate(data.get("children", [])):
+            entries = child.get("standings", {}).get("entries", [])
+            first = entries[0] if entries else {}
+            stats = {s["name"]: s["displayValue"] for s in first.get("stats", [])}
+            out.append({
+                "child_index": i,
+                "child_name": child.get("name"),
+                "child_type": child.get("type"),
+                "entry_keys": list(first.keys()),
+                "team": first.get("team", {}).get("displayName", "MISSING"),
+                "athlete": first.get("athlete", {}).get("displayName", "MISSING"),
+                "stats_keys": list(stats.keys()),
+                "pts_value": stats.get("championshipPts", "KEY NOT FOUND"),
+            })
+        return jsonify(out)
     except Exception as e:
         return jsonify({"error": str(e)})
