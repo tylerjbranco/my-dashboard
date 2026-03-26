@@ -1190,7 +1190,9 @@ def get_podcast_episodes(url, limit=2):
         return [], ""
 
 
-def fetch_all_sports(today, yesterday):
+    print("DEBUG: about to fetch all sports")
+    data = fetch_all_sports(today, yesterday)
+    print(f"DEBUG: cycling_podiums result = {data.get('cycling_podiums')}")
     tasks = {
         "mlb_today": (get_scores, ("baseball", "mlb", today)),
         "mlb_yesterday": (get_scores, ("baseball", "mlb", yesterday)),
