@@ -412,7 +412,7 @@ def render_cycling_results(races, podiums):
     html = f"""
     <div id='cycling-anchor'></div>
     <button class='fixture-toggle' id='cycling-results-toggle-btn' onclick='toggleSection("cycling-results-toggle-btn","cycling-results-body")'>
-        <span class='toggle-arrow'>▾</span> Completed Races
+        <span class='toggle-arrow'>▾</span> Cycling · Completed Races
     </button>
     <div class='fixture-calendar' id='cycling-results-body'>
     <div class='standings'>"""
@@ -469,7 +469,7 @@ def render_cycling_calendar(races):
     inner_html += "</div>"
     return f"""
     <button class='fixture-toggle open' id='cycling-upcoming-toggle-btn' onclick='toggleSection("cycling-upcoming-toggle-btn","cycling-upcoming-body")'>
-        <span class='toggle-arrow'>▾</span> Upcoming Races
+        <span class='toggle-arrow'>▾</span> Cycling · Upcoming Races
     </button>
     <div class='fixture-calendar open' id='cycling-upcoming-body'>
         {inner_html}
