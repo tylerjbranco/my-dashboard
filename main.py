@@ -2543,3 +2543,13 @@ def manifest():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
+    
+@app.route("/debug-f1")
+def debug_f1():
+    try:
+        url = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings"
+        resp = requests.get(url, timeout=8)
+        data = resp.json()
+        return jsonify({"children_count": len(data.get("children", [])), "ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)})
