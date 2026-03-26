@@ -71,7 +71,7 @@ CYCLING_PODIUMS_2026 = {
     ],
     "UAE Tour": [
         {"name": "Isaac del Toro", "flag": "🇲🇽"},
-        {"name": "JAntonio Tiberi", "flag": "🇮🇹"},
+        {"name": "Antonio Tiberi", "flag": "🇮🇹"},
         {"name": "Luke Plapp", "flag": "🇦🇺"},
     ],
     "Omloop Het Nieuwsblad": [
