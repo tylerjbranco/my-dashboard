@@ -168,8 +168,114 @@ F1_CALENDAR_2026 = [
 ]
 
 
-def get_f1_race_results():
-    return []
+def get_f1_data():
+    try:
+        # Upcoming race
+        url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard"
+        response = requests.get(url, timeout=8)
+        data = response.json()
+        events = data.get("events", [])
+
+        eastern = pytz.timezone("America/Toronto")
+        today = datetime.now(eastern).date()
+
+        upcoming = None
+        for event in events:
+            try:
+                competitions = event.get("competitions", [])
+                if not competitions:
+                    continue
+                comp = competitions[0]
+                date_str = comp.get("date", event.get("date", ""))
+                if not date_str:
+                    continue
+                dt_utc = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                dt_eastern = dt_utc.astimezone(eastern)
+                if dt_eastern.date() >= today:
+                    upcoming = event
+                    break
+            except:
+                continue
+
+        upcoming_info = None
+        if upcoming:
+            try:
+                comp = upcoming["competitions"][0]
+                name = upcoming.get("name", "")
+                venue = comp.get("venue", {})
+                location = venue.get("fullName", "") or venue.get("address", {}).get("city", "")
+                country_code = venue.get("address", {}).get("country", "")
+
+                # Find qualifying and race sessions
+                sessions = []
+                for c in upcoming.get("competitions", []):
+                    c_abbrev = c.get("type", {}).get("abbreviation", "")
+                    c_date = c.get("date", "")
+                    if c_date and c_abbrev:
+                        try:
+                            dt_utc = datetime.fromisoformat(c_date.replace("Z", "+00:00"))
+                            dt_est = dt_utc.astimezone(eastern)
+                            sessions.append((c_abbrev, dt_est))
+                        except:
+                            pass
+
+                qual_time = None
+                race_time = None
+                for s_abbrev, s_dt in sessions:
+                    if s_abbrev == "Qual":
+                        qual_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
+                    elif s_abbrev == "Race":
+                        race_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
+                        
+                # Fallback: find from F1_CALENDAR_2026
+                flag = FLAG_HTML.get(country_code, "🏎️")
+                upcoming_info = {
+                    "name": name,
+                    "location": location,
+                    "flag": flag,
+                    "qual_time": qual_time,
+                    "race_time": race_time,
+                }
+            except:
+                pass
+
+        # Standings
+        standings_url = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings"
+        standings_resp = requests.get(standings_url, timeout=8)
+        standings_data = standings_resp.json()
+
+        constructors = []
+        drivers = []
+
+        for child in standings_data.get("children", []):
+            stype = child.get("type", "").lower()
+            entries = child.get("standings", {}).get("entries", [])
+            for entry in entries:
+                team = entry.get("team", {})
+                athlete = entry.get("athlete", {})
+                stats = {s["name"]: s["displayValue"] for s in entry.get("stats", [])}
+                pts = stats.get("points", "0")
+                logo = team.get("logos", [{}])[0].get("href", "") if team.get("logos") else ""
+                if "constructor" in stype or "team" in stype:
+                    constructors.append({
+                        "name": team.get("displayName", team.get("name", "?")),
+                        "logo": logo,
+                        "points": pts,
+                    })
+                elif "driver" in stype:
+                    drivers.append({
+                        "name": athlete.get("displayName", "?"),
+                        "team_logo": logo,
+                        "points": pts,
+                    })
+
+        return {
+            "upcoming": upcoming_info,
+            "constructors": constructors,
+            "drivers": drivers,
+        }
+    except:
+        return {"upcoming": None, "constructors": [], "drivers": []}
 
 
 def get_f1_race_results():
@@ -2439,13 +2545,3 @@ def manifest():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
-    
-@app.route("/debug-f1")
-def debug_f1():
-    try:
-        url = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings"
-        resp = requests.get(url, timeout=8)
-        data = resp.json()
-        return jsonify({"children_count": len(data.get("children", [])), "ok": True})
-    except Exception as e:
-        return jsonify({"error": str(e)})
