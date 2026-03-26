@@ -214,6 +214,17 @@ def get_f1_data():
         data = response.json()
         events = data.get("events", [])
 
+        # Build a constructor logo map from scoreboard competitor data
+        constructor_logo_map = {}
+        for event in events:
+            for comp in event.get("competitions", []):
+                for competitor in comp.get("competitors", []):
+                    team = competitor.get("team", {})
+                    name = team.get("displayName", "")
+                    logos = team.get("logos", [])
+                    if name and logos:
+                        constructor_logo_map[name] = logos[0].get("href", "")
+
         eastern = pytz.timezone("America/Toronto")
         today = datetime.now(eastern).date()
 
@@ -299,7 +310,8 @@ def get_f1_data():
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         con_name = team.get("displayName", team.get("name", "?"))
                         pts = stats.get("points", "0")
-                        constructors.append({"name": con_name, "logo": "", "points": pts})
+                        logo = constructor_logo_map.get(con_name, "")
+                        constructors.append({"name": con_name, "logo": logo, "points": pts})
                     except:
                         continue
             elif "Driver" in child_name:
@@ -308,7 +320,9 @@ def get_f1_data():
                         athlete = entry.get("athlete", {})
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         pts = stats.get("championshipPts", "0")
-                        drivers.append({"name": athlete.get("displayName", "?"), "team_logo": "", "points": pts})
+                        team_name = entry.get("team", {}).get("displayName", "")
+                        team_logo = constructor_logo_map.get(team_name, "")
+                        drivers.append({"name": athlete.get("displayName", "?"), "team_logo": team_logo, "points": pts})
                     except:
                         continue
 
