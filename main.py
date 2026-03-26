@@ -363,6 +363,7 @@ def get_cycling_podiums():
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
             resp = requests.get(url, timeout=8, headers=headers)
             soup = BeautifulSoup(resp.text, "html.parser")
+            print(f"{name}: status={resp.status_code}, table={soup.find('table', class_='basic')}, len={len(resp.text)}")
             podium = []
             table = soup.find("table", class_="basic")
             if not table:
@@ -391,7 +392,8 @@ def get_cycling_podiums():
             if not podium:
                 return name, []
             return name, podium
-        except:
+        except Exception as e:
+            print(f"Error fetching {name}: {e}")
             return name, []
 
     with ThreadPoolExecutor(max_workers=6) as executor:
