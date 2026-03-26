@@ -473,8 +473,8 @@ def render_f1_section(f1_data, race_results):
 
     # Upcoming race widget
     if upcoming:
-        race_html = f"<div class='f1-session'><span class='f1-session-label'>Race</span> {race_d.strftime('%a %b %d')}</div>"
-        qual_html = f"<div class='f1-session'><span class='f1-session-label'>Qualifying</span> {qual_d.strftime('%a %b %d')}</div>"
+        qual_html = f"<div class='f1-session'><span class='f1-session-label'>Qualifying</span> {upcoming['qual_time']}</div>" if upcoming.get("qual_time") else ""
+        race_html = f"<div class='f1-session'><span class='f1-session-label'>Race</span> {upcoming['race_time']}</div>" if upcoming.get("race_time") else ""
 
         # Fallback to calendar if API didn't return session times
         if not qual_html and not race_html:
