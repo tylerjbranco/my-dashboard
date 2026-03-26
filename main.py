@@ -347,6 +347,16 @@ def get_cycling_podiums():
                  for name, country, start_str, end_str, slug in UCI_WORLD_TOUR_2026
                  if date.fromisoformat(end_str) < today]
 
+    PCS_FLAG_MAP = {
+        "si": "🇸🇮", "nl": "🇳🇱", "be": "🇧🇪", "gb": "🇬🇧", "it": "🇮🇹",
+        "fr": "🇫🇷", "dk": "🇩🇰", "co": "🇨🇴", "au": "🇦🇺", "de": "🇩🇪",
+        "es": "🇪🇸", "pt": "🇵🇹", "no": "🇳🇴", "ch": "🇨🇭", "pl": "🇵🇱",
+        "us": "🇺🇸", "kz": "🇰🇿", "ec": "🇪🇨", "ru": "🇷🇺", "at": "🇦🇹",
+        "cz": "🇨🇿", "tr": "🇹🇷", "er": "🇪🇷", "za": "🇿🇦", "ca": "🇨🇦",
+        "sk": "🇸🇰", "ua": "🇺🇦", "lt": "🇱🇹", "lv": "🇱🇻", "ee": "🇪🇪",
+        "hr": "🇭🇷", "ro": "🇷🇴", "hu": "🇭🇺", "se": "🇸🇪", "nz": "🇳🇿",
+    }
+
     def fetch_podium(name, slug):
         try:
             url = f"https://www.procyclingstats.com/race/{slug}/2026"
@@ -354,7 +364,6 @@ def get_cycling_podiums():
             resp = requests.get(url, timeout=8, headers=headers)
             soup = BeautifulSoup(resp.text, "html.parser")
             podium = []
-            # PCS result table — first table with class 'results'
             table = soup.find("table", class_="basic")
             if not table:
                 table = soup.find("table")
@@ -362,10 +371,22 @@ def get_cycling_podiums():
                 rows = table.find_all("tr")[1:4]
                 for row in rows:
                     cells = row.find_all("td")
-                    if len(cells) >= 4:
-                        rider_name = cells[3].get_text(strip=True) if len(cells) > 3 else "?"
-                        nat_code = cells[2].get_text(strip=True) if len(cells) > 2 else ""
-                        flag = NATIONALITY_FLAGS.get(nat_code, "")
+                    if not cells:
+                        continue
+                    # Find the cell containing a flag span and rider link
+                    rider_name = ""
+                    flag = ""
+                    for cell in cells:
+                        anchor = cell.find("a", href=lambda h: h and "rider/" in h)
+                        if anchor:
+                            rider_name = anchor.get_text(strip=True)
+                            flag_span = cell.find("span", class_="flag")
+                            if flag_span:
+                                classes = flag_span.get("class", [])
+                                nat = next((c for c in classes if c != "flag"), "")
+                                flag = PCS_FLAG_MAP.get(nat, "")
+                            break
+                    if rider_name:
                         podium.append({"name": rider_name, "flag": flag})
             if not podium:
                 return name, []
