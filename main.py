@@ -1934,6 +1934,8 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .f1-schedule-meta { display: flex; align-items: center; gap: 8px; width: 100%; font-size: 12px; }
 .f1-loc { font-size: 11px; color: #999; flex: 1; }
 .f1-completed-row { opacity: 0.7; }
+.f1-completed-row .team { color: #111; }
+.f1-completed-row .f1-podium-rider { color: #111; }
 .f1-podium { display: flex; flex-direction: column; gap: 2px; padding-left: 2px; }
 .f1-podium-rider { font-size: 11px; color: #555; display: flex; align-items: center; gap: 4px; }
 .f1-team-logo { width: 14px; height: 14px; object-fit: contain; }
@@ -2029,6 +2031,8 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .f1-toggle-btn.f1-toggle-active { background: #eee; color: #111; border-color: #eee; }
   .f1-podium-rider { color: #aaa; }
   .f1-loc { color: #666; }
+  .f1-completed-row .team { color: #fff; }
+  .f1-completed-row .f1-podium-rider { color: #fff; }
   .sport-subnav { background: #1c1c1e; border-bottom-color: #2c2c2e; }
   .sport-subnav a { color: #aaa; }
   .sport-subnav a:hover { color: #fff; }
