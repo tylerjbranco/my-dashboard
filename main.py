@@ -270,8 +270,10 @@ def get_f1_data():
                         athlete = entry.get("athlete", {})
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         pts = stats.get("championshipPts", "0")
+                        print("DRIVER:", athlete.get("displayName"), "PTS:", pts)
                         drivers.append({"name": athlete.get("displayName", "?"), "team_logo": "", "points": pts})
-                    except:
+                    except Exception as e:
+                        print("DRIVER ERROR:", e)
                         continue
 
         return {
