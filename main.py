@@ -206,28 +206,26 @@ def get_f1_data():
                 location = venue.get("fullName", "") or venue.get("address", {}).get("city", "")
                 country_code = venue.get("address", {}).get("country", "")
 
-                # Find qualifying and race sessions
                 sessions = []
                 for c in upcoming.get("competitions", []):
-                    c_abbrev = c.get("type", {}).get("abbreviation", "")
+                    c_type = c.get("type", {}).get("text", "")
                     c_date = c.get("date", "")
-                    if c_date and c_abbrev:
+                    if c_date and c_type:
                         try:
                             dt_utc = datetime.fromisoformat(c_date.replace("Z", "+00:00"))
                             dt_est = dt_utc.astimezone(eastern)
-                            sessions.append((c_abbrev, dt_est))
+                            sessions.append((c_type, dt_est))
                         except:
                             pass
 
                 qual_time = None
                 race_time = None
-                for s_abbrev, s_dt in sessions:
-                    if s_abbrev == "Qual":
+                for s_type, s_dt in sessions:
+                    if "qualify" in s_type.lower() or "quali" in s_type.lower():
                         qual_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
-                    elif s_abbrev == "Race":
+                    elif "race" in s_type.lower() and "grand prix" in s_type.lower():
                         race_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
-                        
-                # Fallback: find from F1_CALENDAR_2026
+
                 flag = FLAG_HTML.get(country_code, "🏎️")
                 upcoming_info = {
                     "name": name,
@@ -268,6 +266,7 @@ def get_f1_data():
                         "logo": logo,
                         "points": pts,
                     })
+
         return {
             "upcoming": upcoming_info,
             "constructors": constructors,
