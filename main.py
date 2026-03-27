@@ -2543,10 +2543,6 @@ def sports():
 <hr class='sport-divider'>
 <div class='section-label' id='mlb-anchor'>MLB · Scores</div>
 {render_scores_collapsible(mlb_yesterday, mlb_today, 'mlb')}
-<a href='https://www.mlb.com/video/topic/fastcast' target='_blank' style='display:flex; align-items:center; gap:8px; padding:6px 0 2px; text-decoration:none;'>
-    <img src='https://www.mlb.com/assets/images/logos/league_logos/mlb.svg' style='width:20px; height:20px; object-fit:contain;' alt='MLB'>
-    <span style='font-size:12px; color:#999;'>MLB Fastcast</span>
-</a>
 <div class='section-label'>MLB · Standings</div>
 {render_mlb_standings(mlb_standings)}
 <div class='section-label'>MLB · Headlines</div>
