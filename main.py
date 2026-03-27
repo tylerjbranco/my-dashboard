@@ -206,6 +206,24 @@ F1_CALENDAR_2026 = [
 ]
 
 
+def get_f1_team_colors():
+    try:
+        url = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/teams"
+        response = requests.get(url, timeout=8)
+        data = response.json()
+        colors = {}
+        for league in data.get("sports", [{}])[0].get("leagues", []):
+            for team_obj in league.get("teams", []):
+                team = team_obj.get("team", {})
+                name = team.get("displayName", "")
+                color = team.get("color", "")
+                if name and color:
+                    colors[name] = color
+        return colors
+    except:
+        return {}
+
+
 def get_f1_data():
     try:
         # Upcoming race
@@ -308,6 +326,7 @@ def get_f1_data():
         standings_url = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings"
         standings_resp = requests.get(standings_url, timeout=8)
         standings_data = standings_resp.json()
+        team_colors = get_f1_team_colors()
 
         constructors = []
         drivers = []
@@ -328,8 +347,8 @@ def get_f1_data():
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         con_name = team.get("displayName", team.get("name", "?"))
                         pts = stats.get("points", "0")
-                        logo = constructor_logo_map.get(con_name, "")
-                        constructors.append({"name": con_name, "logo": logo, "points": pts})
+                        color = team_colors.get(con_name, "999999")
+                        constructors.append({"name": con_name, "color": color, "points": pts})
                     except:
                         continue
             elif "Driver" in child_name:
@@ -339,11 +358,12 @@ def get_f1_data():
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         pts = stats.get("championshipPts", "0")
                         team_name = entry.get("team", {}).get("displayName", "")
-                        team_logo = constructor_logo_map.get(team_name, "")
-                        drivers.append({"name": athlete.get("displayName", "?"), "team_logo": team_logo, "points": pts})
+                        team_color = team_colors.get(team_name, "999999")
+                        drivers.append({"name": athlete.get("displayName", "?"), "team_name": team_name, "team_color": team_color, "points": pts})
                     except:
                         continue
 
+        drivers.sort(key=lambda d: float(d["points"] or 0), reverse=True)
         return {
             "upcoming": upcoming_info,
             "constructors": constructors,
@@ -717,22 +737,24 @@ def render_f1_section(f1_data, race_results):
     # Standings
     constructors_html = "<div class='standings'>"
     for i, c in enumerate(constructors):
-        logo_html = f'<img src="{c["logo"]}" class="team-logo-sm" alt="">' if c.get("logo") else ""
+        dot_html = f"<span class='f1-color-dot' style='background:#{c['color']}'></span>" if c.get("color") else ""
         constructors_html += f"""
         <div class='standing-row'>
             <span class='pos'>{i+1}</span>
-            <span class='team'>{logo_html}{c['name']}</span>
+            <span class='team'>{dot_html}{c['name']}</span>
             <span class='pts'>{c['points']}</span>
         </div>"""
     constructors_html += "</div>"
 
     drivers_html = "<div class='standings' id='f1-drivers-inner'>"
     for i, d in enumerate(drivers):
-        logo_html = f'<img src="{d["team_logo"]}" class="team-logo-sm" alt="">' if d.get("team_logo") else ""
+        dot_html = f"<span class='f1-color-dot' style='background:#{d['team_color']}'></span>" if d.get("team_color") else ""
+        team_html = f"<span class='f1-driver-team'>{dot_html}{d.get('team_name', '')}</span>" if d.get("team_name") else ""
         drivers_html += f"""
         <div class='standing-row'>
             <span class='pos'>{i+1}</span>
-            <span class='team'>{logo_html}{d['name']}</span>
+            <span class='team'>{d['name']}</span>
+            {team_html}
             <span class='pts'>{d['points']}</span>
         </div>"""
     drivers_html += "</div>"
@@ -2056,6 +2078,8 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .f1-podium { display: flex; flex-direction: column; gap: 2px; padding-left: 2px; }
 .f1-podium-rider { font-size: 11px; color: #555; display: flex; align-items: center; gap: 4px; }
 .f1-team-logo { width: 14px; height: 14px; object-fit: contain; }
+.f1-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; vertical-align: middle; }
+.f1-driver-team { display: flex; align-items: center; font-size: 11px; color: #999; min-width: 100px; }
 /* Cycling results */
 .cycling-result-row { flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px 10px; }
 .cycling-result-meta { display: flex; align-items: center; gap: 8px; width: 100%; }
