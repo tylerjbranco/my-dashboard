@@ -662,7 +662,7 @@ def render_f1_section(f1_data, race_results):
             <div class='f1-upcoming-header'>
                 <span class='f1-flag'>{upcoming.get('flag','')}</span>
                 <div>
-                    <div class='f1-race-name'>{upcoming.get('name','Upcoming Race')}</div>
+                    <div class='f1-race-name'><a href='https://www.espn.com/f1/' target='_blank' style='color:inherit;text-decoration:none;'>{upcoming.get('name','Upcoming Race')} ↗</a></div>
                     <div class='f1-race-location'>{upcoming.get('location','')}</div>
                 </div>
             </div>
