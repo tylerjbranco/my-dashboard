@@ -283,6 +283,8 @@ def get_f1_data():
                         except:
                             pass
 
+                for s_type, s_dt in sessions:
+                    print(f"SESSION: type='{s_type}' time={s_dt}", flush=True)
                 qual_time = None
                 race_time = None
                 for s_type, s_dt in sessions:
