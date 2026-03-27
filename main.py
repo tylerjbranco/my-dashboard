@@ -318,14 +318,17 @@ def get_f1_data():
             if "Constructor" in child_name:
                 for entry in entries:
                     try:
+                        import json
+                        print("CONSTRUCTOR ENTRY:", json.dumps(entry, indent=2), flush=True)
+                        break  # just first entry
+                    except:
+                        pass
+                for entry in entries:
+                    try:
                         team = entry.get("team", {})
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         con_name = team.get("displayName", team.get("name", "?"))
                         pts = stats.get("points", "0")
-                        logo = constructor_logo_map.get(con_name, "")
-                        constructors.append({"name": con_name, "logo": logo, "points": pts})
-                    except:
-                        continue
             elif "Driver" in child_name:
                 for entry in entries:
                     try:
