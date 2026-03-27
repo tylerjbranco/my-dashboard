@@ -154,7 +154,7 @@ UCI_WORLD_TOUR_2026 = [
     ("Tirreno-Adriatico", "IT", "2026-03-11", "2026-03-17", "tirreno-adriatico", 3),
     ("Milan-San Remo", "IT", "2026-03-21", "2026-03-21", "milano-sanremo", 4),
     ("Volta a Catalunya", "ES", "2026-03-23", "2026-03-29", "volta-a-catalunya", 14),
-    ("E3 Saxo Bank Classic", "BE", "2026-03-27", "2026-03-27", "e3-saxo-bank-classic", 47),
+    ("E3 Saxo Classic ME", "BE", "2026-03-27", "2026-03-27", "e3-harelbeke", 47),
     ("Gent-Wevelgem", "BE", "2026-03-29", "2026-03-29", "gent-wevelgem", 7),
     ("Dwars door Vlaanderen", "BE", "2026-04-01", "2026-04-01", "dwars-door-vlaanderen", 75),
     ("Tour of Flanders", "BE", "2026-04-05", "2026-04-05", "ronde-van-vlaanderen", 5),
