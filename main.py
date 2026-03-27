@@ -357,7 +357,8 @@ def get_f1_data():
                         athlete = entry.get("athlete", {})
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         pts = stats.get("championshipPts", "0")
-                        team_name = entry.get("team", {}).get("displayName", "")
+                        team = entry.get("team", {})
+                        team_name = team.get("displayName", "") or team.get("name", "")
                         team_color = team_colors.get(team_name, "999999")
                         drivers.append({"name": athlete.get("displayName", "?"), "team_name": team_name, "team_color": team_color, "points": pts})
                     except:
