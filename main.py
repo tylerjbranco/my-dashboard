@@ -178,6 +178,29 @@ UCI_WORLD_TOUR_2026 = [
     ("Gree-Tour of Guangxi", "CN", "2026-10-13", "2026-10-18", "tour-of-guangxi", 7591),
 ]
 
+F1_DRIVER_TEAMS = {
+    "Max Verstappen": "Red Bull Racing",
+    "Liam Lawson": "Red Bull Racing",
+    "Lando Norris": "McLaren",
+    "Oscar Piastri": "McLaren",
+    "Charles Leclerc": "Ferrari",
+    "Lewis Hamilton": "Ferrari",
+    "George Russell": "Mercedes",
+    "Andrea Kimi Antonelli": "Mercedes",
+    "Fernando Alonso": "Aston Martin",
+    "Lance Stroll": "Aston Martin",
+    "Pierre Gasly": "Alpine",
+    "Jack Doohan": "Alpine",
+    "Oliver Bearman": "Haas",
+    "Esteban Ocon": "Haas",
+    "Nico Hulkenberg": "Sauber",
+    "Gabriel Bortoleto": "Sauber",
+    "Isack Hadjar": "Racing Bulls",
+    "Yuki Tsunoda": "Racing Bulls",
+    "Alexander Albon": "Williams",
+    "Carlos Sainz": "Williams",
+}
+
 F1_CALENDAR_2026 = [
     ("Australian Grand Prix", "AU", "Melbourne", "2026-03-15", "2026-03-15", "aus"),
     ("Chinese Grand Prix", "CN", "Shanghai", "2026-03-22", "2026-03-22", "chn"),
@@ -354,20 +377,13 @@ def get_f1_data():
             elif "Driver" in child_name:
                 for entry in entries:
                     try:
-                        import json
-                        print("DRIVER ENTRY:", json.dumps(entry, indent=2), flush=True)
-                        break  # just first entry
-                    except:
-                        pass
-                for entry in entries:
-                    try:
                         athlete = entry.get("athlete", {})
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         pts = stats.get("championshipPts", "0")
-                        team = entry.get("team", {})
-                        team_name = team.get("displayName", "") or team.get("name", "")
+                        driver_name = athlete.get("displayName", "?")
+                        team_name = F1_DRIVER_TEAMS.get(driver_name, "")
                         team_color = team_colors.get(team_name, "999999")
-                        drivers.append({"name": athlete.get("displayName", "?"), "team_name": team_name, "team_color": team_color, "points": pts})
+                        drivers.append({"name": driver_name, "team_name": team_name, "team_color": team_color, "points": pts})
                     except:
                         continue
 
