@@ -342,9 +342,8 @@ def get_f1_data():
             "drivers": drivers,
         }
     except Exception as e:
-        print("F1 DATA ERROR:", e, flush=True)
-        return {"upcoming": None, "constructors": [], "drivers": []}
-
+        return {"upcoming": None, "constructors": [], "drivers": [], "debug_error": str(e)}
+        
 def get_f1_race_results():
     """Get completed F1 race results from ESPN"""
     try:
@@ -569,6 +568,8 @@ def render_cycling_calendar(races):
 
 
 def render_f1_section(f1_data, race_results):
+    if f1_data.get("debug_error"):
+        return f"<p style='color:red'>F1 ERROR: {f1_data['debug_error']}</p>", "", ""
     upcoming = f1_data.get("upcoming")
     constructors = f1_data.get("constructors", [])
     drivers = f1_data.get("drivers", [])
