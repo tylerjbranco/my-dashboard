@@ -193,13 +193,13 @@ F1_DRIVER_TEAMS = {
     "Franco Colapinto": "Alpine",
     "Esteban Ocon": "Haas",
     "Oliver Bearman": "Haas",
-    "Nico Hulkenberg": "Audi",
+    "Nico Hülkenberg": "Audi",
     "Gabriel Bortoleto": "Audi",
     "Liam Lawson": "Racing Bulls",
     "Arvid Lindblad": "Racing Bulls",
     "Carlos Sainz": "Williams",
     "Alexander Albon": "Williams",
-    "Sergio Perez": "Cadillac",
+    "Sergio Pérez": "Cadillac",
     "Valtteri Bottas": "Cadillac",
 }
 F1_CALENDAR_2026 = [
