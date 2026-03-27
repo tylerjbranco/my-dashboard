@@ -311,7 +311,6 @@ def get_f1_data():
 
         constructors = []
         drivers = []
-
         for child in standings_data.get("children", []):
             child_name = child.get("name", "")
             entries = child.get("standings", {}).get("entries", [])
@@ -329,6 +328,10 @@ def get_f1_data():
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         con_name = team.get("displayName", team.get("name", "?"))
                         pts = stats.get("points", "0")
+                        logo = constructor_logo_map.get(con_name, "")
+                        constructors.append({"name": con_name, "logo": logo, "points": pts})
+                    except:
+                        continue
             elif "Driver" in child_name:
                 for entry in entries:
                     try:
