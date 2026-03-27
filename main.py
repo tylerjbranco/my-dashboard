@@ -380,7 +380,7 @@ def get_f1_data():
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         con_name = team.get("displayName", team.get("name", "?"))
                         pts = stats.get("points", "0")
-                        color = team_colors.get(con_name, "999999")
+                        color = team_colors.get(con_name) or F1_TEAM_COLOR_FALLBACKS.get(con_name, "999999")
                         constructors.append({"name": con_name, "color": color, "points": pts})
                     except:
                         continue
@@ -392,7 +392,7 @@ def get_f1_data():
                         pts = stats.get("championshipPts", "0")
                         driver_name = athlete.get("displayName", "?")
                         team_name = F1_DRIVER_TEAMS.get(driver_name, "")
-                        team_color = team_colors.get(team_name, "999999")
+                        team_color = team_colors.get(team_name) or F1_TEAM_COLOR_FALLBACKS.get(team_name, "999999")
                         drivers.append({"name": driver_name, "team_name": team_name, "team_color": team_color, "points": pts})
                     except:
                         continue
