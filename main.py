@@ -1427,6 +1427,11 @@ def render_scores_collapsible(yesterday_games, today_games, id_prefix):
         for game in yesterday_games:
             html += render_game_card(game)
         html += "</div></div>"
+    if id_prefix == 'mlb' and yesterday_games:
+        html += """<a href='https://www.mlb.com/video/topic/fastcast' target='_blank' style='display:flex; align-items:center; gap:8px; padding:6px 0 2px; text-decoration:none;'>
+    <img src='https://www.mlb.com/assets/images/logos/league_logos/mlb.svg' style='width:20px; height:20px; object-fit:contain;' alt='MLB'>
+    <span style='font-size:12px; color:#999;'>MLB Fastcast</span>
+</a>"""
 
     if today_games:
         html += f"""
