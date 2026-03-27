@@ -202,6 +202,15 @@ F1_DRIVER_TEAMS = {
     "Sergio Pérez": "Cadillac",
     "Valtteri Bottas": "Cadillac",
 }
+
+F1_TEAM_COLOR_FALLBACKS = {
+    "Audi": "BB0000",
+    "Cadillac": "111111",
+    "Racing Bulls": "6692FF",
+    "Williams": "00A3E0",
+    "Alpine": "FF69B4",
+}
+
 F1_CALENDAR_2026 = [
     ("Australian Grand Prix", "AU", "Melbourne", "2026-03-15", "2026-03-15", "aus"),
     ("Chinese Grand Prix", "CN", "Shanghai", "2026-03-22", "2026-03-22", "chn"),
