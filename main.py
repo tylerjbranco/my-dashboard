@@ -354,6 +354,13 @@ def get_f1_data():
             elif "Driver" in child_name:
                 for entry in entries:
                     try:
+                        import json
+                        print("DRIVER ENTRY:", json.dumps(entry, indent=2), flush=True)
+                        break  # just first entry
+                    except:
+                        pass
+                for entry in entries:
+                    try:
                         athlete = entry.get("athlete", {})
                         stats = {s["name"]: s.get("displayValue", "") for s in entry.get("stats", [])}
                         pts = stats.get("championshipPts", "0")
