@@ -99,6 +99,11 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Tom Pidcock", "flag": "🇬🇧"},
         {"name": "Wout van Aert", "flag": "🇧🇪"},
     ],
+    "E3 Saxo Classic ME": [
+        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
+        {"name": "Per Strand Hagenes", "flag": "🇳🇴"},
+        {"name": "Florian Vermeersch", "flag": "🇧🇪"},
+    ],
 }
 
 MY_TEAMS = [
