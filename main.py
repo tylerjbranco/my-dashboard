@@ -255,6 +255,7 @@ def get_f1_team_colors():
                 team = team_obj.get("team", {})
                 name = team.get("displayName", "")
                 color = team.get("color", "")
+                print(f"F1 TEAM: name='{name}' color='{color}'", flush=True)
                 if name and color:
                     colors[name] = color
         return colors
