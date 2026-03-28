@@ -255,7 +255,6 @@ def get_f1_team_colors():
                 team = team_obj.get("team", {})
                 name = team.get("displayName", "")
                 color = team.get("color", "")
-                print(f"F1 TEAM: name='{name}' color='{color}'", flush=True)
                 if name and color and color != "0" and color.lower() != "ffffff":
                     colors[name] = color
         return colors
@@ -281,16 +280,6 @@ def get_f1_data():
                     logos = team.get("logos", [])
                     if name and logos:
                         constructor_logo_map[name] = logos[0].get("href", "")
-
-        # DEBUG - remove after inspection
-        if events:
-            import json
-            first_event = events[0]
-            for comp in first_event.get("competitions", []):
-                for competitor in comp.get("competitors", []):
-                    print("DEBUG COMPETITOR:", json.dumps(competitor, indent=2))
-                    break
-                break
 
         eastern = pytz.timezone("America/Toronto")
         today = datetime.now(eastern).date()
@@ -340,8 +329,6 @@ def get_f1_data():
                         except:
                             pass
 
-                for s_type, s_dt in sessions:
-                    print(f"SESSION: type='{s_type}' time={s_dt}", flush=True)
                 qual_time = None
                 race_time = None
                 for s_type, s_dt in sessions:
@@ -373,13 +360,6 @@ def get_f1_data():
             child_name = child.get("name", "")
             entries = child.get("standings", {}).get("entries", [])
             if "Constructor" in child_name:
-                for entry in entries:
-                    try:
-                        import json
-                        print("CONSTRUCTOR ENTRY:", json.dumps(entry, indent=2), flush=True)
-                        break  # just first entry
-                    except:
-                        pass
                 for entry in entries:
                     try:
                         team = entry.get("team", {})
