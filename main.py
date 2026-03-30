@@ -93,7 +93,7 @@ NATIONALITY_FLAGS = {
 
 CYCLING_PODIUMS_2026 = {
     "Tour Down Under": [
-        {"name": "Jay Vine", "flag": "🇦🇺"},
+        {"name": "Jay Vine", "nat": "AUS"},
         {"name": "Mauro Schmid", "flag": "🇨🇭"},
         {"name": "Harry Sweeny", "flag": "🇦🇺"},
     ],
