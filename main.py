@@ -55,6 +55,20 @@ FLAG_HTML = {
     "QA": "&#x1F1F6;&#x1F1E6;",
 }
 
+COUNTRY_CODE_MAP = {
+    "AU": "aus", "AE": "uae", "BE": "bel", "IT": "ita", "FR": "fra",
+    "ES": "esp", "NL": "ned", "CH": "sui", "DE": "ger", "PL": "pol",
+    "CA": "can", "CN": "chn", "GB": "gbr", "MC": "mon", "BH": "bhr",
+    "SA": "ksa", "JP": "jpn", "US": "usa", "AZ": "aze", "SG": "sin",
+    "MX": "mex", "BR": "bra", "AT": "aut", "HU": "hun", "QA": "qat",
+}
+
+def get_country_flag_img(country_code, size=16):
+    code = COUNTRY_CODE_MAP.get(country_code, "").lower()
+    if not code:
+        return FLAG_HTML.get(country_code, country_code)
+    return f'<img src="https://a.espncdn.com/i/teamlogos/countries/500/{code}.png" style="width:{size}px;height:{size}px;object-fit:contain;vertical-align:middle;" alt="{country_code}">'
+    
 NATIONALITY_FLAGS = {
     "NED": "🇳🇱", "BEL": "🇧🇪", "GBR": "🇬🇧", "ITA": "🇮🇹", "FRA": "🇫🇷",
     "SLO": "🇸🇮", "DEN": "🇩🇰", "COL": "🇨🇴", "AUS": "🇦🇺", "GER": "🇩🇪",
@@ -347,7 +361,7 @@ def get_f1_data():
                     elif "race" in s_type.lower() and "grand prix" in s_type.lower():
                         race_time = s_dt.strftime("%a %b %d · %I:%M %p ET")
 
-                flag = FLAG_HTML.get(country_code, "🏎️")
+                flag = get_country_flag_img(country)
                 upcoming_info = {
                     "name": name,
                     "location": location,
@@ -499,7 +513,7 @@ def render_cycling_results(races, podiums):
     <div class='fixture-calendar' id='cycling-results-body'>
     <div class='standings'>"""
     for race in completed:
-        flag = FLAG_HTML.get(race["country"], race["country"])
+        flag = get_country_flag_img(race["country"])
         if race["start"] == race["end"]:
             date_str = race["start"].strftime("%b %d")
         else:
@@ -541,7 +555,7 @@ def render_cycling_calendar(races):
         else:
             status_badge = ""
             row_class = "standing-row"
-        flag = FLAG_HTML.get(race["country"], race["country"])
+        flag = get_country_flag_img(race["country"])
         inner_html += f"""
         <div class='{row_class}'>
             <span class='race-date'>{date_str}</span>
@@ -582,7 +596,7 @@ def render_f1_section(f1_data, race_results):
                     qual_html = f"<div class='f1-session'><span class='f1-session-label'>Qualifying</span> {qual_d.strftime('%a %b %d')} <span class='f1-tbc'>(times TBC)</span></div>"
                     if not upcoming.get("name"):
                         upcoming["name"] = race_name
-                        upcoming["flag"] = FLAG_HTML.get(country, "🏎️")
+                        upcoming["flag"] = get_country_flag_img(country)
                         upcoming["location"] = loc
                     break
 
@@ -607,7 +621,7 @@ def render_f1_section(f1_data, race_results):
         for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
             race_d = date.fromisoformat(race_date_str)
             if race_d >= today:
-                flag = FLAG_HTML.get(country, "🏎️")
+                flag = get_country_flag_img(country)
                 qual_d = race_d - timedelta(days=1)
                 upcoming_widget = f"""
                 <div class='f1-upcoming'>
@@ -640,7 +654,7 @@ def render_f1_section(f1_data, race_results):
 
     for race_name, country, loc, race_date_str, _, slug in F1_CALENDAR_2026:
         race_d = date.fromisoformat(race_date_str)
-        flag = FLAG_HTML.get(country, "🏎️")
+        flag = get_country_flag_img(country)
         date_str = race_d.strftime("%b %d")
         is_completed = race_d < today
 
