@@ -229,7 +229,7 @@ F1_TEAM_COLOR_FALLBACKS = {
 F1_CALENDAR_2026 = [
     ("Australian Grand Prix", "AU", "Melbourne", "2026-03-15", "2026-03-15", "aus"),
     ("Chinese Grand Prix", "CN", "Shanghai", "2026-03-22", "2026-03-22", "chn"),
-    ("Japanese Grand Prix", "JP", "Suzuka", "2026-03-30", "2026-03-30", "jpn"),
+    ("Japanese Grand Prix", "JP", "Suzuka", "2026-03-29", "2026-03-29", "jpn"),
     ("Bahrain Grand Prix", "BH", "Sakhir", "2026-04-19", "2026-04-19", "bhr"),
     ("Saudi Arabian Grand Prix", "SA", "Jeddah", "2026-04-26", "2026-04-26", "sau"),
     ("Miami Grand Prix", "US", "Miami", "2026-05-03", "2026-05-03", "mia"),
