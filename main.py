@@ -104,6 +104,16 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Per Strand Hagenes", "flag": "🇳🇴"},
         {"name": "Florian Vermeersch", "flag": "🇧🇪"},
     ],
+    "Volta a Catalunya": [
+        {"name": "Jonas Vingegaard", "flag": "🇩🇰"},
+        {"name": "Lenny Martinez", "flag": "🇫🇷"},
+        {"name": "Florian Lipowitz", "flag": "🇩🇪"},
+    ],
+    "Gent-Wevelgem": [
+        {"name": "Jasper Philipsen", "flag": "🇧🇪"},
+        {"name": "Tobias Lund Andresen", "flag": "🇩🇰"},
+        {"name": "Christophe Laporte", "flag": "🇫🇷"},
+    ],
 }
 
 MY_TEAMS = [
