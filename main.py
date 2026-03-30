@@ -63,25 +63,11 @@ COUNTRY_CODE_MAP = {
     "MX": "mex", "BR": "bra", "AT": "aut", "HU": "hun", "QA": "qat",
 }
 
-NATIONALITY_CODE_MAP = {
-    "AUS": "aus", "BEL": "bel", "GBR": "gbr", "ITA": "ita", "FRA": "fra",
-    "SLO": "svk", "DEN": "den", "COL": "col", "GER": "ger", "ESP": "esp",
-    "POR": "por", "NOR": "nor", "SWI": "sui", "POL": "pol", "USA": "usa",
-    "KAZ": "kaz", "ECU": "ecu", "AUT": "aut", "CZE": "cze", "NED": "ned",
-    "RSA": "rsa", "CAN": "can", "MEX": "mex", "DEN": "den", "NOR": "nor",
-}
-
 def get_country_flag_img(country_code, size=16):
     code = COUNTRY_CODE_MAP.get(country_code, "").lower()
     if not code:
         return FLAG_HTML.get(country_code, country_code)
     return f'<img src="https://a.espncdn.com/i/teamlogos/countries/500/{code}.png" style="width:{size}px;height:{size}px;object-fit:contain;vertical-align:middle;" alt="{country_code}">'
-
-def get_nationality_flag_img(nat_code, size=16):
-    code = NATIONALITY_CODE_MAP.get(nat_code, "").lower()
-    if not code:
-        return nat_code
-    return f'<img src="https://a.espncdn.com/i/teamlogos/countries/500/{code}.png" style="width:{size}px;height:{size}px;object-fit:contain;vertical-align:middle;" alt="{nat_code}">'
     
 NATIONALITY_FLAGS = {
     "NED": "🇳🇱", "BEL": "🇧🇪", "GBR": "🇬🇧", "ITA": "🇮🇹", "FRA": "🇫🇷",
@@ -93,54 +79,54 @@ NATIONALITY_FLAGS = {
 
 CYCLING_PODIUMS_2026 = {
     "Tour Down Under": [
-        {"name": "Jay Vine", "nat": "AUS"},
-        {"name": "Mauro Schmid", "nat": "SWI"},
-        {"name": "Harry Sweeny", "nat": "AUS"},
+        {"name": "Jay Vine", "flag": "🇦🇺"},
+        {"name": "Mauro Schmid", "flag": "🇨🇭"},
+        {"name": "Harry Sweeny", "flag": "🇦🇺"},
     ],
     "UAE Tour": [
-        {"name": "Isaac del Toro", "nat": "MEX"},
-        {"name": "Antonio Tiberi", "nat": "ITA"},
-        {"name": "Luke Plapp", "nat": "AUS"},
+        {"name": "Isaac del Toro", "flag": "🇲🇽"},
+        {"name": "Antonio Tiberi", "flag": "🇮🇹"},
+        {"name": "Luke Plapp", "flag": "🇦🇺"},
     ],
     "Omloop Het Nieuwsblad": [
-        {"name": "Mathieu van der Poel", "nat": "NED"},
-        {"name": "Tim van Dijke", "nat": "NED"},
-        {"name": "Florian Vermeersch", "nat": "BEL"},
+        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
+        {"name": "Tim van Dijke", "flag": "🇳🇱"},
+        {"name": "Florian Vermeersch", "flag": "🇧🇪"},
     ],
     "Strade Bianche": [
-        {"name": "Tadej Pogačar", "nat": "SLO"},
-        {"name": "Paul Seixas", "nat": "FRA"},
-        {"name": "Isaac del Toro", "nat": "MEX"},
+        {"name": "Tadej Pogačar", "flag": "🇸🇮"},
+        {"name": "Paul Seixas ", "flag": "🇫🇷"},
+        {"name": "Isaac del Toro", "flag": "🇲🇽"},
     ],
     "Paris-Nice": [
-        {"name": "Jonas Vingegaard", "nat": "DEN"},
-        {"name": "Daniel Martínez", "nat": "COL"},
-        {"name": "Georg Steinhauser", "nat": "GER"},
+        {"name": "Jonas Vingegaard", "flag": "🇩🇰"},
+        {"name": "Daniel Martínez", "flag": "🇨🇴"},
+        {"name": "Georg Steinhauser", "flag": "🇩🇪"},
     ],
     "Tirreno-Adriatico": [
-        {"name": "Isaac del Toro", "nat": "MEX"},
-        {"name": "Matteo Jorgenson", "nat": "USA"},
-        {"name": "Giulio Pellizzari", "nat": "ITA"},
+        {"name": "Isaac del Toro", "flag": "🇲🇽"},
+        {"name": "Matteo Jorgenson", "flag": "🇺🇸"},
+        {"name": "Giulio Pellizzari", "flag": "🇮🇹"},
     ],
     "Milan-San Remo": [
-        {"name": "Tadej Pogačar", "nat": "SLO"},
-        {"name": "Tom Pidcock", "nat": "GBR"},
-        {"name": "Wout van Aert", "nat": "BEL"},
+        {"name": "Tadej Pogačar", "flag": "🇸🇮"},
+        {"name": "Tom Pidcock", "flag": "🇬🇧"},
+        {"name": "Wout van Aert", "flag": "🇧🇪"},
     ],
     "E3 Saxo Classic ME": [
-        {"name": "Mathieu van der Poel", "nat": "NED"},
-        {"name": "Per Strand Hagenes", "nat": "NOR"},
-        {"name": "Florian Vermeersch", "nat": "BEL"},
+        {"name": "Mathieu van der Poel", "flag": "🇳🇱"},
+        {"name": "Per Strand Hagenes", "flag": "🇳🇴"},
+        {"name": "Florian Vermeersch", "flag": "🇧🇪"},
     ],
     "Volta a Catalunya": [
-        {"name": "Jonas Vingegaard", "nat": "DEN"},
-        {"name": "Lenny Martinez", "nat": "FRA"},
-        {"name": "Florian Lipowitz", "nat": "GER"},
+        {"name": "Jonas Vingegaard", "flag": "🇩🇰"},
+        {"name": "Lenny Martinez", "flag": "🇫🇷"},
+        {"name": "Florian Lipowitz", "flag": "🇩🇪"},
     ],
     "Gent-Wevelgem": [
-        {"name": "Jasper Philipsen", "nat": "BEL"},
-        {"name": "Tobias Lund Andresen", "nat": "DEN"},
-        {"name": "Christophe Laporte", "nat": "FRA"},
+        {"name": "Jasper Philipsen", "flag": "🇧🇪"},
+        {"name": "Tobias Lund Andresen", "flag": "🇩🇰"},
+        {"name": "Christophe Laporte", "flag": "🇫🇷"},
     ],
 }
 
