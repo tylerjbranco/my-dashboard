@@ -63,12 +63,26 @@ COUNTRY_CODE_MAP = {
     "MX": "mex", "BR": "bra", "AT": "aut", "HU": "hun", "QA": "qat",
 }
 
+NATIONALITY_CODE_MAP = {
+    "AUS": "aus", "BEL": "bel", "GBR": "gbr", "ITA": "ita", "FRA": "fra",
+    "SLO": "slo", "DEN": "den", "COL": "col", "GER": "ger", "ESP": "esp",
+    "POR": "por", "NOR": "nor", "SWI": "sui", "POL": "pol", "USA": "usa",
+    "KAZ": "kaz", "ECU": "ecu", "AUT": "aut", "CZE": "cze", "NED": "ned",
+    "RSA": "rsa", "CAN": "can", "MEX": "mex",
+}
+
 def get_country_flag_img(country_code, size=16):
     code = COUNTRY_CODE_MAP.get(country_code, "").lower()
     if not code:
         return FLAG_HTML.get(country_code, country_code)
     return f'<img src="https://a.espncdn.com/i/teamlogos/countries/500/{code}.png" style="width:{size}px;height:{size}px;object-fit:contain;vertical-align:middle;" alt="{country_code}">'
-    
+
+def get_nationality_flag_img(nat_code, size=16):
+    code = NATIONALITY_CODE_MAP.get(nat_code, "").lower()
+    if not code:
+        return nat_code
+    return f'<img src="https://a.espncdn.com/i/teamlogos/countries/500/{code}.png" style="width:{size}px;height:{size}px;object-fit:contain;vertical-align:middle;" alt="{nat_code}">'
+
 NATIONALITY_FLAGS = {
     "NED": "🇳🇱", "BEL": "🇧🇪", "GBR": "🇬🇧", "ITA": "🇮🇹", "FRA": "🇫🇷",
     "SLO": "🇸🇮", "DEN": "🇩🇰", "COL": "🇨🇴", "AUS": "🇦🇺", "GER": "🇩🇪",
@@ -525,7 +539,7 @@ def render_cycling_results(races, podiums):
             podium_html = "<div class='cycling-podium'>"
             for i, rider in enumerate(podium[:3]):
                 medal = medals[i] if i < len(medals) else ""
-                podium_html += f"<span class='cycling-podium-rider'>{medal} {rider['flag']} {rider['name']}</span>"
+                podium_html += f"<span class='cycling-podium-rider'>{medal} {get_nationality_flag_img(rider.get('nat', ''))} {rider['name']}</span>"
             podium_html += "</div>"
         html += f"""
         <div class='standing-row cycling-result-row'>
