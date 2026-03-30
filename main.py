@@ -63,25 +63,11 @@ COUNTRY_CODE_MAP = {
     "MX": "mex", "BR": "bra", "AT": "aut", "HU": "hun", "QA": "qat",
 }
 
-NATIONALITY_CODE_MAP = {
-    "AUS": "aus", "BEL": "bel", "GBR": "gbr", "ITA": "ita", "FRA": "fra",
-    "SLO": "svk", "DEN": "den", "COL": "col", "GER": "ger", "ESP": "esp",
-    "POR": "por", "NOR": "nor", "SWI": "sui", "POL": "pol", "USA": "usa",
-    "KAZ": "kaz", "ECU": "ecu", "AUT": "aut", "CZE": "cze", "NED": "ned",
-    "RSA": "rsa", "CAN": "can", "MEX": "mex", "DEN": "den", "NOR": "nor",
-}
-
 def get_country_flag_img(country_code, size=16):
     code = COUNTRY_CODE_MAP.get(country_code, "").lower()
     if not code:
         return FLAG_HTML.get(country_code, country_code)
     return f'<img src="https://a.espncdn.com/i/teamlogos/countries/500/{code}.png" style="width:{size}px;height:{size}px;object-fit:contain;vertical-align:middle;" alt="{country_code}">'
-
-def get_nationality_flag_img(nat_code, size=16):
-    code = NATIONALITY_CODE_MAP.get(nat_code, "").lower()
-    if not code:
-        return nat_code
-    return f'<img src="https://a.espncdn.com/i/teamlogos/countries/500/{code}.png" style="width:{size}px;height:{size}px;object-fit:contain;vertical-align:middle;" alt="{nat_code}">'
     
 NATIONALITY_FLAGS = {
     "NED": "🇳🇱", "BEL": "🇧🇪", "GBR": "🇬🇧", "ITA": "🇮🇹", "FRA": "🇫🇷",
@@ -93,9 +79,9 @@ NATIONALITY_FLAGS = {
 
 CYCLING_PODIUMS_2026 = {
     "Tour Down Under": [
-        {"name": "Jay Vine", "nat": "AUS"},
-        {"name": "Mauro Schmid", "nat": "SWI"},
-        {"name": "Harry Sweeny", "nat": "AUS"},
+        {"name": "Jay Vine", "flag": "🇦🇺"},
+        {"name": "Mauro Schmid", "flag": "🇨🇭"},
+        {"name": "Harry Sweeny", "flag": "🇦🇺"},
     ],
     "UAE Tour": [
         {"name": "Isaac del Toro", "flag": "🇲🇽"},
