@@ -142,6 +142,11 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Tobias Lund Andresen", "nat": "DEN"},
         {"name": "Christophe Laporte", "nat": "FRA"},
     ],
+    "Dwars door Vlaanderen": [
+        {"name": "Filippo Ganna", "nat": "ITA"},
+        {"name": "Wout van Aert", "nat": "BEL"},
+        {"name": "Søren Wærenskjold", "nat": "NOR"},
+    ],
 }
 
 MY_TEAMS = [
