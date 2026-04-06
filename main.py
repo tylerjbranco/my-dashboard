@@ -147,6 +147,11 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Wout van Aert", "nat": "BEL"},
         {"name": "Søren Wærenskjold", "nat": "NOR"},
     ],
+    "Tour of Flanders": [
+        {"name": "Tadej Pogačar", "nat": "SLO"},
+        {"name": "Mathieu van der Poel", "nat": "NED"},
+        {"name": "Remco Evenepoel", "nat": "BEL"},
+    ],
 }
 
 MY_TEAMS = [
