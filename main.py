@@ -152,6 +152,11 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Mathieu van der Poel", "nat": "NED"},
         {"name": "Remco Evenepoel", "nat": "BEL"},
     ],
+    "Paris-Roubaix": [
+        {"name": "Wout van Aert", "nat": "BEL"},
+        {"name": "Tadej Pogačar", "nat": "SLO"},
+        {"name": "Jasper Stuyven", "nat": "BEL"},
+    ],
 }
 
 MY_TEAMS = [
