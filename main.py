@@ -1446,13 +1446,13 @@ def render_game_card(game):
                     trailer_wins = min(h, a)
                     # Figure out which team leads
                     if h > a:
-                        leader_name = home_team
+                        leader_name = competition["competitors"][0]["team"].get("location", home_team)
                     else:
-                        leader_name = away_team
+                        leader_name = competition["competitors"][1]["team"].get("location", away_team)
                     if leader_wins == 4:
-                        series_summary = f"{leader_name} wins {leader_wins}-{trailer_wins}"
+                        series_summary = f"{leader_name} win {leader_wins}-{trailer_wins}"
                     else:
-                        series_summary = f"{leader_name} leads {leader_wins}-{trailer_wins}"
+                        series_summary = f"{leader_name} lead {leader_wins}-{trailer_wins}"
     except:
         pass
 
