@@ -1429,6 +1429,35 @@ def render_game_card(game):
                 away_bold = "font-weight: 600;"
         except:
             pass
+    # Series info (playoffs)
+    series_summary = ""
+    try:
+        series = competition.get("series", {})
+        if series:
+            home_wins = series.get("competitors", [{}, {}])[0].get("wins", 0)
+            away_wins = series.get("competitors", [{}, {}])[1].get("wins", 0)
+            if home_wins or away_wins:
+                h = int(home_wins)
+                a = int(away_wins)
+                if h == a:
+                    series_summary = f"Series tied {h}-{a}"
+                else:
+                    leader_wins = max(h, a)
+                    trailer_wins = min(h, a)
+                    # Figure out which team leads
+                    if h > a:
+                        leader_name = home_team
+                    else:
+                        leader_name = away_team
+                    if leader_wins == 4:
+                        series_summary = f"{leader_name} wins {leader_wins}-{trailer_wins}"
+                    else:
+                        series_summary = f"{leader_name} leads {leader_wins}-{trailer_wins}"
+    except:
+        pass
+
+    series_html = f"<div class='score-series'>{series_summary}</div>" if series_summary else ""
+
     return f"""
     <a href='{game_url}' target='_blank' class='score-card-link'>
         <div class='score-card'>
@@ -1447,6 +1476,7 @@ def render_game_card(game):
                 <span class='score-num' style='{home_bold}'>{home_score}</span>
             </div>
             <div class='score-status'>{status}</div>
+            {series_html}
         </div>
     </a>"""
 
@@ -1953,6 +1983,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
 .score-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin: 3px 0; }
 .score-num { font-weight: 500; min-width: 20px; text-align: right; }
 .score-status { font-size: 9px; color: #999; margin-top: 6px; }
+.score-series { font-size: 9px; color: #1e40af; font-weight: 500; margin-top: 2px; }
 .team-logo { width: 20px; height: 20px; object-fit: contain; }
 .team-logo-sm { width: 16px; height: 16px; object-fit: contain; margin-right: 4px; vertical-align: middle; }
 .standings { background: white; border: 0.5px solid #eee; border-radius: 10px; overflow: hidden; margin-bottom: 4px; }
@@ -2127,6 +2158,7 @@ body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI'
   .story-item a { color: #eee; }
   .news-item { border-bottom-color: #2c2c2e; }
   .news-content a { color: #eee; }
+  .score-series { color: #93c5fd; }
   .scores-section-label { color: #888; }
   .scores-section-toggle { color: #888; }
   .score-status { color: #888; }
