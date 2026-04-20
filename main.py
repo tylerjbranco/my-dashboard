@@ -157,6 +157,11 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Tadej Pogačar", "nat": "SLO"},
         {"name": "Jasper Stuyven", "nat": "BEL"},
     ],
+    "Amstel Gold Race": [
+        {"name": "Remco Evenepoel", "nat": "BEL"},
+        {"name": "Mattias Skjelmose", "nat": "DEN"},
+        {"name": "Benoît Cosnefroy", "nat": "FRA"},
+    ],
 }
 
 MY_TEAMS = [
