@@ -164,7 +164,7 @@ CYCLING_PODIUMS_2026 = {
     ],
     "La Flèche Wallonne": [
         {"name": "Paul Seixas", "nat": "FRA"},
-        {"name": "Mauro Schmid", "nat": "SUI"},
+        {"name": "Mauro Schmid", "nat": "SWI"},
         {"name": "Ben Tulett", "nat": "GBR"},
     ],
 }
