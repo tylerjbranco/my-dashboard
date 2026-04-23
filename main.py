@@ -162,6 +162,11 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Mattias Skjelmose", "nat": "DEN"},
         {"name": "Benoît Cosnefroy", "nat": "FRA"},
     ],
+    "La Flèche Wallonne": [
+        {"name": "Paul Seixas", "nat": "FRA"},
+        {"name": "Mauro Schmid", "nat": "SUI"},
+        {"name": "Ben Tulett", "nat": "GBR"},
+    ],
 }
 
 MY_TEAMS = [
