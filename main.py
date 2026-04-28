@@ -167,6 +167,11 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Mauro Schmid", "nat": "SWI"},
         {"name": "Ben Tulett", "nat": "GBR"},
     ],
+    "Liège–Bastogne–Liège: [
+        {"name": "Tadej Pogačar", "nat": "SLO"},
+        {"name": "Paul Seixas", "nat": "FRA"},
+        {"name": "Remco Evenepoel", "nat": "BEL"},
+    ],
 }
 
 MY_TEAMS = [
