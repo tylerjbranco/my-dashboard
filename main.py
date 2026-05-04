@@ -172,6 +172,16 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Paul Seixas", "nat": "FRA"},
         {"name": "Remco Evenepoel", "nat": "BEL"},
     ],
+    "Tour de Romandie": [
+        {"name": "Tadej Pogačar", "nat": "SLO"},
+        {"name": "Florian Lipowitz", "nat": "GER"},
+        {"name": "Lenny Martinez", "nat": "FRA"},
+    ],
+    "Eschborn–Frankfurt": [
+        {"name": "Georg Zimmermann", "nat": "GER"},
+        {"name": "Tom Pidcock", "nat": "GBR"},
+        {"name": "Ben Tulett", "nat": "GBR"},
+    ],
 }
 
 MY_TEAMS = [
