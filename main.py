@@ -177,7 +177,7 @@ CYCLING_PODIUMS_2026 = {
         {"name": "Florian Lipowitz", "nat": "GER"},
         {"name": "Lenny Martinez", "nat": "FRA"},
     ],
-    "Eschborn–Frankfurt": [
+    "Eschborn-Frankfurt": [
         {"name": "Georg Zimmermann", "nat": "GER"},
         {"name": "Tom Pidcock", "nat": "GBR"},
         {"name": "Ben Tulett", "nat": "GBR"},
