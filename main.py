@@ -1759,13 +1759,30 @@ def render_mlb_standings(data):
         html += "<div class='standing-header'><span class='pos'></span><span class='team'></span><span class='stat-col'>W</span><span class='stat-col'>L</span><span class='stat-col'>PCT</span><span class='pts'>GB</span></div>"
         division_teams = [(team, team_lookup[team]) for team in teams if team in team_lookup]
         division_teams.sort(key=lambda x: int(x[1]["stats"].get("wins", "0") or "0"), reverse=True)
+        leader_w = leader_l = None
+        if division_teams:
+            try:
+                leader_w = int(division_teams[0][1]["stats"].get("wins", 0) or 0)
+                leader_l = int(division_teams[0][1]["stats"].get("losses", 0) or 0)
+            except:
+                pass
+
         for i, (team, tdata) in enumerate(division_teams):
             s = tdata["stats"]
             logo = tdata["logo"]
             w = s.get("wins", "-")
             l = s.get("losses", "-")
             pct = s.get("winPercent", "-")
-            gb = s.get("gamesBehind", "-")
+            if i == 0:
+                gb = "-"
+            elif leader_w is not None:
+                try:
+                    gb_val = ((leader_w - int(w)) + (int(l) - leader_l)) / 2
+                    gb = f"{gb_val:.1f}" if gb_val % 1 else str(int(gb_val))
+                except:
+                    gb = s.get("gamesBehind", "-")
+            else:
+                gb = s.get("gamesBehind", "-")
             logo_html = f'<img class="team-logo-sm" src="{logo}" alt="">' if logo else ""
             row_style = ""
             if team in div_leader_teams:
