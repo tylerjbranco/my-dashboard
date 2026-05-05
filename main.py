@@ -1181,8 +1181,7 @@ def get_scores_range(sport, league, start_date, end_date):
 
 
 def get_standings(sport, league):
-    params = "?group=division" if league == "mlb" else ""
-    url = f"https://site.api.espn.com/apis/v2/sports/{sport}/{league}/standings{params}"
+    url = f"https://site.api.espn.com/apis/v2/sports/{sport}/{league}/standings"
     try:
         response = requests.get(url, timeout=5)
         data = response.json()
@@ -1714,9 +1713,8 @@ def render_mlb_standings(data):
     try:
         all_entries = []
         for conference in data.get("children", []):
-            for division in conference.get("children", []):
-                for entry in division["standings"]["entries"]:
-                    all_entries.append((entry, conference.get("name", "")))
+            for entry in conference["standings"]["entries"]:
+                all_entries.append((entry, conference.get("name", "")))
     except:
         return "<p class='empty'>Standings unavailable</p>"
 
@@ -1767,7 +1765,7 @@ def render_mlb_standings(data):
             w = s.get("wins", "-")
             l = s.get("losses", "-")
             pct = s.get("winPercent", "-")
-            gb = s.get("divisionGamesBehind", s.get("gamesBehind", "-"))
+            gb = s.get("gamesBehind", "-")
             logo_html = f'<img class="team-logo-sm" src="{logo}" alt="">' if logo else ""
             row_style = ""
             if team in div_leader_teams:
