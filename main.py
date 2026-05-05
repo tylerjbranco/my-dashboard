@@ -1705,6 +1705,12 @@ def render_nhl_standings(data):
 
 
 def render_mlb_standings(data):
+    import json
+    print("MLB STANDINGS KEYS:", list(data.keys()), flush=True)
+    for conf in data.get("children", []):
+        print("  CONF:", conf.get("name"), "| child keys:", list(conf.keys()), flush=True)
+        for div in conf.get("children", []):
+            print("    DIV:", div.get("name"), "| keys:", list(div.keys()), flush=True)
     try:
         all_entries = []
         for conference in data.get("children", []):
